@@ -94,3 +94,32 @@ config file.
   of every table for either string.
 - No secret, local path, domain or username in any committed file.
 - `bash corpus/lint.sh` passes.
+
+## Outcome (2026-11-04)
+
+Built as specified. Workspaces `shared` and `server` only; `web` joins the
+root `package.json` in brief 04, since npm needs a workspace folder to exist.
+
+- **zod 4.6.7**, not brief-board's 4.5.4: 4.5.4 has a high advisory
+  (GHSA-mrhx-c7xc-m3w5, memory on oversized collections), and this server
+  validates bodies from other apps. `npm audit` still lists minimatch under
+  ESLint, dev tooling only.
+- **"No text column"** means no column for a prompt or an answer: `app` and
+  `model` are names, everything else is a number.
+- **The queue** (`server/src/queue.ts`) ends a cancelled job at once and
+  ignores what its runner does afterwards; the runner reports each attempt
+  (`attempt(provider, model)`) so the page and the record know where it ran.
+  The prompt is dropped from memory the moment a job ends.
+- **Errors**: a body that isn't JSON answers "the body is not valid JSON"
+  without quoting it (V8's parse errors quote the input). A request after
+  shutdown starts is a 503.
+- `server/src/testing.ts` holds the hand-driven stub runner the tests share.
+
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (4 files, 43 tests:
+FIFO, one at a time, tickets, now serving and position, cancel waiting and
+running with the signal aborted, force close, clear, queue full, long-poll
+early and on time and on hang-up, tokens, 404 for another app's job, strict
+body, records with no text in any table, the raw database file, the WAL or a
+trace-level log, and tickets counting on across a restart). By hand: the built
+server took a job under `/wicket-api` with a token, the job failed with "no
+provider is configured yet", and the log held neither the prompt nor the token.

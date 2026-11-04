@@ -21,3 +21,13 @@ and the containers with the owner's setup. Details the build picked on its own
 strict body, records kept forever) wait for the owner in
 [wiki/open-questions.md](wiki/open-questions.md). Filed the todo to score the
 backup model on a quiet machine.
+
+## [2026-11-04] done | Brief 01: the queue, the jobs API, app tokens and records
+
+The `shared` and `server` workspaces on brief-board's pins (zod moved to the
+patched 4.6.7). One in-memory queue runs one job at a time in ticket order,
+with cancel, force close, clear, a 200-job cap and long-polling; the job routes
+take per-app tokens from `WICKET_APP_TOKENS`; records keep counts and timings
+only, proved by a test that searches every table, the raw file and a
+trace-level log for the prompt and the answer. No provider yet. See
+[briefs/done/01-queue-and-jobs-api.md](briefs/done/01-queue-and-jobs-api.md).

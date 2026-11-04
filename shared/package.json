@@ -1,0 +1,21 @@
+{
+  "name": "@wicket/shared",
+  "version": "0.1.0",
+  "description": "The API contract as zod schemas, shared by the server and the page.",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

@@ -1,12 +1,17 @@
 ---
-summary: How Wicket is put together, as planned 2026-11-04 before any code. Three npm workspaces (shared contract, Fastify + SQLite server, React page); the queue, the providers and the records inside the server and how a job moves through them; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS with its backup Ollama container. Updated as each brief lands.
+summary: How Wicket is put together, planned 2026-11-04; the queue, jobs API, tokens and records built the same day (brief 01). Three npm workspaces (shared contract, Fastify + SQLite server, React page); the queue, the providers and the records inside the server and how a job moves through them; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS with its backup Ollama container. Updated as each brief lands.
 updated: 2026-11-04
 ---
 
 # Architecture
 
-_Planned 2026-11-04._ Each brief updates the part it builds; the code wins
-where this page and it disagree.
+_Planned 2026-11-04._ Built so far: the workspaces `shared` and `server`, the
+queue ([queue.ts](../../server/src/queue.ts)), the job routes
+([app.ts](../../server/src/app.ts)), the app tokens
+([tokens.ts](../../server/src/tokens.ts)) and the records
+([records.ts](../../server/src/records.ts), [db.ts](../../server/src/db.ts)).
+Each brief updates the part it builds; the code wins where this page and it
+disagree.
 
 ## Workspaces
 
