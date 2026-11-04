@@ -186,7 +186,7 @@ VM, so everything here goes through compose networks and loopback ports.
 "Sign in with Ward" can't be checked this way: the API in the container would
 have to reach the local Ward at its `localhost` address, which inside the
 container is the container itself. Check it with `npm run dev` instead
-([Local development](#local-development)).
+([getting-started.md](getting-started.md#6-sign-in-with-ward-optional)).
 
 ## 6. Deploy
 
@@ -249,17 +249,40 @@ daemon a container can't reach the host's loopback, so `127.0.0.1:8808` works
 only from the box's own shell. The contract the callers code against is in
 [`corpus/wiki/api.md`](../corpus/wiki/api.md).
 
+## 9. The docs site
+
+The docs site builds into `docs-site/dist` with base `/wicket/docs/`
+([docs-site/README.md](../docs-site/README.md)). vps-deploy ships what is
+built in the checkout and builds nothing, so it needs a docs stack, written in
+its `app.ts` the way the other apps' are:
+
+```ts
+new DocsStack(estate, "wicket", {
+  repo: estate.repos.wicket,
+  distDir: "docs-site/dist",
+  generator: "docusaurus",
+  description: "Wicket docs — the queue, the API contract, the corpus",
+  routeTitle: "Wicket docs",
+  deployedWith: wicket,
+});
+```
+
+vps-deploy's docs construct already handles a docs route inside an app's
+path, as it does for Atrium's `/atrium/docs` inside `/atrium`. Then, from this
+repo and from vps-deploy:
+
+```
+npm ci --prefix docs-site && npm run docs
+node cli.ts wicket-docs deploy
+curl -sI <production origin>/wicket/docs/
+```
+
+Links from the wiki to source files render as plain text, since the repo
+doesn't write its own GitHub address down. Build with
+`DOCS_REPO_URL=https://github.com/<account>/wicket npm run docs` to make them
+links.
+
 ## Local development
 
-1. `cp .env.example .env`, then fill `WICKET_APP_TOKENS` with a token for any
-   app you test with (`openssl rand -hex 32`). Leave `OLLAMA_API_KEY` empty to
-   send every call to the backup, and set `WICKET_BACKUP_MODEL` to a model your
-   own Ollama already has (pull nothing for this).
-2. Make your local account: `npm run seed -w @wicket/server`.
-3. For "Sign in with Ward" against the local Ward: Ward's local seed
-   (`wzd_auth`, `infrastructure/local/seed.mjs`) lists Wicket since
-   2026-11-04. Run `node seed.mjs` there, in a terminal (it needs the owner
-   account). It writes the five `WARD_OIDC_*` values into this repo's `.env`.
-4. `npm run dev`: the API on `127.0.0.1:8808` and the page at
-   <http://localhost:5179/wicket/>. For `npm start` (the built page on the
-   server's own port), set `PUBLIC_ORIGIN=http://127.0.0.1:8808`.
+Running Wicket on your own machine, "Sign in with Ward" against a local Ward
+included, is in [getting-started.md](getting-started.md).

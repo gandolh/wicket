@@ -18,7 +18,8 @@
     "start": "node server/dist/index.js",
     "test": "vitest run",
     "typecheck": "tsc -b && tsc -p web --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "docs": "npm run docs --prefix docs-site"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

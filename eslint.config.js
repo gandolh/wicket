@@ -8,7 +8,9 @@ import tseslint from "typescript-eslint";
  * see. The React hooks rules apply to the page only.
  */
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/node_modules/**", "data/**", "**/vendor/**"] },
+  // docs-site is its own package with its own typecheck (`npm run typecheck
+  // --prefix docs-site`); its generated .docusaurus/ and reference are not ours.
+  { ignores: ["**/dist/**", "**/node_modules/**", "data/**", "**/vendor/**", "docs-site/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

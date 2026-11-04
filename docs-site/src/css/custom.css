@@ -1,0 +1,69 @@
+/*
+ * The site's theme on Infima's tokens, in the queue page's palette (its
+ * styles.css): the same blue accent, navy text and grey ground. Light only;
+ * the block also covers [data-theme='dark'], so a crafted
+ * `?docusaurus-data-theme=dark` cannot repaint the site.
+ *
+ * The accent ramp is #0c66e4 darkened and lightened by 10/15/30% lightness.
+ */
+
+:root,
+:root[data-theme='light'],
+:root[data-theme='dark'] {
+  color-scheme: light only;
+
+  --ifm-color-primary: #0c66e4;
+  --ifm-color-primary-dark: #0b5ccd;
+  --ifm-color-primary-darker: #0a57c2;
+  --ifm-color-primary-darkest: #0847a0;
+  --ifm-color-primary-light: #1d74f2;
+  --ifm-color-primary-lighter: #2a7cf3;
+  --ifm-color-primary-lightest: #5294f5;
+
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #ffffff;
+  --ifm-navbar-background-color: #ffffff;
+  --ifm-font-color-base: #172b4d;
+  --ifm-heading-color: #172b4d;
+  --ifm-font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ifm-code-font-size: 92%;
+  --ifm-toc-border-color: #dfe1e6;
+  --ifm-hr-background-color: #dfe1e6;
+  --docusaurus-highlighted-code-line-bg: rgba(9, 30, 66, 0.06);
+}
+
+/* Prose links only: --ifm-link-decoration would underline the sidebar too. */
+.markdown a {
+  text-underline-offset: 0.18em;
+}
+
+/* "You are here". Not .menu__link--active: Infima also puts that on the parent
+   category of the current page. */
+.menu__link[aria-current='page'] {
+  font-weight: 600;
+}
+
+.markdown :not(pre) > code {
+  font-variant-ligatures: none;
+}
+
+/* The landing's short fact list. */
+.doc-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1.25rem;
+  margin: 1.25rem 0 1.75rem;
+}
+.doc-facts dt {
+  font-weight: 600;
+  color: #5e6c84;
+}
+.doc-facts dd {
+  margin: 0;
+}
+
+/* Screenshots and the diagram: framed like the page's cards. */
+.markdown img {
+  border: 1px solid #dfe1e6;
+  border-radius: 8px;
+}

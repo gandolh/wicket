@@ -1,0 +1,41 @@
+{
+  "name": "@wicket/docs-site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Wicket's documentation site: the corpus wiki and the docs/ guides rendered, with a TypeDoc reference over the shared API contract, built with Docusaurus.",
+  "scripts": {
+    "sync-corpus": "node scripts/sync-corpus.mjs",
+    "ref": "typedoc",
+    "prestart": "npm run sync-corpus",
+    "start": "docusaurus start",
+    "docs": "npm run sync-corpus && npm run ref && docusaurus build --out-dir dist",
+    "typecheck": "tsc",
+    "clear": "docusaurus clear"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/faster": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@easyops-cn/docusaurus-search-local": "0.55.3",
+    "@mdx-js/react": "3.1.1",
+    "clsx": "2.1.1",
+    "prism-react-renderer": "2.4.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/tsconfig": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "@types/react": "19.2.18",
+    "typedoc": "0.28.20",
+    "typescript": "6.0.3"
+  },
+  "browserslist": {
+    "production": [">0.5%", "not dead", "not op_mini all"],
+    "development": ["last 3 chrome version", "last 3 firefox version", "last 5 safari version"]
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

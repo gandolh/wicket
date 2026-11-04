@@ -1,18 +1,24 @@
-# Docs
+# Wicket docs
 
-- [owner-setup.md](owner-setup.md): registering Wicket in Ward, the secrets,
-  what the vps-deploy stack needs (ports, routes, env, the backup container's
-  caps), pulling the backup model, deploying, the first account, pointing the
-  apps at Wicket, and local development.
+Start with the [main README](../README.md). This folder holds what it links to.
 
-The rest lives in the project wiki, under [`corpus/`](../corpus/index.md):
+| File | What it covers |
+|---|---|
+| [getting-started.md](getting-started.md) | Running it locally: install, settings, your account, a first call, tests, Ward, the containers |
+| [architecture.md](architecture.md) | How a call moves through the parts, on one screen |
+| [owner-setup.md](owner-setup.md) | Putting Wicket on a VPS: Ward, the secrets, what the deploy stack needs, the model pull, the first account, the callers |
+| [images/](images/shots.md) | The screenshots and the diagram used here, and how each was made |
 
-| Question | Page |
+Going deeper:
+
+- Docs site: built from [`docs-site/`](../docs-site/README.md) with `npm run docs`; it renders these guides and the wiki, with a reference generated from the code. Not deployed yet.
+- Project wiki: [corpus/](../corpus/index.md), for decisions, the API contract, status and the briefs that built it.
+
+| Question | Wiki page |
 |---|---|
 | What does a caller send and get back? | [api.md](../corpus/wiki/api.md) |
 | Why is it built this way? | [decisions.md](../corpus/wiki/decisions.md) |
 | What do ticket, now serving, backup model mean? | [glossary.md](../corpus/wiki/glossary.md) |
-| How is it put together? | [architecture.md](../corpus/wiki/architecture.md) |
 | When does a call fall back to the backup? | [providers.md](../corpus/wiki/providers.md) |
 | Who gets into which route? | [sign-in.md](../corpus/wiki/sign-in.md) |
 | Where do things stand? | [status.md](../corpus/wiki/status.md) |

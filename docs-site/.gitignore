@@ -1,0 +1,11 @@
+# Docusaurus's own cache and build output.
+.docusaurus/
+dist/
+node_modules/
+
+# GENERATED on every docs build. Do not commit, do not edit.
+#   scripts/sync-corpus.mjs renders corpus/ and the repo's docs/ into here
+docs/wiki/
+docs/guides/
+#   typedoc renders the shared contract into here
+static/reference/

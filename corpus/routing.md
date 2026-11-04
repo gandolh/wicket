@@ -30,7 +30,8 @@ Read by the `orchestrate` skill at the start of a work request.
 | [index.md](index.md) | `node_modules/`, `dist/` | `corpus-flow` for any capture or completion |
 | [wiki/status.md](wiki/status.md) | lockfiles, the SQLite database file | `plan-split-dispatch` for 3 or more independent chunks |
 | [wiki/glossary.md](wiki/glossary.md) | `briefs/` wholesale, `*/vendor/ward/` (generated) | `impeccable` for visual or UX work |
-| [CLAUDE.md](CLAUDE.md) hard rules | | `grill-me` before a new subsystem |
+| [CLAUDE.md](CLAUDE.md) hard rules | `docs-site/docs/wiki/`, `docs-site/docs/guides/`, `docs-site/static/reference/` (rendered on every docs build) | `grill-me` before a new subsystem |
+| | | `readme-docs` for the README and `docs/`; `corpus-docs-site` for `docs-site/` |
 
 ## Knowledge routing
 

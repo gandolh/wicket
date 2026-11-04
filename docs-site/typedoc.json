@@ -1,0 +1,12 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["../shared/src/index.ts"],
+  "tsconfig": "../shared/tsconfig.json",
+  "out": "static/reference",
+  "name": "@wicket/shared: the API contract",
+  "readme": "none",
+  "hideGenerator": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "sort": ["source-order"]
+}

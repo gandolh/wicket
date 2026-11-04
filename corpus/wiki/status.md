@@ -1,5 +1,5 @@
 ---
-summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-06 (queue and jobs API, providers, sign-in with admin routes and /metrics, the queue page, the containers and owner setup, both images built and smoke-tested locally); 85 tests; not deployed. The owner's steps in order (Ward registration, secrets, disk room for the 6.55 GB Ollama image, push and deploy with vps-deploy's wicket stack, the model pull, the account, pointing just-a-bot and ro-housing at it, running Ward's local seed); one open question (the Ollama image's size); open brief 07 (README, docs, docs site); and the open todos (score the backup model; bump @fastify/static).
+summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-07 (queue and jobs API, providers, sign-in with admin routes and /metrics, the queue page, the containers and owner setup, both images built and smoke-tested locally, README and docs with a Docusaurus docs site); 85 tests; not deployed. The owner's steps in order (Ward registration, secrets, disk room for the 6.55 GB Ollama image, push and deploy with vps-deploy's wicket stack, the model pull, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); two open questions (the Ollama image's size, the docs site as a separate package); no open briefs; and the open todos (score the backup model; bump @fastify/static).
 updated: 2026-11-04
 ---
 
@@ -7,7 +7,9 @@ updated: 2026-11-04
 
 _2026-11-04_. The owner settled the design in a grill
 ([decisions.md](decisions.md)) and briefs 01 to 05 built it the same day.
-Brief 06 built both images and ran them together locally the same evening.
+Brief 06 built both images and ran them together locally the same evening,
+and brief 07 brought the README and `docs/` to the estate's standard with a
+docs site.
 **Not deployed.** Everything the deploy needs is in `docs/owner-setup.md`.
 
 ## By area
@@ -37,6 +39,11 @@ Brief 06 built both images and ran them together locally the same evening.
   request. Nothing in the images had to change. The Ollama image is 6.55 GB
   ([open-questions.md](open-questions.md)). "Sign in with Ward" wasn't walked:
   Ward's local seed hadn't been run.
+- **README, docs, docs site** (brief 07). A landing README with captures from
+  the local run (a dummy account and dummy calls), `docs/getting-started.md`,
+  `docs/architecture.md` with a diagram, and `docs-site/`: Docusaurus over the
+  wiki and `docs/`, TypeDoc over `shared`, base `/wicket/docs/`, built once.
+  It is a separate package, not a workspace ([open-questions.md](open-questions.md)).
 
 85 tests (84 run, 1 opt-in live test skipped); typecheck, lint and build
 clean (2026-11-04).
@@ -54,17 +61,21 @@ In this order; the details are in `docs/owner-setup.md`.
    `docs/owner-setup.md`), then pull `gemma3:1b` into `wicket-ollama` once.
 5. Seed your account in the container, then link Ward.
 6. Give just-a-bot and ro-housing `WICKET_URL` and their own `WICKET_TOKEN`.
+   Then the docs: add a `DocsStack` for `wicket` in vps-deploy's `app.ts`
+   (`docs-site/dist`, `generator: "docusaurus"`), run `npm ci --prefix
+   docs-site && npm run docs` here, and `node cli.ts wicket-docs deploy`
+   (`docs/owner-setup.md` section 9).
 7. For local development only: run Ward's local seed in a terminal
    (`node seed.mjs` in `wzd_auth`'s `infrastructure/local/`; it lists Wicket
    since 2026-11-04), then walk "Sign in with Ward" with `npm run dev`.
 
 The six calls the first build made on its own were all kept by the owner on
-2026-11-04. One new call waits in [open-questions.md](open-questions.md): the
-Ollama image's size.
+2026-11-04. Two new calls wait in [open-questions.md](open-questions.md): the
+Ollama image's size, and the docs site as a separate package.
 
 ## Open briefs
 
-- [07: README, docs/ and a docs site](../briefs/todo/07-readme-docs-and-docs-site.md).
+None.
 
 ## Todos
 

@@ -103,3 +103,16 @@ and about 40-50 MB of memory; the upstream Ollama image 6.55 GB, mostly GPU
 libraries, now an open question. "Sign in with Ward" wasn't walked: Ward's
 local seed hadn't been run. Filed brief 07 (README, docs, docs site). See
 [briefs/done/06-images-build-and-run-locally.md](briefs/done/06-images-build-and-run-locally.md).
+
+## [2026-11-04] done | Brief 07: README, docs/ and a docs site
+
+The README follows the estate's standard with captures from brief 06's
+container run (a throwaway account, dummy calls); `docs/` gained
+getting-started, an architecture page with a diagram, and an index;
+owner-setup's local-development section moved into getting-started and it
+gained the docs stack step. `docs-site/` is a Docusaurus site over the wiki
+and `docs/`, with TypeDoc over `shared`, built once with `npm run docs`. It is
+a separate package with its own lockfile rather than a workspace, so the API
+image's build stays as checked (an open question). Deploying it waits for a
+docs stack in vps-deploy. See
+[briefs/done/07-readme-docs-and-docs-site.md](briefs/done/07-readme-docs-and-docs-site.md).

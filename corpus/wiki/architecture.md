@@ -1,5 +1,5 @@
 ---
-summary: How Wicket is put together, as built 2026-11-04 (briefs 01-06). Three npm workspaces (shared contract, Fastify + SQLite server, React page); how a job moves through the queue, the providers and the records; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS as two containers (the API and a capped backup Ollama), and what the first local run of both images measured.
+summary: How Wicket is put together, as built 2026-11-04 (briefs 01-07). Three npm workspaces (shared contract, Fastify + SQLite server, React page) and a separate Docusaurus docs-site package; how a job moves through the queue, the providers and the records; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS as two containers (the API and a capped backup Ollama), and what the first local run of both images measured.
 updated: 2026-11-04
 ---
 
@@ -29,6 +29,11 @@ Like brief-board, without its CLI:
   built page.
 - `web`: the React 19 page at `/wicket/`, on Vite, with Base UI and the
   vendored ward-auth hooks.
+
+Beside them, `docs-site/` is the Docusaurus docs site: its own npm package
+with its own lockfile, not a workspace, so the API image's `npm ci` never
+installs the docs toolchain. It renders this wiki and `docs/`, with TypeDoc
+over `shared`, into `docs-site/dist` (`npm run docs`).
 
 ## A job's path
 
