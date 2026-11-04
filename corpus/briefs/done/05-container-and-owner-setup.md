@@ -74,3 +74,34 @@ Anything in vps-deploy or `wzd_auth`.
   otherwise the hand-back says it wasn't tried.
 - No secret, local path, domain, host alias or username in any file.
 - `bash corpus/lint.sh` passes.
+
+## Outcome (2026-11-04)
+
+Built as specified, except the container check: **Docker wasn't reachable**
+from the build machine (no `docker` in the WSL distro), so neither image was
+built and `docker compose config` wasn't run. The compose file parses as YAML.
+
+- **Dockerfile**: brief-board's multi-stage build for `shared`, `server` and
+  `server/vendor`, without the web source; it also drops the tests' stub
+  runner (`testing.js`). Health check on `/v1/health`.
+- **Compose**: `wicket-api` (loopback 8808, `WICKET_BACKUP_URL` pointing at
+  the backup by service name, which the rootless daemon needs) and
+  `wicket-ollama` (`ollama/ollama:0.24.0`, the version tested locally;
+  loopback 11434, `mem_limit: 1300m`, `cpus: 1.0`, keep-alive 1m, one model,
+  one request at a time, a health check with `ollama list`). The models sit
+  in a named volume, not a bind mount: they are re-downloadable. The API
+  doesn't wait on the backup's health, so it runs cloud-only while the
+  backup is down or the model isn't pulled yet.
+- **`docs/owner-setup.md`** has a table of everything the vps-deploy stack
+  needs, two checks the rootless daemon decides (the memory limit holds;
+  `cpus` needs the `cpu` controller delegated), the model pull, the deploy
+  checks (health, the page, and `/wicket-api/metrics` answering 404), the
+  seed, the Ward link order, the callers' settings, and local development
+  with Ward's local seed entry.
+- **README** in brief-board's shape, with a two-call example; no screenshots
+  yet. `docs/README.md` points into the wiki.
+
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (84 passed, 1
+skipped) and `npm run build`. No secret, local path, domain, host alias or
+username in any file; the vendored ward-auth headers name its GitHub
+repository and author as upstream attribution, as brief-board's copy does.

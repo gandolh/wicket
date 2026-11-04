@@ -1,11 +1,11 @@
 ---
-summary: How Wicket is put together, planned 2026-11-04; the queue, jobs API, tokens, records, providers, sign-in, admin routes, metrics and the queue page built the same day (briefs 01-04). Three npm workspaces (shared contract, Fastify + SQLite server, React page); the queue, the providers and the records inside the server and how a job moves through them; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS with its backup Ollama container. Updated as each brief lands.
+summary: How Wicket is put together, as built 2026-11-04 (briefs 01-05). Three npm workspaces (shared contract, Fastify + SQLite server, React page); how a job moves through the queue, the providers and the records; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS as two containers (the API and a capped backup Ollama).
 updated: 2026-11-04
 ---
 
 # Architecture
 
-_Planned 2026-11-04._ Built so far: the workspaces `shared` and `server`, the
+_Built 2026-11-04._ The pieces: the workspaces `shared` and `server`, the
 queue ([queue.ts](../../server/src/queue.ts)), the job routes
 ([app.ts](../../server/src/app.ts)), the app tokens
 ([tokens.ts](../../server/src/tokens.ts)) and the records
@@ -69,9 +69,16 @@ the five `WARD_OIDC_*`, `AUTH_TRUSTED_PROXIES`, `SEED_USERNAME`,
 ## Running it
 
 Locally: `npm run dev` (API on 8808, page on Vite at port 5179), with the
-developer's own Ollama as the backup. On the VPS: two containers from
-`infrastructure/docker-compose.yml`, `wicket-api` on loopback 8808 and
-`wicket-ollama` on loopback 11434, the API reaching Ollama by its compose
-service name. Caddy serves the built page at `/wicket/` and forwards
-`/wicket-api/` to the API. vps-deploy's stack is written from
-`docs/owner-setup.md`.
+developer's own Ollama as the backup; `npm start` serves the built page from
+the API's own port. On the VPS: two containers from
+[`infrastructure/docker-compose.yml`](../../infrastructure/docker-compose.yml),
+`wicket-api` (built from [`infrastructure/Dockerfile`](../../infrastructure/Dockerfile))
+on loopback 8808 and `wicket-ollama` (`ollama/ollama:0.24.0`, capped at
+1300 MB and one core, keep-alive 1m) on loopback 11434. The API reaches the
+backup by its compose service name, because under the box's rootless Docker a
+container can't reach the host's loopback; callers in containers use the
+public `/wicket-api` address for the same reason. Caddy serves the built page
+at `/wicket/` and forwards `/wicket-api/` to the API with the prefix stripped.
+vps-deploy's stack is written from
+[`docs/owner-setup.md`](../../docs/owner-setup.md). Not built or deployed as
+of 2026-11-04.

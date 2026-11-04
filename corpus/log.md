@@ -61,3 +61,13 @@ recent calls. The server serves the built page for `npm start`. Walked through
 in a browser against a stand-in Ollama: both buttons ended the callers' jobs as
 `cancelled`. Filed a todo to move `@fastify/static` to 10.1.9 once it is two
 weeks old. See [briefs/done/04-the-queue-page.md](briefs/done/04-the-queue-page.md).
+
+## [2026-11-04] done | Brief 05: the containers, the owner's setup, the README
+
+`infrastructure/` holds the API's Dockerfile and a compose file with the
+backup `wicket-ollama` (`ollama/ollama:0.24.0`, 1300 MB, one core, keep-alive
+1m); neither was built, since Docker wasn't reachable. `docs/owner-setup.md`
+is everything the vps-deploy stack needs (ports, routes, env and secret names,
+the backup's caps, the model pull, the Prometheus scrape) and the owner's
+steps; the README follows brief-board's shape. All five briefs are done. See
+[briefs/done/05-container-and-owner-setup.md](briefs/done/05-container-and-owner-setup.md).
