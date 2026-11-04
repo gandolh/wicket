@@ -19,8 +19,9 @@ owner asked not to do while other agents work.
   ([decisions.md](../wiki/decisions.md)). Time a call there, not only on a
   developer machine.
 - Ollama's default context may cut a long listing page from the front. Pick a
-  context length that fits the pages and the cap
-  ([open-questions.md](../wiki/open-questions.md), "The backup's context length").
+  context length that fits the pages and the cap. The owner left it at
+  Ollama's default on 2026-11-04 until this todo measures it
+  ([providers.md](../wiki/providers.md)).
 - If gemma3:1b is too weak, the candidates are other models around 1B that fit
   the same cap.
 

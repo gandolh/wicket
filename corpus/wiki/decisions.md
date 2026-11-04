@@ -1,5 +1,5 @@
 ---
-summary: Locked calls for Wicket, settled in a grill with the owner on 2026-11-04, each with rejected alternatives and the reason. One service holds the Ollama key and queues every app's LLM calls; Fastify + React like brief-board; Ollama Cloud first with a small local backup model (gemma3:1b in a capped container) and Wicket choosing the model; one first-come-first-served queue running one call at a time; tickets and now serving; an in-memory queue that a restart cancels; records with counts and timings, never text; a queue page with force close and clear queue; sign-in like brief-board with per-app bearer tokens for callers; /wicket and /wicket-api on loopback port 8808; a loopback-only /metrics. Read before proposing to change any of these.
+summary: Locked calls for Wicket, settled in a grill with the owner on 2026-11-04, each with rejected alternatives and the reason. One service holds the Ollama key and queues every app's LLM calls; Fastify + React like brief-board; Ollama Cloud first with a small local backup model (gemma3:1b in a capped container) and Wicket choosing the model; one first-come-first-served queue running one call at a time; tickets and now serving; an in-memory queue that a restart cancels; records with counts and timings, never text; a queue page with force close and clear queue; sign-in like brief-board with per-app bearer tokens for callers; /wicket and /wicket-api on loopback port 8808; a loopback-only /metrics; and three calls the build made that the owner kept the same day: the app tokens in one secret (WICKET_APP_TOKENS), at most 200 waiting calls with 503 queue_full, and a strict request body. Read before proposing to change any of these.
 updated: 2026-11-04
 ---
 
@@ -7,8 +7,9 @@ updated: 2026-11-04
 
 Each entry passed three tests: hard to reverse, surprising without context, and
 a real trade-off. Changing one needs an explicit revisit and a `log.md` entry.
-All of these were settled by the owner in a grill on 2026-11-04. Details the
-build had to pick on its own are in [open-questions.md](open-questions.md)
+All of these were settled by the owner on 2026-11-04: most in the grill, and
+the last three when the owner kept calls the first build had made on its own.
+Calls a build makes on its own wait in [open-questions.md](open-questions.md)
 until the owner confirms them.
 
 ## One service holds the key and queues every app's LLM calls
@@ -115,3 +116,28 @@ counts. Caddy forwards everything under `/wicket-api`, so Wicket refuses
 _2026-11-04_. [api.md](api.md) is the contract just-a-bot's and ro-housing's
 briefs quote word for word. Additions that callers can ignore are allowed;
 changing a route, a field or a status means telling the owner first.
+
+## The app tokens are one secret, not rows in the database
+_2026-11-04_, a call the first build made, kept by the owner. Every app's
+token sits in one deploy secret, `WICKET_APP_TOKENS=app=token,app=token`,
+each token at least 32 characters (`openssl rand -hex 32`). Adding an app
+means a new pair on that line and a restart of `wicket-api`. Rejected for now:
+tokens minted by a command and stored hashed in SQLite, which needs a token
+page or a command run inside the container, for two callers. Revisit when
+there are more than a handful of apps.
+
+## At most 200 calls wait, and the next gets 503 queue_full
+_2026-11-04_, a call the first build made, kept by the owner. The 201st
+waiting call is refused with `503 queue_full`, so a caller looping by mistake
+can't grow the in-memory queue without bound. It is part of the contract
+([api.md](api.md)), which callers quote, and a caller that never fills the
+queue never sees it. Rejected: no cap, which leaves memory to the callers'
+good behaviour; a lower cap or a cap per app, which nothing measured yet
+calls for.
+
+## The request body is strict
+_2026-11-04_, a call the first build made, kept by the owner. An unknown field
+in `POST /v1/jobs` (a `model`, `stream`, `options`) is a 400, so a caller that
+thinks it chose a model finds out at once instead of being silently ignored.
+Callers quote this in their briefs. Rejected: dropping unknown fields, which
+lets a caller believe it picked a model or turned on streaming when it didn't.

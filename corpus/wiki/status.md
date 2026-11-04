@@ -1,5 +1,5 @@
 ---
-summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-05 (queue and jobs API, providers, sign-in with admin routes and /metrics, the queue page, the containers and owner setup); 85 tests; not deployed, containers not built (no Docker on the build machine). The owner's steps in order (Ward registration, secrets, the vps-deploy stack from docs/owner-setup.md, the model pull, the account, pointing just-a-bot and ro-housing at it, Ward's local seed entry), and the open todos (score the backup model; bump @fastify/static).
+summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-05 (queue and jobs API, providers, sign-in with admin routes and /metrics, the queue page, the containers and owner setup); 85 tests; not deployed, containers not built (no Docker on the build machine). The owner's steps in order (Ward registration, secrets, the vps-deploy stack from docs/owner-setup.md, the model pull, the account, pointing just-a-bot and ro-housing at it, Ward's local seed entry); no open questions (the owner kept all six calls 2026-11-04); and the open todos (score the backup model; bump @fastify/static).
 updated: 2026-11-04
 ---
 
@@ -52,7 +52,9 @@ In this order; the details are in `docs/owner-setup.md`.
    `infrastructure/local/seed.mjs`):
    `{ slug: "wicket", name: "Wicket", repo: "wicket", envFiles: [".env"], dev: "http://localhost:5179/wicket/", api: "/wicket-api" }`
    in `APPS`, and its row in that folder's README table.
-8. Answer the calls the build made on its own ([open-questions.md](open-questions.md)).
+
+The six calls the first build made on its own were all kept by the owner on
+2026-11-04 ([open-questions.md](open-questions.md) is empty again).
 
 ## Open briefs
 

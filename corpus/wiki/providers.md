@@ -1,5 +1,5 @@
 ---
-summary: How a job reaches a model, as built 2026-11-04. Ollama Cloud first, then the backup Ollama; the settings and their defaults (gpt-oss:120b, 120 s; gemma3:1b, 1m keep-alive, 300 s); what counts as a cloud failure (anything but a cancel); why a cancel never falls back and how the code tells it from a timeout; what the caller's error and the log say (never the prompt); running with no key; how it was tested (stub servers, one opt-in live test).
+summary: How a job reaches a model, as built 2026-11-04. Ollama Cloud first, then the backup Ollama; the settings and their defaults (gpt-oss:120b, 120 s; gemma3:1b, 1m keep-alive, 300 s); the backup's context length (Ollama's default until the scoring todo measures it); what counts as a cloud failure (anything but a cancel); why a cancel never falls back and how the code tells it from a timeout; what the caller's error and the log say (never the prompt); running with no key; how it was tested (stub servers, one opt-in live test).
 updated: 2026-11-04
 ---
 
@@ -31,6 +31,13 @@ The answer is `message.content`, trimmed.
 
 [`config.ts`](../../server/src/config.ts) checks them at start and names any
 that is wrong, never repeating the key.
+
+The backup's context length is Ollama's default, a few thousand tokens. A
+longer prompt is cut from the front, so a long listing page may lose its start
+on the backup; a bigger context costs memory inside the 1.3 GB cap. The owner
+kept the default on 2026-11-04 until the scoring todo
+([score-the-backup-model](../todos/score-the-backup-model.md)) measures real
+listings.
 
 ## What counts as a cloud failure
 

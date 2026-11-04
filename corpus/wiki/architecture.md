@@ -40,7 +40,8 @@ Like brief-board, without its CLI:
    except a cancel, the backup.
 3. When the job ends (done, failed or cancelled), the queue writes its record
    (counts and timings only) and keeps the answer in memory for 10 minutes for
-   the caller's `GET`.
+   the caller's `GET`. Records are never pruned: a record is a few numbers,
+   and years of calls stay small (kept by the owner, 2026-11-04).
 4. Every change wakes the callers long-polling with `?wait`.
 
 Force close aborts the running job's request (one `AbortController` per job).

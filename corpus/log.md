@@ -71,3 +71,22 @@ is everything the vps-deploy stack needs (ports, routes, env and secret names,
 the backup's caps, the model pull, the Prometheus scrape) and the owner's
 steps; the README follows brief-board's shape. All five briefs are done. See
 [briefs/done/05-container-and-owner-setup.md](briefs/done/05-container-and-owner-setup.md).
+
+## [2026-11-04] decision | The owner keeps the six calls the first build made
+
+The owner kept all six calls from [wiki/open-questions.md](wiki/open-questions.md),
+which is empty again:
+
+- **The app tokens in one secret**, `WICKET_APP_TOKENS=app=token,...`, rather
+  than hashed tokens minted into SQLite. Now a decision.
+- **At most 200 waiting calls**, the 201st answered `503 queue_full`, rather
+  than no cap or a cap per app. Now a decision; already in the contract.
+- **A strict request body**: an unknown field is a 400. Now a decision;
+  already in the contract.
+- **Answers kept 10 minutes** in memory after a job ends. Easy to change and
+  already in [wiki/api.md](wiki/api.md), so not a decision.
+- **Records kept forever**, no pruning. Easy to add later, so not a decision;
+  noted in [wiki/architecture.md](wiki/architecture.md).
+- **The backup's context length** stays at Ollama's default until the scoring
+  todo measures real listings; noted in [wiki/providers.md](wiki/providers.md).
+  The todo stays open for a quiet machine.
