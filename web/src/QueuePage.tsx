@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "../vendor/ward/ward-auth-react.js";
 import { clearQueue, fetchQueue, fetchRecords, forceClose } from "./api";
 import { ConfirmAction } from "./ConfirmAction";
-import { CountsTable, NowServing, PROVIDER_LABEL, RecordsTable, RunningCard, WaitingTable } from "./QueueView";
+import { CountsTable, NowServing, RecordsTable, RunningCard, WaitingTable } from "./QueueView";
 import { navigate, pathOf } from "./route";
 import { clock } from "./time";
 import { useNow, usePolling } from "./usePolling";
@@ -88,8 +88,7 @@ export function QueuePage() {
                       title={`Force close ticket ${running.ticket}?`}
                       description={
                         <p>
-                          Wicket aborts {running.app}'s call
-                          {running.provider ? ` to the ${PROVIDER_LABEL[running.provider].toLowerCase()} model` : ""}. {running.app} sees the
+                          Wicket aborts {running.app}'s call{running.model ? ` to ${running.model}` : ""}. {running.app} sees the
                           ticket as cancelled, and the next ticket starts.
                         </p>
                       }

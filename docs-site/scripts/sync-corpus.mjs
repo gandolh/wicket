@@ -4,7 +4,7 @@
 //
 //   corpus/wiki/*.md, corpus/log.md ─►  docs-site/docs/wiki/<slug>.md
 //   docs/*.md (not README.md)       ─►  docs-site/docs/guides/<name>.md
-//   docs/images/* (not .md)         ─►  docs-site/docs/guides/images/<name>
+//   docs/images/*.{svg,webp,...}    ─►  docs-site/docs/guides/images/<name>
 //
 // Corpus pages are discovered, not listed: every *.md under corpus/wiki/, plus
 // log.md at the corpus root, minus the DENY set. A list would drift silently.
@@ -84,7 +84,7 @@ async function discoverGuides() {
     .map((f) => ({ kind: 'guides', src: `docs/${f}`, out: `guides/${f}` }))
 }
 
-/** Copy docs/images/ (not its notes) beside the rendered guides. */
+/** Copy the pictures in docs/images/ (not its notes or scripts) beside the rendered guides. */
 async function copyImages() {
   const dir = resolve(repoRoot, 'docs/images')
   if (!existsSync(dir)) return 0
@@ -92,7 +92,7 @@ async function copyImages() {
   await mkdir(target, { recursive: true })
   let n = 0
   for (const f of await readdir(dir)) {
-    if (f.endsWith('.md')) continue
+    if (!/\.(svg|webp|png|jpe?g|gif)$/i.test(f)) continue
     await copyFile(resolve(dir, f), resolve(target, f))
     n++
   }

@@ -7,9 +7,9 @@ updated: 2026-11-04
 
 Wicket is the estate's one door to an LLM. An app sends it chat messages; Wicket
 puts the call in a single first-come-first-served queue, runs one call at a
-time on Ollama Cloud, falls back to a small model on the VPS when the cloud
-fails, and hands the answer back. It holds the Ollama key, so no other app
-needs one.
+time on Ollama Cloud, and hands the answer back. When the cloud fails, the
+call fails with the reason; there is no model on the VPS (since 2026-11-04).
+It holds the Ollama key, so no other app needs one.
 
 A wicket is the small door in a big gate that lets people through one at a
 time. It joins the estate's other gates: Ward (sign-in) and Postern (webmail).

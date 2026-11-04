@@ -40,16 +40,10 @@ export type JobStatus = z.infer<typeof jobStatusSchema>;
 
 export const FINAL_STATUSES: ReadonlySet<JobStatus> = new Set(["done", "failed", "cancelled"]);
 
-/** Where a job ran. */
-export const PROVIDERS = ["cloud", "backup"] as const;
-export const providerSchema = z.enum(PROVIDERS);
-export type Provider = z.infer<typeof providerSchema>;
-
-/** The answer, on a `done` job only. `backup` is true when the backup model answered. */
+/** The answer, on a `done` job only: its text and the cloud model that wrote it. */
 export const resultSchema = z.object({
   text: z.string(),
   model: z.string(),
-  backup: z.boolean(),
 });
 export type JobResult = z.infer<typeof resultSchema>;
 
@@ -103,8 +97,7 @@ export const runningJobSchema = z.object({
   id: z.string(),
   app: z.string(),
   ticket: z.number().int().positive(),
-  /** Null for the instant before the runner names where it asks. */
-  provider: providerSchema.nullable(),
+  /** Null for the instant before the runner names the model it asks. */
   model: z.string().nullable(),
   startedAt: z.number(),
 });
@@ -145,7 +138,6 @@ export const recordSchema = z.object({
   app: z.string(),
   ticket: z.number().int(),
   model: z.string().nullable(),
-  provider: providerSchema.nullable(),
   outcome: outcomeSchema,
   queuedAt: z.number(),
   startedAt: z.number().nullable(),
@@ -155,14 +147,13 @@ export const recordSchema = z.object({
 });
 export type RecordView = z.infer<typeof recordSchema>;
 
-/** Per app, over a window: how many calls, how they ended, how many the backup answered. */
+/** Per app, over a window: how many calls, and how they ended. */
 export const appCountsSchema = z.object({
   app: z.string(),
   total: z.number().int(),
   ok: z.number().int(),
   failed: z.number().int(),
   cancelled: z.number().int(),
-  backup: z.number().int(),
 });
 export type AppCounts = z.infer<typeof appCountsSchema>;
 

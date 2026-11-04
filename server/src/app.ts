@@ -82,7 +82,7 @@ export function stripApiPrefix(url: string, prefix: string = API_PREFIX): string
 export interface AppOptions {
   /** A file path, or `:memory:` for tests. */
   dbPath: string;
-  /** Runs one job: the providers. */
+  /** Runs one job: the cloud model. */
   run: Runner;
   /** The built page, served at `webBase`; skipped when the directory does not exist. */
   webDist?: string;

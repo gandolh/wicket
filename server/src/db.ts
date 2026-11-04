@@ -32,6 +32,10 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX records_by_finished ON records (finished_at);
   `,
+  // Wicket asks Ollama Cloud only, so a record no longer says cloud or backup.
+  `
+  ALTER TABLE records DROP COLUMN provider;
+  `,
 ];
 
 function migrate(db: Db): void {

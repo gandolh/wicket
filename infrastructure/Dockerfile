@@ -1,12 +1,11 @@
-# Wicket's API (Fastify + SQLite): the queue, the providers, the records, the
-# sign-in and /metrics.
+# Wicket's API (Fastify + SQLite): the queue, the calls to Ollama Cloud, the
+# records, the sign-in and /metrics.
 #
 # Build context is the REPO ROOT (one root lockfile covers shared, server and
 # web). Multi-stage: the TypeScript compiler and the native build toolchain
 # live in build stages and never reach the runtime image. The queue page is a
 # static site that the deploy builds and Caddy serves; it is not in this
-# image. The backup model runs in its own container (wicket-ollama in
-# docker-compose.yml), not here.
+# image. There is no model here: every call goes to Ollama Cloud.
 #
 #   docker compose -f infrastructure/docker-compose.yml up wicket-api
 #

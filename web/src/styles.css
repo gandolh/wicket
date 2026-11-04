@@ -13,7 +13,6 @@
   --accent: #0c66e4;
   --danger: #c9372c;
   --ok: #1f845a;
-  --backup: #b38600;
   --shadow: 0 1px 1px rgb(9 30 66 / 0.25), 0 0 1px rgb(9 30 66 / 0.31);
   --banner-bg: #fff7d6;
   --banner-text: #533f04;
@@ -36,7 +35,6 @@
     --accent: #579dff;
     --danger: #f87168;
     --ok: #4bce97;
-    --backup: #e2b203;
     --shadow: 0 1px 1px rgb(0 0 0 / 0.5), 0 0 1px rgb(0 0 0 / 0.5);
     --banner-bg: #332e1b;
     --banner-text: #f5cd47;
@@ -291,26 +289,6 @@ main {
   border-radius: 8px;
   background: var(--surface);
   box-shadow: var(--shadow);
-}
-
-.badge {
-  display: inline-block;
-  padding: 0 6px;
-  border-radius: 3px;
-  font-size: 12px;
-  font-weight: 650;
-  background: var(--surface-sunk);
-  color: var(--text-muted);
-}
-
-.badge-cloud {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent);
-}
-
-.badge-backup {
-  background: color-mix(in srgb, var(--backup) 18%, transparent);
-  color: var(--text);
 }
 
 .outcome {

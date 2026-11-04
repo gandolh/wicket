@@ -116,3 +116,24 @@ a separate package with its own lockfile rather than a workspace, so the API
 image's build stays as checked (an open question). Deploying it waits for a
 docs stack in vps-deploy. See
 [briefs/done/07-readme-docs-and-docs-site.md](briefs/done/07-readme-docs-and-docs-site.md).
+
+## [2026-11-04] decision | Ollama Cloud only: the backup model is dropped
+
+Shown that the official `ollama/ollama` image is 6.55 GB and the VPS had
+7.1 GB free of 38 GB, the owner answered: "ollama cloud only, drop any ollama
+local briefs or idea". Rejected: a slim CPU-only image of our own, and the
+official image once vps-deploy frees 3.9 GB. The two backup decisions are
+marked superseded in [wiki/decisions.md](wiki/decisions.md), the open
+question about the image's size is closed, and the todo to score gemma3:1b
+is deleted.
+
+## [2026-11-04] done | Brief 08: Wicket uses Ollama Cloud only
+
+The backup provider, its settings and the fallback are gone. A cloud failure,
+or a missing key, ends the job `failed` with the reason and the next ticket
+runs. `result` is `{ text, model }`; the provider left the records (a new
+migration drops the column), the metrics and the page. The compose file has
+one service, `wicket-api`; the image rebuilt and ran with no key, and a job
+failed with the no-key reason. The docs and captures follow (the captures
+against a loopback stand-in for the cloud). See
+[briefs/done/08-ollama-cloud-only.md](briefs/done/08-ollama-cloud-only.md).

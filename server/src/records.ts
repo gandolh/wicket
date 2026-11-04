@@ -1,18 +1,17 @@
-import type { AppCounts, Outcome, Provider } from "@wicket/shared";
+import type { AppCounts, Outcome } from "@wicket/shared";
 import type { Db } from "./db.js";
 
 export type { Outcome };
 
 /**
- * One finished job, as kept: who, which ticket, where it ran and how long it
+ * One finished job, as kept: who, which ticket, which model and how long it
  * took. Never any text; see `db.ts`.
  */
 export interface JobRecord {
   app: string;
   ticket: number;
-  /** The model that answered, or the last one tried; null if the job never ran. */
+  /** The model asked; null if the job never ran. */
   model: string | null;
-  provider: Provider | null;
   outcome: Outcome;
   queuedAt: number;
   startedAt: number | null;
@@ -31,7 +30,6 @@ interface Row {
   app: string;
   ticket: number;
   model: string | null;
-  provider: Provider | null;
   outcome: Outcome;
   queued_at: number;
   started_at: number | null;
@@ -46,7 +44,6 @@ function fromRow(row: Row): StoredRecord {
     app: row.app,
     ticket: row.ticket,
     model: row.model,
-    provider: row.provider,
     outcome: row.outcome,
     queuedAt: row.queued_at,
     startedAt: row.started_at,
@@ -65,8 +62,8 @@ export class Records {
 
   constructor(db: Db) {
     this.insert = db.prepare(
-      `INSERT INTO records (app, ticket, model, provider, outcome, queued_at, started_at, finished_at, wait_ms, run_ms)
-       VALUES (@app, @ticket, @model, @provider, @outcome, @queuedAt, @startedAt, @finishedAt, @waitMs, @runMs)`,
+      `INSERT INTO records (app, ticket, model, outcome, queued_at, started_at, finished_at, wait_ms, run_ms)
+       VALUES (@app, @ticket, @model, @outcome, @queuedAt, @startedAt, @finishedAt, @waitMs, @runMs)`,
     );
     this.maxTicketStmt = db.prepare("SELECT COALESCE(MAX(ticket), 0) AS max FROM records");
     this.recentStmt = db.prepare("SELECT * FROM records ORDER BY finished_at DESC, id DESC LIMIT ?");
@@ -75,8 +72,7 @@ export class Records {
               COUNT(*) AS total,
               SUM(outcome = 'ok') AS ok,
               SUM(outcome = 'failed') AS failed,
-              SUM(outcome = 'cancelled') AS cancelled,
-              SUM(provider = 'backup') AS backup
+              SUM(outcome = 'cancelled') AS cancelled
          FROM records
         WHERE finished_at >= ?
         GROUP BY app
@@ -106,7 +102,6 @@ export class Records {
       ok: row.ok ?? 0,
       failed: row.failed ?? 0,
       cancelled: row.cancelled ?? 0,
-      backup: row.backup ?? 0,
     }));
   }
 }

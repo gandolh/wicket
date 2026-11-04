@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { FINAL_STATUSES, type JobRequest, type JobResult, type JobStatus, type JobView, type Provider } from "@wicket/shared";
+import { FINAL_STATUSES, type JobRequest, type JobResult, type JobStatus, type JobView } from "@wicket/shared";
 import type { JobRecord, Outcome } from "./records.js";
 
 /**
@@ -7,7 +7,7 @@ import type { JobRecord, Outcome } from "./records.js";
  * served, and exactly one runs at a time, whatever it runs on. It lives in
  * memory only: a restart cancels whatever waits or runs.
  *
- * Running a job means calling the runner (the providers) with the job's
+ * Running a job means calling the runner (the cloud model) with the job's
  * messages and an abort signal. A cancel (the caller's `DELETE`, a force
  * close, a clear, shutdown) ends the job at once: the signal is aborted, the
  * job is `cancelled`, the next ticket starts, and whatever the runner does
@@ -20,10 +20,10 @@ import type { JobRecord, Outcome } from "./records.js";
 
 /** What a runner reports while it works, and the signal that stops it. */
 export interface RunContext {
-  /** Aborted when the job is cancelled. A runner must stop on it, and must not fall back. */
+  /** Aborted when the job is cancelled. A runner must stop on it. */
   signal: AbortSignal;
-  /** The runner is now asking `provider` with `model`; the page shows it and the record keeps the last. */
-  attempt(provider: Provider, model: string): void;
+  /** The runner is now asking `model`; the page shows it and the record keeps it. */
+  attempt(model: string): void;
 }
 
 /** Runs one job. Throws when no model could answer; the message must never repeat the prompt. */
@@ -74,7 +74,6 @@ export interface RunningJob {
   id: string;
   app: string;
   ticket: number;
-  provider: Provider | null;
   model: string | null;
   startedAt: number;
 }
@@ -103,7 +102,6 @@ interface Job {
   queuedAt: number;
   startedAt: number | null;
   finishedAt: number | null;
-  provider: Provider | null;
   model: string | null;
   result: JobResult | undefined;
   error: string | undefined;
@@ -158,7 +156,6 @@ export class Queue {
       queuedAt: this.now(),
       startedAt: null,
       finishedAt: null,
-      provider: null,
       model: null,
       result: undefined,
       error: undefined,
@@ -239,7 +236,6 @@ export class Queue {
             id: running.id,
             app: running.app,
             ticket: running.ticket,
-            provider: running.provider,
             model: running.model,
             startedAt: running.startedAt ?? running.queuedAt,
           }
@@ -294,9 +290,8 @@ export class Queue {
     try {
       const result = await this.run(request, {
         signal,
-        attempt: (provider, model) => {
+        attempt: (model) => {
           if (job.status !== "running") return;
-          job.provider = provider;
           job.model = model;
           this.changed();
         },
@@ -304,7 +299,6 @@ export class Queue {
       if (job.status !== "running") return;
       job.result = result;
       job.model = result.model;
-      job.provider = result.backup ? "backup" : "cloud";
       this.end(job, "done");
     } catch (error) {
       if (job.status !== "running") return;
@@ -339,7 +333,6 @@ export class Queue {
         app: job.app,
         ticket: job.ticket,
         model: job.model,
-        provider: job.provider,
         outcome,
         queuedAt: job.queuedAt,
         startedAt: job.startedAt,

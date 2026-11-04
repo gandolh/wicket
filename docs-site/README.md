@@ -31,4 +31,4 @@ files render as plain text unless `DOCS_REPO_URL` names the repository's
 GitHub address when you build.
 
 Deploying it is an owner step: [docs/owner-setup.md](../docs/owner-setup.md),
-section 9.
+section 8.

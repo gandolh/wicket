@@ -1,5 +1,5 @@
 ---
-summary: The API contract callers build against (just-a-bot and ro-housing quote it), settled 2026-11-04. WICKET_URL and WICKET_TOKEN; POST /v1/jobs, GET /v1/jobs/:id with ?wait long-polling, DELETE /v1/jobs/:id; the admin routes for the page (GET /v1/queue, force close, clear queue); what ticket, nowServing and position mean; the statuses; errors (400, 401, 404, 503 queue_full); how long an answer is kept; health and metrics. Read before writing a caller or changing a route.
+summary: The API contract callers build against (just-a-bot and ro-housing quote it), settled 2026-11-04. WICKET_URL and WICKET_TOKEN; POST /v1/jobs, GET /v1/jobs/:id with ?wait long-polling, DELETE /v1/jobs/:id; the admin routes for the page (GET /v1/queue, force close, clear queue); what ticket, nowServing and position mean; the statuses; result { text, model } (backup dropped 2026-11-04, cloud only); a cloud failure fails the job; errors (400, 401, 404, 503 queue_full); how long an answer is kept; health and metrics. Read before writing a caller or changing a route.
 updated: 2026-11-04
 ---
 
@@ -15,7 +15,7 @@ Callers set `WICKET_URL` (the API base) and `WICKET_TOKEN` (a per-app bearer
 token that names the app).
 
 - `POST {WICKET_URL}/v1/jobs` with `{ messages: [{role, content}], format?: "json" | <JSON schema> }` → `202 { id, ticket, nowServing, position, status }`.
-- `GET {WICKET_URL}/v1/jobs/:id` (optional `?wait=25` long-polls up to 25 s for a change) → `{ id, ticket, nowServing, position, status: "queued"|"running"|"done"|"failed"|"cancelled", result?: { text, model, backup }, error? }`.
+- `GET {WICKET_URL}/v1/jobs/:id` (optional `?wait=25` long-polls up to 25 s for a change) → `{ id, ticket, nowServing, position, status: "queued"|"running"|"done"|"failed"|"cancelled", result?: { text, model }, error? }`.
 - `DELETE {WICKET_URL}/v1/jobs/:id` cancels the caller's own job.
 - Admin, UI session only: `GET /v1/queue`, `POST /v1/queue/running/cancel` (force close), `POST /v1/queue/clear`.
 - 401 for a missing or unknown token.
@@ -43,10 +43,11 @@ token that names the app).
 - **`status`**: `queued` (waiting), `running`, then one of `done`, `failed`
   or `cancelled`.
 - **`result`**: on `done` only. `text` is the answer (for `format`, the JSON
-  as a string), `model` is the model that answered, `backup` is true when
-  the backup model answered because the cloud failed.
+  as a string), `model` is the Ollama Cloud model that answered. (Until
+  2026-11-04 it also had `backup`; Wicket asks the cloud only since then.)
 - **`error`**: on `failed` only, a short message that never repeats the
-  prompt. On `cancelled`, a short reason: cancelled by the caller, force
+  prompt, such as "the cloud model answered 429: you have reached your usage
+  limit" or "the cloud model took longer than 120 s". On `cancelled`, a short reason: cancelled by the caller, force
   closed, cleared, or the server restarted.
 
 ## Behaviour a caller can rely on
@@ -58,8 +59,11 @@ token that names the app).
   A finished job returns at once. Without `wait`, it answers at once.
 - **Cancel.** `DELETE` answers 200 with the job as it is after the call. A
   waiting or running job becomes `cancelled`; a running one has its request
-  to Ollama aborted. A finished job is left as it was. A cancelled call never
-  falls back to the backup.
+  to Ollama aborted. A finished job is left as it was.
+- **A cloud failure fails the job.** When Ollama Cloud errors, times out or
+  refuses (a spent quota is a 429), the job ends `failed` with the reason and
+  the next ticket runs. There is no second model. Retry later, or tell your
+  user.
 - **Answers are kept in memory for 10 minutes** after a job finishes, then the
   job is forgotten and `GET` answers 404. Nothing about the answer is
   written to disk.
@@ -76,7 +80,7 @@ token that names the app).
 ## For the page and the box
 
 - `GET /v1/queue`: the server's clock (`serverTime`), now serving, the
-  running call (id, app, ticket, cloud or backup, model, when it started) and
+  running call (id, app, ticket, model, when it started) and
   the waiting tickets (id, app, ticket, when each joined). Times are epoch
   milliseconds. No message text.
 - `POST /v1/queue/running/cancel`: force close. 200 with `{ closed: true }`,
@@ -84,8 +88,7 @@ token that names the app).
 - `POST /v1/queue/clear`: 200 with `{ cleared: <how many> }`.
 - `GET /v1/records?limit=N` (default 50, at most 200): an addition for the
   page, session only: the newest records, and per app for the last 24 hours
-  and 7 days the total, `ok`, `failed`, `cancelled` and how many the backup
-  answered.
+  and 7 days the total, `ok`, `failed` and `cancelled`.
 - The two admin POSTs refuse a browser that says it came from another site
   (403 `cross_site`).
 - `GET /v1/health`: open, `{ ok: true }`, for the deploy's check.

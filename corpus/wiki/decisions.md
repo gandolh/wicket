@@ -1,5 +1,5 @@
 ---
-summary: Locked calls for Wicket, settled in a grill with the owner on 2026-11-04, each with rejected alternatives and the reason. One service holds the Ollama key and queues every app's LLM calls; Fastify + React like brief-board; Ollama Cloud first with a small local backup model (gemma3:1b in a capped container) and Wicket choosing the model; one first-come-first-served queue running one call at a time; tickets and now serving; an in-memory queue that a restart cancels; records with counts and timings, never text; a queue page with force close and clear queue; sign-in like brief-board with per-app bearer tokens for callers; /wicket and /wicket-api on loopback port 8808; a loopback-only /metrics; and three calls the build made that the owner kept the same day: the app tokens in one secret (WICKET_APP_TOKENS), at most 200 waiting calls with 503 queue_full, and a strict request body. Read before proposing to change any of these.
+summary: Locked calls for Wicket, settled in a grill with the owner on 2026-11-04, each with rejected alternatives and the reason. One service holds the Ollama key and queues every app's LLM calls; Fastify + React like brief-board; Ollama Cloud only with Wicket choosing the model (revisited 2026-11-04: the earlier local backup model, gemma3:1b in a capped container, is superseded and kept as history); one first-come-first-served queue running one call at a time; tickets and now serving; an in-memory queue that a restart cancels; records with counts and timings, never text; a queue page with force close and clear queue; sign-in like brief-board with per-app bearer tokens for callers; /wicket and /wicket-api on loopback port 8808; a loopback-only /metrics; and three calls the build made that the owner kept the same day: the app tokens in one secret (WICKET_APP_TOKENS), at most 200 waiting calls with 503 queue_full, and a strict request body. Read before proposing to change any of these.
 updated: 2026-11-04
 ---
 
@@ -28,7 +28,24 @@ The estate already runs this shape, so deploys, sign-in and reviews carry over.
 Rejected: a bare proxy with no page, which leaves the owner blind to what is
 waiting; and a new stack, which nobody here maintains yet.
 
+## Ollama Cloud only, and Wicket picks the model
+_2026-11-04_, a revisit of the two backup decisions below. Every call goes to
+Ollama Cloud with the cloud model, a setting that defaults to `gpt-oss:120b`
+(just-a-bot's default). There is no model on the box. When the cloud fails (an
+error, a timeout, a spent quota, or no key), the job ends `failed` with the
+reason and the next ticket runs; callers already handle a failed call. Callers
+never name a model, and a result is `{ text, model }`. The owner, shown that
+the official `ollama/ollama:0.24.0` image is 6.55 GB (6.1 GB of it GPU libraries) and
+that the VPS had 7.1 GB free of 38 GB: "ollama cloud only, drop any ollama
+local briefs or idea". Rejected: a slim CPU-only Ollama image of our own,
+which still costs a second Dockerfile, a build step and a 1.3 GB memory cap on
+a tight box; and the official image once vps-deploy frees 3.9 GB, which would
+still eat most of the disk. Accepted with it: when the cloud is down or the
+quota is spent, every app's call fails until it is back.
+
 ## Ollama Cloud first, a small local model as the backup, and Wicket picks
+_Superseded 2026-11-04 by "Ollama Cloud only" above; kept as history._
+
 _2026-11-04_. A call goes to Ollama Cloud with the cloud model, a setting that
 defaults to `gpt-oss:120b` (just-a-bot's default). When the cloud fails (an
 error, a timeout, a quota refusal), the same call goes to the backup model on
@@ -39,20 +56,21 @@ first answer; and callers picking models, which spreads cost and makes the
 queue's timings meaningless.
 
 ## The backup is gemma3:1b in a small, capped container
+_Superseded 2026-11-04 by "Ollama Cloud only" above; kept as history._
+
 _2026-11-04_. The backup Ollama runs `gemma3:1b`, capped at about 1.3 GB of
 RAM and one CPU core, with a short keep-alive (1 minute, or 0) so the model
 leaves memory when idle. The VPS is shared with every other app, and the
 backup is for the rare hour the cloud is down. Rejected: a bigger model, which
 the box can't spare memory for; and keeping the model loaded, which holds
 memory all day for calls that mostly never come. Whether gemma3:1b reads
-Romanian listings well enough is a todo
-([score-the-backup-model](../todos/score-the-backup-model.md)).
+Romanian listings well enough was a todo, deleted with the backup.
 
 ## One queue, first come first served, one call at a time
 _2026-11-04_. Every call from every app waits in one FIFO queue, and exactly one
-runs at a time, whether it runs on the cloud or the backup. Rejected: a queue
-per app, priorities, and parallel cloud calls. One at a time keeps the quota
-and the box calm, and makes every wait explainable: the calls ahead of yours.
+runs at a time. Rejected: a queue per app, priorities, and parallel cloud
+calls. One at a time keeps the quota and the box calm, and makes every wait
+explainable: the calls ahead of yours.
 
 ## Tickets and now serving, like a market counter
 _2026-11-04_. Every call gets a ticket number when it joins the queue, and every
@@ -68,16 +86,16 @@ replaying calls whose callers may have given up. Calls are short-lived, and the
 callers already handle a failed call.
 
 ## Records hold counts and timings, never text
-_2026-11-04_. Per call, Wicket keeps the app, the ticket, the model, cloud or
-backup, the wait time, the run time and the outcome (ok, failed, cancelled).
-It never stores a prompt or an answer, in the database or in its logs. The
-answer is held in memory only until its caller fetches it or it expires.
+_2026-11-04_. Per call, Wicket keeps the app, the ticket, the model, the wait
+time, the run time and the outcome (ok, failed, cancelled). It never stores
+a prompt or an answer, in the database or in its logs. The answer is held in
+memory only until its caller fetches it or it expires.
 Rejected: keeping prompts and answers for debugging. Listings and Discord
 messages are other people's words, and what isn't stored can't leak.
 
 ## A queue page with force close and clear queue
 _2026-11-04_. The page at `/wicket` shows now serving, the running call (app,
-ticket, elapsed time, cloud or backup), the waiting tickets (app, time waited),
+ticket, elapsed time, model), the waiting tickets (app, time waited),
 and recent records and counts. Two actions: **Force close** aborts the running
 call's request (Ollama stops generating when the request is aborted), and
 **Clear queue** drops every waiting ticket. Clear queue is always available,
@@ -98,8 +116,7 @@ keep alive in every caller.
 
 ## /wicket and /wicket-api on the shared origin, port 8808
 _2026-11-04_. Like brief-board: the page at `/wicket/`, the API at
-`/wicket-api`, the container on loopback port 8808, the backup Ollama on its
-own loopback port 11434. Rejected: a host of its own, which needs a DNS record
+`/wicket-api`, the container on loopback port 8808. Rejected: a host of its own, which needs a DNS record
 and a certificate for a page only the owner opens.
 
 ## A small /metrics for Grafana, loopback only

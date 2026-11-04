@@ -24,7 +24,7 @@ const sidebars: SidebarsConfig = {
       collapsible: false,
       items: [
         { type: 'doc', id: 'wiki/api', label: 'The API contract' },
-        { type: 'doc', id: 'wiki/providers', label: 'Cloud and backup' },
+        { type: 'doc', id: 'wiki/providers', label: 'The cloud call' },
         { type: 'doc', id: 'wiki/sign-in', label: 'Sign-in and routes' },
         // Generated HTML in static/, not a Docusaurus route: `pathname://` makes
         // it a plain link (baseUrl still applied) instead of a router

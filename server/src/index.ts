@@ -40,9 +40,8 @@ const app = await buildApp({
   webDist: resolve(REPO_ROOT, "web/dist"),
   run: createRunner({
     cloud: config.cloud,
-    backup: config.backup,
     // Called only once jobs run, after `app` exists.
-    log: { warn: (message) => app.log.warn(message), error: (message) => app.log.error(message) },
+    log: { error: (message) => app.log.error(message) },
   }),
   appTokens: config.appTokens,
   publicOrigin: config.publicOrigin,
@@ -58,9 +57,8 @@ app.log.info(apps.length > 0 ? `apps: ${apps.join(", ")}` : "no WICKET_APP_TOKEN
 app.log.info(
   config.cloud
     ? `cloud: ${config.cloud.model} at ${config.cloud.url}`
-    : "no OLLAMA_API_KEY: every job goes straight to the backup model",
+    : "no OLLAMA_API_KEY: every job fails until it is set",
 );
-app.log.info(`backup: ${config.backup.model} at ${config.backup.url}, keep-alive ${config.backup.keepAlive}`);
 app.log.info(config.ward ? "Sign in with Ward is on" : "WARD_OIDC_ISSUER is not set: local accounts only, no Sign in with Ward");
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {

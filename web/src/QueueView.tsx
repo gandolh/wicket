@@ -1,4 +1,4 @@
-import type { AppCounts, Provider, QueueResponse, RecordView, RunningJob, WaitingJob } from "@wicket/shared";
+import type { AppCounts, QueueResponse, RecordView, RunningJob, WaitingJob } from "@wicket/shared";
 import type { ReactNode } from "react";
 import { duration, when } from "./time";
 
@@ -9,14 +9,7 @@ import { duration, when } from "./time";
  * and elapsed don't depend on the browser's clock being right.
  */
 
-export const PROVIDER_LABEL: Record<Provider, string> = { cloud: "Cloud", backup: "Backup" };
-
 const OUTCOME_LABEL: Record<RecordView["outcome"], string> = { ok: "OK", failed: "Failed", cancelled: "Cancelled" };
-
-export function ProviderBadge({ provider }: { provider: Provider | null }) {
-  if (provider === null) return <span className="badge">Starting</span>;
-  return <span className={`badge badge-${provider}`}>{PROVIDER_LABEL[provider]}</span>;
-}
 
 /** The big number: which ticket the counter is on. */
 export function NowServing({ queue }: { queue: QueueResponse }) {
@@ -50,10 +43,6 @@ export function RunningCard({ running, serverNow, action }: { running: RunningJo
           <dd>{running.app}</dd>
           <dt>Elapsed</dt>
           <dd className="num">{duration(serverNow - running.startedAt)}</dd>
-          <dt>Provider</dt>
-          <dd>
-            <ProviderBadge provider={running.provider} />
-          </dd>
           <dt>Model</dt>
           <dd>{running.model ?? "Not chosen yet"}</dd>
         </dl>
@@ -117,9 +106,6 @@ export function CountsTable({ counts }: { counts: AppCounts[] }) {
             <th scope="col" className="num">
               Cancelled
             </th>
-            <th scope="col" className="num">
-              Answered by backup
-            </th>
           </tr>
         </thead>
         <tbody>
@@ -130,7 +116,6 @@ export function CountsTable({ counts }: { counts: AppCounts[] }) {
               <td className="num">{row.ok}</td>
               <td className={`num${row.failed > 0 ? " has-failed" : ""}`}>{row.failed}</td>
               <td className="num">{row.cancelled}</td>
-              <td className="num">{row.backup}</td>
             </tr>
           ))}
         </tbody>
@@ -152,7 +137,6 @@ export function RecordsTable({ records, now }: { records: RecordView[]; now: num
             <th scope="col" className="num">
               Ticket
             </th>
-            <th scope="col">Provider</th>
             <th scope="col">Model</th>
             <th scope="col" className="num">
               Waited
@@ -169,7 +153,6 @@ export function RecordsTable({ records, now }: { records: RecordView[]; now: num
               <td className="num">{when(record.finishedAt, now)}</td>
               <td>{record.app}</td>
               <td className="num">{record.ticket}</td>
-              <td>{record.provider ? <ProviderBadge provider={record.provider} /> : <span className="muted">None</span>}</td>
               <td>{record.model ?? <span className="muted">None</span>}</td>
               <td className="num">{duration(record.waitMs)}</td>
               <td className="num">{record.runMs === null ? <span className="muted">None</span> : duration(record.runMs)}</td>

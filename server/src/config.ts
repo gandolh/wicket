@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { wardClientOptionsFromEnv, type WardClientOptions } from "../vendor/ward/ward-auth.js";
-import type { BackupSettings, CloudSettings } from "./providers.js";
+import type { CloudSettings } from "./providers.js";
 import { AppTokens, TokenConfigError } from "./tokens.js";
 
 /** Where the auth plugin's routes sit as Fastify sees them; the browser reaches them under the API prefix. */
@@ -20,9 +20,8 @@ export interface Config {
   dbPath: string | undefined;
   /** The apps and their tokens, from `WICKET_APP_TOKENS`. Secrets: never log them. */
   appTokens: AppTokens;
-  /** Ollama Cloud, or undefined when `OLLAMA_API_KEY` is unset and every job goes to the backup. */
+  /** Ollama Cloud, or undefined when `OLLAMA_API_KEY` is unset and every job fails, saying so. */
   cloud: CloudSettings | undefined;
-  backup: BackupSettings;
   /** The page's own origin as the browser sees it, bare. Default is the Vite dev server. */
   publicOrigin: string;
   /** The API prefix as the browser sees it, and the session cookie's path. Default `/wicket-api`. */
@@ -52,33 +51,18 @@ const baseUrl = (name: string) =>
   z
     .string()
     .refine((value) => URL.canParse(value) && /^https?:$/.test(new URL(value).protocol), {
-      message: `${name} must be an http or https URL, such as http://127.0.0.1:11434.`,
+      message: `${name} must be an http or https URL, such as https://ollama.com.`,
     })
     .transform((value) => value.replace(/\/+$/, ""));
 
 const seconds = (name: string) =>
   z.coerce.number<string>().int().min(1).max(3600, { message: `${name} must be a whole number of seconds, 1 to 3600.` });
 
-/**
- * Ollama's `keep_alive`: whole seconds (sent as a number, `0` unloads at
- * once) or a Go duration such as `1m` or `30s` (sent as a string).
- */
-const keepAlive = z
-  .string()
-  .regex(/^(-?\d+|-?(\d+(\.\d+)?(ms|s|m|h))+)$/, {
-    message: "WICKET_BACKUP_KEEP_ALIVE must be seconds (0 unloads at once) or a duration such as 1m.",
-  })
-  .transform((value): string | number => (/^-?\d+$/.test(value) ? Number(value) : value));
-
-/** The defaults the owner settled: just-a-bot's cloud model, and the small backup. */
+/** The defaults the owner settled: just-a-bot's cloud model. */
 export const DEFAULTS = {
   cloudUrl: "https://ollama.com",
   cloudModel: "gpt-oss:120b",
   cloudTimeoutSeconds: 120,
-  backupUrl: "http://127.0.0.1:11434",
-  backupModel: "gemma3:1b",
-  backupKeepAlive: "1m",
-  backupTimeoutSeconds: 300,
 } as const;
 
 const envSchema = z.object({
@@ -92,12 +76,6 @@ const envSchema = z.object({
   WICKET_CLOUD_MODEL: optional(z.string().trim()).transform((value) => value ?? DEFAULTS.cloudModel),
   WICKET_CLOUD_TIMEOUT_SECONDS: optional(seconds("WICKET_CLOUD_TIMEOUT_SECONDS")).transform(
     (value) => value ?? DEFAULTS.cloudTimeoutSeconds,
-  ),
-  WICKET_BACKUP_URL: optional(baseUrl("WICKET_BACKUP_URL")).transform((value) => value ?? DEFAULTS.backupUrl),
-  WICKET_BACKUP_MODEL: optional(z.string().trim()).transform((value) => value ?? DEFAULTS.backupModel),
-  WICKET_BACKUP_KEEP_ALIVE: optional(keepAlive).transform((value) => value ?? DEFAULTS.backupKeepAlive),
-  WICKET_BACKUP_TIMEOUT_SECONDS: optional(seconds("WICKET_BACKUP_TIMEOUT_SECONDS")).transform(
-    (value) => value ?? DEFAULTS.backupTimeoutSeconds,
   ),
   PUBLIC_ORIGIN: optional(
     z.string().refine((value) => URL.canParse(value) && new URL(value).origin === value, {
@@ -180,12 +158,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
           timeoutMs: values.WICKET_CLOUD_TIMEOUT_SECONDS * 1000,
         }
       : undefined,
-    backup: {
-      url: values.WICKET_BACKUP_URL,
-      model: values.WICKET_BACKUP_MODEL,
-      keepAlive: values.WICKET_BACKUP_KEEP_ALIVE,
-      timeoutMs: values.WICKET_BACKUP_TIMEOUT_SECONDS * 1000,
-    },
     publicOrigin: values.PUBLIC_ORIGIN,
     apiPrefix: values.WICKET_API_PREFIX,
     webBase: values.WICKET_BASE,

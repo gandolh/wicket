@@ -1,15 +1,14 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import type { JobRequest, JobResult } from "@wicket/shared";
+import { FINAL_STATUSES, type JobRequest, type JobResult, type JobView } from "@wicket/shared";
 import { afterEach, describe, expect, it } from "vitest";
-import { createRunner, type BackupSettings, type CloudSettings } from "./providers.js";
+import { createRunner, NO_KEY_ERROR, type CloudSettings } from "./providers.js";
 import { Queue, type RunContext } from "./queue.js";
 import type { JobRecord } from "./records.js";
 
 /**
- * The providers against stub Ollama servers on loopback. No real model: one
- * opt-in test at the end asks the developer's own Ollama, and is skipped
- * unless WICKET_LIVE_OLLAMA=1.
+ * The cloud runner against stub Ollama servers on loopback. No real model is
+ * ever asked.
  */
 
 interface Seen {
@@ -81,14 +80,11 @@ const KEY = "k".repeat(40);
 function cloudAt(url: string, timeoutMs = 2_000): CloudSettings {
   return { url, model: "gpt-oss:120b", apiKey: KEY, timeoutMs };
 }
-function backupAt(url: string, keepAlive: string | number = "1m"): BackupSettings {
-  return { url, model: "gemma3:1b", keepAlive, timeoutMs: 2_000 };
-}
 
-/** A context for calling the runner directly; records each attempt. */
+/** A context for calling the runner directly; records each model asked. */
 function context(signal = new AbortController().signal): RunContext & { attempts: string[] } {
   const attempts: string[] = [];
-  return { signal, attempts, attempt: (provider, model) => attempts.push(`${provider}:${model}`) };
+  return { signal, attempts, attempt: (model) => void attempts.push(model) };
 }
 
 /** A port nothing listens on: a server that was opened and closed. */
@@ -101,15 +97,13 @@ async function deadUrl(): Promise<string> {
 }
 
 describe("the cloud", () => {
-  it("answers, and the backup is never asked", async () => {
+  it("answers with the text and the model", async () => {
     const cloud = await stub();
-    const backup = await stub();
     cloud.handle((_req, res) => answer(res, "  from the cloud  "));
-    const run = createRunner({ cloud: cloudAt(cloud.url), backup: backupAt(backup.url) });
+    const run = createRunner({ cloud: cloudAt(cloud.url) });
     const ctx = context();
-    await expect(run({ ...ask, format: "json" }, ctx)).resolves.toEqual({ text: "from the cloud", model: "gpt-oss:120b", backup: false });
-    expect(backup.seen).toHaveLength(0);
-    expect(ctx.attempts).toEqual(["cloud:gpt-oss:120b"]);
+    await expect(run({ ...ask, format: "json" }, ctx)).resolves.toEqual({ text: "from the cloud", model: "gpt-oss:120b" });
+    expect(ctx.attempts).toEqual(["gpt-oss:120b"]);
     expect(cloud.seen[0]!.headers.authorization).toBe(`Bearer ${KEY}`);
     expect(cloud.seen[0]!.body).toMatchObject({ model: "gpt-oss:120b", stream: false, format: "json", messages: ask.messages });
     expect(cloud.seen[0]!.body).not.toHaveProperty("keep_alive");
@@ -118,157 +112,137 @@ describe("the cloud", () => {
   it("passes a JSON schema format as it is", async () => {
     const cloud = await stub();
     const schema = { type: "object", properties: { rooms: { type: "integer" } }, required: ["rooms"] };
-    const run = createRunner({ cloud: cloudAt(cloud.url), backup: backupAt(await deadUrl()) });
+    const run = createRunner({ cloud: cloudAt(cloud.url) });
     await run({ ...ask, format: schema }, context());
     expect(cloud.seen[0]!.body.format).toEqual(schema);
   });
 });
 
-describe("falling back", () => {
-  const failures: [string, Handler][] = [
-    ["a 500", (_req, res) => refuse(res, 500, "internal error")],
-    ["a 429 (quota)", (_req, res) => refuse(res, 429, "you have reached your usage limit")],
-    ["a 401 (bad key)", (_req, res) => refuse(res, 401, "unauthorized")],
-    ["a body that isn't JSON", (_req, res) => res.end("<html>bad gateway</html>")],
-    ["an empty answer", (_req, res) => answer(res, "   ")],
-    ["an error in a 200", (_req, res) => refuse(res, 200, "model not loaded")],
+describe("failing", () => {
+  const failures: [string, Handler, RegExp][] = [
+    ["a 500", (_req, res) => refuse(res, 500, "internal error"), /^the cloud model answered 500: internal error$/],
+    ["a 429 (quota)", (_req, res) => refuse(res, 429, "you have reached your usage limit"), /^the cloud model answered 429: you have reached/],
+    ["a 401 (bad key)", (_req, res) => refuse(res, 401, "unauthorized"), /^the cloud model answered 401: unauthorized$/],
+    ["a body that isn't JSON", (_req, res) => res.end("<html>bad gateway</html>"), /^the cloud model sent a body that is not JSON$/],
+    ["an empty answer", (_req, res) => answer(res, "   "), /^the cloud model sent an empty answer$/],
+    ["an error in a 200", (_req, res) => refuse(res, 200, "model not loaded"), /^the cloud model sent an error: model not loaded$/],
   ];
 
-  for (const [name, handler] of failures) {
-    it(`falls back on ${name}`, async () => {
+  for (const [name, handler, reason] of failures) {
+    it(`fails on ${name}, with the reason`, async () => {
       const cloud = await stub();
-      const backup = await stub();
       cloud.handle(handler);
-      backup.handle((_req, res) => answer(res, "from the backup"));
-      const warnings: string[] = [];
-      const run = createRunner({
-        cloud: cloudAt(cloud.url),
-        backup: backupAt(backup.url),
-        log: { warn: (m) => warnings.push(m), error: (m) => warnings.push(m) },
-      });
-      const ctx = context();
-      await expect(run(ask, ctx)).resolves.toEqual({ text: "from the backup", model: "gemma3:1b", backup: true });
-      expect(ctx.attempts).toEqual(["cloud:gpt-oss:120b", "backup:gemma3:1b"]);
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]).toMatch(/^the cloud failed \(/);
+      const logged: string[] = [];
+      const run = createRunner({ cloud: cloudAt(cloud.url), log: { error: (m) => logged.push(m) } });
+      const error = await run(ask, context()).catch((e: unknown) => e as Error);
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toMatch(reason);
+      expect(logged).toHaveLength(1);
+      expect(logged[0]).toMatch(/^the cloud failed \(/);
+      expect(cloud.seen).toHaveLength(1);
     });
   }
 
-  it("falls back when the cloud takes too long, and aborts its request", async () => {
+  it("fails when the cloud takes too long, and aborts its request", async () => {
     const cloud = await stub();
-    const backup = await stub();
     cloud.handle(() => undefined); // never answers
-    const run = createRunner({ cloud: cloudAt(cloud.url, 100), backup: backupAt(backup.url) });
-    await expect(run(ask, context())).resolves.toMatchObject({ backup: true });
+    const run = createRunner({ cloud: cloudAt(cloud.url, 100) });
+    await expect(run(ask, context())).rejects.toThrow(/^the cloud model took longer than 0 s$/);
     await cloud.hungUp;
   });
 
-  it("falls back when the cloud can't be reached", async () => {
-    const backup = await stub();
-    const run = createRunner({ cloud: cloudAt(await deadUrl()), backup: backupAt(backup.url) });
-    await expect(run(ask, context())).resolves.toMatchObject({ backup: true });
+  it("fails when the cloud can't be reached", async () => {
+    const run = createRunner({ cloud: cloudAt(await deadUrl()) });
+    await expect(run(ask, context())).rejects.toThrow(/^the cloud model could not be reached$/);
   });
 
-  it("goes straight to the backup with no key", async () => {
-    const backup = await stub();
-    const run = createRunner({ cloud: undefined, backup: backupAt(backup.url) });
+  it("fails at once with no key, asking nothing", async () => {
+    const logged: string[] = [];
+    const run = createRunner({ cloud: undefined, log: { error: (m) => logged.push(m) } });
     const ctx = context();
-    await expect(run(ask, ctx)).resolves.toEqual({ text: "stub answer", model: "gemma3:1b", backup: true });
-    expect(ctx.attempts).toEqual(["backup:gemma3:1b"]);
-    expect(backup.seen[0]!.headers.authorization).toBeUndefined();
+    await expect(run(ask, ctx)).rejects.toThrow(NO_KEY_ERROR);
+    expect(ctx.attempts).toEqual([]);
+    expect(logged).toEqual(["a job failed: no OLLAMA_API_KEY"]);
   });
 
-  it("sends the backup's keep-alive, as a duration or as seconds", async () => {
-    const backup = await stub();
-    await createRunner({ cloud: undefined, backup: backupAt(backup.url, "1m") })(ask, context());
-    await createRunner({ cloud: undefined, backup: backupAt(backup.url, 0) })(ask, context());
-    expect(backup.seen.map((s) => s.body.keep_alive)).toEqual(["1m", 0]);
-    expect(backup.seen[0]!.body).toMatchObject({ model: "gemma3:1b", stream: false });
-  });
-
-  it("fails with both short reasons when both fail, and never the prompt", async () => {
+  it("never puts the prompt in the log", async () => {
     const cloud = await stub();
-    const backup = await stub();
     // An Ollama that quoted the prompt back would still not reach the log.
     cloud.handle((_req, res) => refuse(res, 503, `overloaded while reading ${PROMPT}`));
-    backup.handle((_req, res) => refuse(res, 500, "out of memory"));
     const logged: string[] = [];
-    const run = createRunner({
-      cloud: cloudAt(cloud.url),
-      backup: backupAt(backup.url),
-      log: { warn: (m) => logged.push(m), error: (m) => logged.push(m) },
-    });
-    const error = await run(ask, context()).catch((e: unknown) => e as Error);
-    expect(error).toBeInstanceOf(Error);
-    expect((error as Error).message).toMatch(/^the cloud model answered 503: .*, and the backup model answered 500: out of memory$/);
-    expect(logged).toEqual(["the cloud failed (503); asking the backup", "the backup failed (500)"]);
+    const run = createRunner({ cloud: cloudAt(cloud.url), log: { error: (m) => logged.push(m) } });
+    await expect(run(ask, context())).rejects.toThrow(/^the cloud model answered 503: /);
+    expect(logged).toEqual(["the cloud failed (503)"]);
     expect(logged.join("\n")).not.toContain(PROMPT);
   });
 });
 
-describe("cancelling", () => {
-  function queueWith(cloud: CloudSettings | undefined, backup: BackupSettings) {
+describe("in the queue", () => {
+  function queueWith(cloud: CloudSettings | undefined) {
     const records: JobRecord[] = [];
-    const queue = new Queue({ run: createRunner({ cloud, backup }), record: (r) => records.push(r) });
+    const queue = new Queue({ run: createRunner({ cloud }), record: (r) => records.push(r) });
     return { queue, records };
   }
 
-  it("force close aborts the cloud's request, and the backup is never asked", async () => {
+  /** The job once it has finished. */
+  async function finished(queue: Queue, id: string): Promise<JobView | undefined> {
+    for (;;) {
+      const view = await queue.waitForChange(id, "app", 1_000);
+      if (!view || FINAL_STATUSES.has(view.status)) return view;
+    }
+  }
+
+  it("a cloud failure ends the job failed with the reason, and the next ticket runs", async () => {
     const cloud = await stub();
-    const backup = await stub();
+    let calls = 0;
+    cloud.handle((_req, res) => (calls++ === 0 ? refuse(res, 429, "you have reached your usage limit") : answer(res, "second")));
+    const { queue, records } = queueWith(cloudAt(cloud.url));
+    const first = queue.submit("app", ask);
+    const second = queue.submit("app", ask);
+    await expect(finished(queue, second.id)).resolves.toMatchObject({ status: "done", result: { text: "second", model: "gpt-oss:120b" } });
+    expect(queue.get(first.id, "app")).toMatchObject({ status: "failed", error: "the cloud model answered 429: you have reached your usage limit" });
+    expect(records.map((r) => r.outcome)).toEqual(["failed", "ok"]);
+  });
+
+  it("with no key, a job ends failed with the reason", async () => {
+    const { queue, records } = queueWith(undefined);
+    const job = queue.submit("app", ask);
+    await expect(finished(queue, job.id)).resolves.toMatchObject({ status: "failed", error: NO_KEY_ERROR });
+    expect(records[0]).toMatchObject({ outcome: "failed", model: null });
+  });
+
+  it("force close aborts the cloud's request and ends the job cancelled", async () => {
+    const cloud = await stub();
     cloud.handle(() => undefined);
-    const { queue, records } = queueWith(cloudAt(cloud.url, 10_000), backupAt(backup.url));
+    const { queue, records } = queueWith(cloudAt(cloud.url, 10_000));
     const job = queue.submit("app", ask);
     await cloud.reached;
     expect(queue.forceClose()).toBe(true);
     await cloud.hungUp;
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    expect(backup.seen).toHaveLength(0);
     expect(queue.get(job.id, "app")).toMatchObject({ status: "cancelled" });
-    expect(records[0]).toMatchObject({ outcome: "cancelled", provider: "cloud", model: "gpt-oss:120b" });
+    expect(records[0]).toMatchObject({ outcome: "cancelled", model: "gpt-oss:120b" });
   });
 
-  it("the caller's cancel aborts the backup's request", async () => {
-    const backup = await stub();
-    backup.handle(() => undefined);
-    const { queue, records } = queueWith(undefined, backupAt(backup.url));
-    const job = queue.submit("app", ask);
-    await backup.reached;
-    queue.cancel(job.id, "app");
-    await backup.hungUp;
-    expect(records[0]).toMatchObject({ outcome: "cancelled", provider: "backup", model: "gemma3:1b" });
-  });
-
-  it("a runner whose signal is already aborted rethrows the abort instead of falling back", async () => {
+  it("the caller's cancel aborts the cloud's request", async () => {
     const cloud = await stub();
-    const backup = await stub();
     cloud.handle(() => undefined);
-    const run = createRunner({ cloud: cloudAt(cloud.url), backup: backupAt(backup.url) });
+    const { queue, records } = queueWith(cloudAt(cloud.url, 10_000));
+    const job = queue.submit("app", ask);
+    await cloud.reached;
+    queue.cancel(job.id, "app");
+    await cloud.hungUp;
+    expect(records[0]).toMatchObject({ outcome: "cancelled", model: "gpt-oss:120b" });
+  });
+
+  it("a runner whose signal is aborted rethrows the abort, not a failure", async () => {
+    const cloud = await stub();
+    cloud.handle(() => undefined);
+    const run = createRunner({ cloud: cloudAt(cloud.url) });
     const controller = new AbortController();
     const result: Promise<JobResult> = run(ask, context(controller.signal));
     await cloud.reached;
     controller.abort();
-    await expect(result).rejects.toThrow();
-    expect(backup.seen).toHaveLength(0);
-  });
-});
-
-describe.skipIf(process.env.WICKET_LIVE_OLLAMA !== "1")("the developer's own Ollama (WICKET_LIVE_OLLAMA=1)", () => {
-  it("answers as the backup when the cloud fails", { timeout: 180_000 }, async () => {
-    const cloud = await stub();
-    cloud.handle((_req, res) => refuse(res, 500, "down"));
-    const run = createRunner({
-      cloud: cloudAt(cloud.url),
-      backup: {
-        url: process.env.WICKET_LIVE_BACKUP_URL ?? "http://127.0.0.1:11434",
-        model: process.env.WICKET_LIVE_BACKUP_MODEL ?? "llama3.2:1b",
-        keepAlive: 0,
-        timeoutMs: 170_000,
-      },
-    });
-    const result = await run({ messages: [{ role: "user", content: "Reply with the single word: yes" }] }, context());
-    expect(result.backup).toBe(true);
-    expect(result.model).toBe(process.env.WICKET_LIVE_BACKUP_MODEL ?? "llama3.2:1b");
-    expect(result.text.length).toBeGreaterThan(0);
+    const error = await result.catch((e: unknown) => e as Error);
+    expect(error).toMatchObject({ name: "AbortError" });
   });
 });

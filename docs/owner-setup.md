@@ -1,15 +1,15 @@
 # Owner setup
 
 Everything it takes to put Wicket on the VPS, and what the vps-deploy stack
-needs to know. Nothing in this repo deploys, registers a Ward client, writes a
-secret or pulls a model: those are the owner's steps, written down here.
-Commands run on your machine unless a step says otherwise.
+needs to know. Nothing in this repo deploys, registers a Ward client or
+writes a secret: those are the owner's steps, written down here. Commands run
+on your machine unless a step says otherwise.
 
-Wicket runs as two containers from
+Wicket runs as one container from
 [`infrastructure/docker-compose.yml`](../infrastructure/docker-compose.yml):
-`wicket-api` (the queue, the API, sign-in, `/metrics`) on `127.0.0.1:8808`,
-and `wicket-ollama` (the backup model) on `127.0.0.1:11434`. Caddy serves the
-built page at `/wicket/` and forwards `/wicket-api/` to the API.
+`wicket-api` (the queue, the API, sign-in, `/metrics`) on `127.0.0.1:8808`.
+Every call goes to Ollama Cloud; there is no model on the box. Caddy serves
+the built page at `/wicket/` and forwards `/wicket-api/` to the API.
 
 `<production origin>` below means `https://` plus the main domain's host, with
 no path.
@@ -35,7 +35,7 @@ brief-board was registered the same way.
    public JWK and these addresses:
    - redirect URI: `<production origin>/wicket-api/auth/ward/callback`
    - sign-out return URI: `<production origin>/wicket/`
-5. Grant a role on the app to your own Ward account (step 7 links it).
+5. Grant a role on the app to your own Ward account (step 6 links it).
 
 ## 2. The secrets
 
@@ -66,89 +66,53 @@ With vps-deploy, these go in its secrets file for the stack
 | Setting | Value |
 |---|---|
 | Source repo | `wicket`, built from the workspace root |
-| Containers | `wicket-api` (built from `infrastructure/Dockerfile`, image `wicket-api:1.0`) and `wicket-ollama` (`ollama/ollama:0.24.0`), both from `infrastructure/docker-compose.yml` alone (`docker-compose.local.yml` is for a local check, step 5) |
+| Container | `wicket-api` (built from `infrastructure/Dockerfile`, image `wicket-api:1.0`, about 210 MB), from `infrastructure/docker-compose.yml` alone (`docker-compose.local.yml` is for a local check, step 4). No Ollama container and no model |
 | Server dir | `/srv/wicket-api` (the compose file's `.env` goes in `infrastructure/`, 0600) |
-| Ports | `127.0.0.1:8808` (API), `127.0.0.1:11434` (backup Ollama). Loopback only; the deploy's loopback check should cover both |
+| Port | `127.0.0.1:8808`. Loopback only |
 | Page | `web/dist`, built with `WICKET_BASE=/wicket/`, served at `/wicket/` with an SPA fallback to `index.html` |
 | API route | `/wicket-api/*` to `127.0.0.1:8808`, prefix stripped |
 | Leave out | `/wicket-api/metrics`: answer 404 at Caddy. Wicket also refuses `/metrics` on any request carrying `X-Forwarded-For` |
 | Health check | `GET http://127.0.0.1:8808/v1/health`, expecting `"ok":true` (through Caddy: `/wicket-api/v1/health`) |
 | Data | `/srv/wicket-api/data` bind-mounted at `/data` (`WICKET_DATA_DIR`): the records and the accounts' password hashes. No prompt or answer is ever stored |
-| Models | the named volume `ollama-models` (about 0.8 GB for gemma3:1b); re-downloadable, no backup needed |
 | Secrets | `WARD_OIDC_CLIENT_KEY`, `OLLAMA_API_KEY`, `WICKET_APP_TOKENS` (step 2) |
 | Plain env | `PUBLIC_ORIGIN=<production origin>`; `WARD_OIDC_ISSUER` (Ward's origin), `WARD_OIDC_CLIENT_ID=wicket`, `WARD_OIDC_REDIRECT_URI=<production origin>/wicket-api/auth/ward/callback`, `WARD_OIDC_POST_LOGOUT_REDIRECT_URI=<production origin>/wicket/`; `AUTH_TRUSTED_PROXIES` = the range Caddy reaches containers from, as for the other apps |
-| Set by compose | `HOST`, `PORT`, `WICKET_DB`, and `WICKET_BACKUP_URL=http://wicket-ollama:11434` |
-| Optional env | `WICKET_CLOUD_MODEL` (default `gpt-oss:120b`), `WICKET_CLOUD_TIMEOUT_SECONDS` (120), `WICKET_BACKUP_MODEL` (`gemma3:1b`), `WICKET_BACKUP_KEEP_ALIVE` (`1m`), `WICKET_BACKUP_TIMEOUT_SECONDS` (300) |
-| Backup caps | `mem_limit: 1300m`, `cpus: 1.0`, `OLLAMA_KEEP_ALIVE=1m`, `OLLAMA_NUM_PARALLEL=1`, `OLLAMA_MAX_LOADED_MODELS=1` (in the compose file) |
-| Model pull | once, after the first start: step 4 |
+| Set by compose | `HOST`, `PORT`, `WICKET_DB` |
+| Optional env | `WICKET_CLOUD_MODEL` (default `gpt-oss:120b`), `WICKET_CLOUD_TIMEOUT_SECONDS` (120) |
+| Outbound | HTTPS to `ollama.com`, where every call goes |
 | Prometheus | a scrape job `wicket` on `127.0.0.1:8808`, path `/metrics` (Prometheus runs on host networking, bound to loopback) |
 | Ward client | slug `wicket`, like brief-board's |
 
 `/metrics` gives `wicket_queue_waiting`, `wicket_queue_running`,
-`wicket_jobs_total{app,outcome,provider}`, and `wicket_job_wait_seconds` and
-`wicket_job_run_seconds` as `_sum` and `_count` by provider. Useful panels:
-the queue length, calls per minute by app
-(`sum by (app) (rate(wicket_jobs_total[5m]))`), and the share answered by
-the backup.
+`wicket_jobs_total{app,outcome}`, and `wicket_job_wait_seconds` and
+`wicket_job_run_seconds` as `_sum` and `_count`. Useful panels: the queue
+length, calls per minute by app (`sum by (app) (rate(wicket_jobs_total[5m]))`),
+and the failed share (`outcome="failed"`), which shows a spent quota or a
+cloud outage.
 
-Two things to check once on the box, because the rootless daemon decides
-them: that the backup's limits hold (`docker stats wicket-ollama` shows a 1.3
-GB limit), and that the daemon accepts `cpus` (it needs the `cpu` controller
-delegated to the services account; if `compose up` refuses it, drop the line
-and note it).
+Measured in a local run on 2026-11-04: the API sits at about 40-50 MB of
+memory.
 
-Sizes, measured in a local run on 2026-11-04:
+## 4. Check the container locally
 
-- **Disk.** `wicket-api:1.0` is about 210 MB. `ollama/ollama:0.24.0` is
-  **6.55 GB** unpacked, 6.1 GB of it GPU libraries the box never loads. Check
-  the box has the room before the first deploy.
-- **Memory.** The API sits at about 40-50 MB. The backup Ollama sits at about
-  120-190 MB with no model loaded. Ollama reads the container's memory limit
-  and loads a model's weights into plain memory (no mmap), so the model plus
-  its context must fit under `mem_limit`: gemma3:1b (about 0.8 GB) fits
-  1300m; a bigger backup model needs a bigger cap. The model leaves memory
-  one minute after its last call (`OLLAMA_KEEP_ALIVE=1m`).
+Optional, on your own machine, before the first deploy. It builds the image
+and runs it as the compose project `wicket-smoke`, with
+[`infrastructure/docker-compose.local.yml`](../infrastructure/docker-compose.local.yml)
+keeping the data in a volume the teardown removes. Docker Desktop's WSL
+integration must be on. Its `--network host` is its own VM, so everything
+here goes through the compose network and the loopback port.
 
-## 4. Pull the backup model
-
-Once, after the first deploy, on the box as the services account:
-
-```
-export DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock
-cd /srv/wicket-api
-docker compose -f infrastructure/docker-compose.yml exec wicket-ollama ollama pull gemma3:1b
-```
-
-Until it is pulled, a call the cloud can't answer fails instead of falling
-back. Check with `curl -s http://127.0.0.1:11434/api/tags`.
-
-## 5. Check the containers locally
-
-Optional, on your own machine, before the first deploy. It builds both images
-and runs them as the compose project `wicket-smoke`, pulling no model: the
-override [`infrastructure/docker-compose.local.yml`](../infrastructure/docker-compose.local.yml)
-mounts the model store of an Ollama you already run, read-only, into the
-backup container, and keeps the API's data in a volume the teardown removes.
-Docker Desktop's WSL integration must be on. Its `--network host` is its own
-VM, so everything here goes through compose networks and loopback ports.
-
-1. Write `infrastructure/.env` (git-ignored) with a model your Ollama
-   already has, another port if your own Ollama holds 11434, and throwaway
-   tokens. No `OLLAMA_API_KEY`: every call then goes to the backup.
+1. Write `infrastructure/.env` (git-ignored) with throwaway tokens. Leave
+   `OLLAMA_API_KEY` out unless you mean to spend real cloud calls.
 
    ```
    umask 077
-   printf 'WICKET_OLLAMA_PORT=11435\nWICKET_BACKUP_MODEL=llama3.2:1b\nWICKET_APP_TOKENS=just-a-bot=%s,ro-housing=%s\n' \
+   printf 'WICKET_APP_TOKENS=just-a-bot=%s,ro-housing=%s\n' \
      "$(openssl rand -hex 32)" "$(openssl rand -hex 32)" > infrastructure/.env
    ```
 
-2. Point the override at your model store (the Linux service keeps it in
-   `/usr/share/ollama/.ollama/models`, a user install in `~/.ollama/models`),
-   then build and start. A model bigger than gemma3:1b needs more than the
-   production cap; the override raises it to 2500m for this check.
+2. Build and start:
 
    ```
-   export WICKET_LOCAL_MODELS=/usr/share/ollama/.ollama/models
    C="docker compose -p wicket-smoke -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.local.yml"
    $C config --quiet && $C up --build -d
    curl -s http://127.0.0.1:8808/v1/health
@@ -163,7 +127,8 @@ VM, so everything here goes through compose networks and loopback ports.
    start a second API on 8808). Open <http://localhost:5179/wicket/> and sign
    in. Vite forwards `/wicket-api` to the container.
 5. Send a call with one of the tokens in `infrastructure/.env` and wait for
-   it. The result should say `"backup":true` and name your model:
+   it. With no key it ends `failed` with "the cloud model can't be asked:
+   OLLAMA_API_KEY is not set", and the next call still runs:
 
    ```
    TOKEN=$(sed -n 's/.*just-a-bot=\([0-9a-f]*\).*/\1/p' infrastructure/.env)
@@ -172,8 +137,8 @@ VM, so everything here goes through compose networks and loopback ports.
    curl -s "http://127.0.0.1:8808/v1/jobs/<id>?wait=25" -H "Authorization: Bearer $TOKEN"
    ```
 
-   To try Force close and Clear queue on the page, send a long call ("count
-   to 400") and two more behind it.
+   To see calls running and waiting on the page without a key, use the
+   stand-in cloud in [`docs/images/shots.md`](images/shots.md).
 6. `curl -s http://127.0.0.1:8808/metrics` answers Prometheus text; with an
    `X-Forwarded-For` header it answers 404.
 7. Tear it down and drop the tokens:
@@ -188,7 +153,7 @@ have to reach the local Ward at its `localhost` address, which inside the
 container is the container itself. Check it with `npm run dev` instead
 ([getting-started.md](getting-started.md#6-sign-in-with-ward-optional)).
 
-## 6. Deploy
+## 5. Deploy
 
 Once the vps-deploy stack exists, from vps-deploy (check the stack's CLI name
 in its `cli.ts`):
@@ -208,7 +173,7 @@ curl -s -o /dev/null -w '%{http_code}\n' <production origin>/wicket-api/metrics
 
 Expect `{"ok":true}`, a `200`, and a `404`.
 
-## 7. Your account, and Ward
+## 6. Your account, and Ward
 
 There is no register page. On the box as the services account, run the seed
 inside the container. It asks for a username and password and shows neither:
@@ -235,7 +200,7 @@ docker compose -f infrastructure/docker-compose.yml logs wicket-api | grep -i "X
 No output is right. A line saying every caller shares one failure counter
 means `AUTH_TRUSTED_PROXIES` doesn't name the range Caddy comes from.
 
-## 8. Point the apps at Wicket
+## 7. Point the apps at Wicket
 
 Each caller gets two settings in its own deploy secrets:
 
@@ -249,7 +214,7 @@ daemon a container can't reach the host's loopback, so `127.0.0.1:8808` works
 only from the box's own shell. The contract the callers code against is in
 [`corpus/wiki/api.md`](../corpus/wiki/api.md).
 
-## 9. The docs site
+## 8. The docs site
 
 The docs site builds into `docs-site/dist` with base `/wicket/docs/`
 ([docs-site/README.md](../docs-site/README.md)). vps-deploy ships what is

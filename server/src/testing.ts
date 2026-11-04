@@ -17,11 +17,11 @@ export function stubRunner(): { run: Runner; calls: StubCall[] } {
   const calls: StubCall[] = [];
   const run: Runner = (request, context) =>
     new Promise<JobResult>((resolve, reject) => {
-      context.attempt("cloud", "stub-model");
+      context.attempt("stub-model");
       calls.push({
         request,
         signal: context.signal,
-        answer: (result) => resolve({ text: "an answer", model: "stub-model", backup: false, ...result }),
+        answer: (result) => resolve({ text: "an answer", model: "stub-model", ...result }),
         fail: (message) => reject(new Error(message)),
       });
     });

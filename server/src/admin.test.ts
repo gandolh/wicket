@@ -76,7 +76,7 @@ describe("the admin routes", () => {
     expect(res.json<QueueResponse>()).toEqual({
       serverTime: clock,
       nowServing: first.ticket,
-      running: { id: first.id, app: "just-a-bot", ticket: first.ticket, provider: "cloud", model: "stub-model", startedAt: clock - 5_000 },
+      running: { id: first.id, app: "just-a-bot", ticket: first.ticket, model: "stub-model", startedAt: clock - 5_000 },
       waiting: [{ id: second.id, app: "just-a-bot", ticket: second.ticket, queuedAt: clock }],
     });
     expect(res.body).not.toContain("PROMPT-");
@@ -134,9 +134,9 @@ describe("the admin routes", () => {
     const cookie = await signIn();
     await submit();
     await submit();
-    calls[0]!.answer({ backup: true, model: "gemma3:1b" });
+    calls[0]!.answer();
     await settle();
-    calls[1]!.fail("both failed");
+    calls[1]!.fail("the cloud model answered 429");
     await settle();
     await submit();
     await app.inject({ method: "POST", url: "/wicket-api/v1/queue/running/cancel", headers: { cookie } });
@@ -144,7 +144,7 @@ describe("the admin routes", () => {
     const body = res.json<RecordsResponse>();
     expect(body.records).toHaveLength(2);
     expect(body.records.map((r) => r.outcome)).toEqual(["cancelled", "failed"]);
-    const counts = { app: "just-a-bot", total: 3, ok: 1, failed: 1, cancelled: 1, backup: 1 };
+    const counts = { app: "just-a-bot", total: 3, ok: 1, failed: 1, cancelled: 1 };
     expect(body.counts).toEqual({ day: [counts], week: [counts] });
     expect((await app.inject({ url: "/wicket-api/v1/records?limit=900", headers: { cookie } })).statusCode).toBe(400);
   });
@@ -187,9 +187,10 @@ describe("/metrics", () => {
     expect(res.headers["content-type"]).toContain("text/plain");
     expect(res.body).toContain("wicket_queue_waiting 0\n");
     expect(res.body).toContain("wicket_queue_running 1\n");
-    expect(res.body).toContain('wicket_jobs_total{app="just-a-bot",outcome="ok",provider="cloud"} 1\n');
-    expect(res.body).toContain('wicket_job_run_seconds_sum{provider="cloud"} 2\n');
-    expect(res.body).toContain('wicket_job_wait_seconds_count{provider="cloud"} 1\n');
+    expect(res.body).toContain('wicket_jobs_total{app="just-a-bot",outcome="ok"} 1\n');
+    expect(res.body).toContain("wicket_job_run_seconds_sum 2\n");
+    expect(res.body).toContain("wicket_job_wait_seconds_count 1\n");
+    expect(res.body).not.toContain("provider");
   });
 
   it("is refused through a proxy", async () => {

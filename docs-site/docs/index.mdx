@@ -7,10 +7,10 @@ hide_table_of_contents: true
 
 **Wicket** is one queue for every LLM call a small set of self-hosted apps
 makes. It holds the Ollama key, gives every call a ticket in one
-first-come-first-served line, and runs one call at a time. Ollama Cloud answers
-first, and a small backup model on the box answers when the cloud fails.
+first-come-first-served line, and runs one call at a time on Ollama Cloud.
+When the cloud fails, the call fails with the reason and the next one runs.
 
-![The Wicket queue page: now serving ticket 2, a running call answered by the backup model, two tickets waiting, calls per app and recent calls](./guides/images/hero.webp)
+![The Wicket queue page: now serving ticket 3, a running call to gpt-oss:120b, two tickets waiting, calls per app and recent calls](./guides/images/hero.webp)
 
 <dl className="doc-facts">
   <dt>Callers</dt>
@@ -20,12 +20,12 @@ first, and a small backup model on the box answers when the cloud fails.
   <dt>Page</dt>
   <dd>React 19 at <code>/wicket/</code>, behind sign-in (local accounts or Ward)</dd>
   <dt>Models</dt>
-  <dd>Ollama Cloud (<code>gpt-oss:120b</code>), then <code>gemma3:1b</code> in a capped container</dd>
+  <dd>Ollama Cloud only (<code>gpt-oss:120b</code>); no model on the box</dd>
   <dt>Stored</dt>
   <dd>Counts and timings per call, never a prompt or an answer</dd>
 </dl>
 
-![How a call moves through Wicket: apps post to wicket-api with their own token; the queue runs one call at a time on Ollama Cloud first and on the wicket-ollama backup when the cloud fails](./guides/images/architecture.svg)
+![How a call moves through Wicket: apps post to wicket-api with their own token; the queue runs one call at a time on Ollama Cloud, and a failed call ends failed while the next ticket runs](./guides/images/architecture.svg)
 
 ## Where to read
 

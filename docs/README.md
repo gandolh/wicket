@@ -4,10 +4,10 @@ Start with the [main README](../README.md). This folder holds what it links to.
 
 | File | What it covers |
 |---|---|
-| [getting-started.md](getting-started.md) | Running it locally: install, settings, your account, a first call, tests, Ward, the containers |
+| [getting-started.md](getting-started.md) | Running it locally: install, settings, your account, a first call, tests, Ward, the container |
 | [architecture.md](architecture.md) | How a call moves through the parts, on one screen |
-| [owner-setup.md](owner-setup.md) | Putting Wicket on a VPS: Ward, the secrets, what the deploy stack needs, the model pull, the first account, the callers |
-| [images/](images/shots.md) | The screenshots and the diagram used here, and how each was made |
+| [owner-setup.md](owner-setup.md) | Putting Wicket on a VPS: Ward, the secrets, what the deploy stack needs, the first account, the callers, the docs stack |
+| [images/](images/shots.md) | The screenshots and the diagram used here, how each was made, and the stand-in cloud used for them |
 
 Going deeper:
 
@@ -18,7 +18,7 @@ Going deeper:
 |---|---|
 | What does a caller send and get back? | [api.md](../corpus/wiki/api.md) |
 | Why is it built this way? | [decisions.md](../corpus/wiki/decisions.md) |
-| What do ticket, now serving, backup model mean? | [glossary.md](../corpus/wiki/glossary.md) |
-| When does a call fall back to the backup? | [providers.md](../corpus/wiki/providers.md) |
+| What do ticket, now serving, cloud model mean? | [glossary.md](../corpus/wiki/glossary.md) |
+| What happens when the cloud fails? | [providers.md](../corpus/wiki/providers.md) |
 | Who gets into which route? | [sign-in.md](../corpus/wiki/sign-in.md) |
 | Where do things stand? | [status.md](../corpus/wiki/status.md) |

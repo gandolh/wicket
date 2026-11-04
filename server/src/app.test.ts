@@ -71,16 +71,16 @@ describe("jobs", () => {
     await settle();
     const res = await call({ url: `/v1/jobs/${id}`, headers: BOT });
     expect(res.statusCode).toBe(200);
-    expect(res.json<JobView>()).toMatchObject({ status: "done", result: { text: "forty-two", model: "gpt-oss:120b", backup: false } });
+    expect(res.json<JobView>()).toMatchObject({ status: "done", result: { text: "forty-two", model: "gpt-oss:120b" } });
   });
 
   it("answers a failed job with a short error", async () => {
     const { id } = (await submit()).json<JobView>();
-    calls[0]!.fail("the cloud answered 500, and the backup answered 503");
+    calls[0]!.fail("the cloud model answered 429: you have reached your usage limit");
     await settle();
     expect((await call({ url: `/v1/jobs/${id}`, headers: BOT })).json<JobView>()).toMatchObject({
       status: "failed",
-      error: "the cloud answered 500, and the backup answered 503",
+      error: "the cloud model answered 429: you have reached your usage limit",
     });
   });
 
@@ -189,7 +189,7 @@ describe("records", () => {
       const cancelled = (await submit(`${prompt}-cancelled`)).json<JobView>();
       await call({ method: "DELETE", url: `/v1/jobs/${cancelled.id}`, headers: BOT });
       await submit(`${prompt}-failed`);
-      calls[2]!.fail("the backup answered 500");
+      calls[2]!.fail("the cloud model answered 500");
       await settle();
 
       expect(app.records.recent(10).map((r) => r.outcome).sort()).toEqual(["cancelled", "failed", "ok"]);

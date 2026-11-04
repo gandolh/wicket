@@ -1,5 +1,5 @@
 ---
-summary: Wicket's vocabulary. Job, app and app token, queue, ticket, now serving, position, the cloud model, the backup model and provider, force close, clear queue, a job's status vs a record's outcome, and record, each with the words they replace.
+summary: Wicket's vocabulary. Job, app and app token, queue, ticket, now serving, position, the cloud model (the only model since 2026-11-04), force close, clear queue, a job's status vs a record's outcome, and record, each with the words they replace.
 updated: 2026-11-04
 ---
 
@@ -41,18 +41,9 @@ _Avoid_: rank, index, queue length
 ## Models
 
 **Cloud model**:
-The model Wicket asks first, on Ollama Cloud. A setting, `gpt-oss:120b` by
-default.
-_Avoid_: main model, primary
-
-**Backup model**:
-The small model on the backup Ollama container, asked only when the cloud
-fails. `gemma3:1b` in production.
-_Avoid_: fallback model, local model (the developer's own Ollama is also local)
-
-**Provider**:
-Where a job ran: `cloud` or `backup`.
-_Avoid_: backend, host, engine
+The model Wicket asks, on Ollama Cloud, for every job. A setting,
+`gpt-oss:120b` by default. There is no other model.
+_Avoid_: main model, primary, provider
 
 ## Actions
 
@@ -74,8 +65,8 @@ Where a live job stands: `queued`, `running`, `done`, `failed` or
 _Avoid_: state, phase
 
 **Record**:
-The row Wicket keeps once a job ends: app, ticket, model, provider, wait time,
-run time, outcome. Never any text.
+The row Wicket keeps once a job ends: app, ticket, model, wait time, run time,
+outcome. Never any text.
 _Avoid_: log, history, audit entry
 
 **Outcome**:

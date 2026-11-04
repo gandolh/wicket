@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="t">How a call moves through Wicket</title>
-  <desc id="d">Apps post calls to the wicket-api container with their own token. The queue runs one call at a time, first on Ollama Cloud and, when the cloud fails, on the backup model in the wicket-ollama container. Records keep counts and timings only. The queue page signs in to see and manage the queue, and Prometheus reads /metrics on the box's loopback.</desc>
+  <desc id="d">Apps post calls to the wicket-api container with their own token. The queue runs one call at a time on Ollama Cloud; when the cloud fails, the job fails with the reason and the next ticket runs. Records keep counts and timings only. The queue page signs in to see and manage the queue, and Prometheus reads /metrics on the box's loopback.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="#172b4d"/>
@@ -50,18 +50,19 @@
     <text x="470" y="567" font-size="20" fill="#5e6c84">through a proxy</text>
   </g>
 
-  <!-- Right column: the models -->
+  <!-- Right column: the model -->
   <g>
-    <rect x="910" y="60" width="260" height="140" rx="10" fill="#ffffff" stroke="#dfe1e6" stroke-width="2"/>
+    <rect x="910" y="60" width="260" height="170" rx="10" fill="#ffffff" stroke="#dfe1e6" stroke-width="2"/>
     <text x="930" y="96" font-size="22" font-weight="700" fill="#172b4d">Ollama Cloud</text>
     <text x="930" y="130" font-size="20" fill="#172b4d">gpt-oss:120b</text>
-    <text x="930" y="162" font-size="20" fill="#5e6c84">asked first</text>
+    <text x="930" y="162" font-size="20" fill="#5e6c84">one call at a time</text>
+    <text x="930" y="194" font-size="20" fill="#5e6c84">no model on the box</text>
 
-    <rect x="910" y="260" width="260" height="170" rx="10" fill="#ffffff" stroke="#b38600" stroke-width="2"/>
-    <text x="930" y="296" font-size="22" font-weight="700" fill="#172b4d">wicket-ollama</text>
-    <text x="930" y="330" font-size="20" fill="#172b4d">backup, gemma3:1b</text>
-    <text x="930" y="362" font-size="20" fill="#5e6c84">1.3 GB, one core</text>
-    <text x="930" y="394" font-size="20" fill="#5e6c84">unloads when idle</text>
+    <rect x="910" y="290" width="260" height="156" rx="10" fill="#ffffff" stroke="#c9372c" stroke-width="2" stroke-dasharray="8 6"/>
+    <text x="930" y="326" font-size="22" font-weight="700" fill="#172b4d">If it fails</text>
+    <text x="930" y="359" font-size="20" fill="#172b4d">the job ends failed,</text>
+    <text x="930" y="389" font-size="20" fill="#172b4d">with the reason</text>
+    <text x="930" y="425" font-size="20" fill="#5e6c84">next ticket runs</text>
   </g>
 
   <!-- Arrows -->
@@ -69,15 +70,13 @@
     <line x1="282" y1="150" x2="446" y2="150" marker-end="url(#arrow)"/>
     <line x1="282" y1="335" x2="428" y2="335" marker-end="url(#arrow)"/>
     <line x1="282" y1="515" x2="446" y2="515" marker-end="url(#arrow)"/>
-    <line x1="782" y1="160" x2="906" y2="130" marker-end="url(#arrow)"/>
-    <line x1="782" y1="220" x2="906" y2="320" marker-end="url(#arrow)" stroke-dasharray="9 7"/>
+    <line x1="782" y1="160" x2="906" y2="140" marker-end="url(#arrow)"/>
+    <line x1="1040" y1="232" x2="1040" y2="286" marker-end="url(#arrow)" stroke-dasharray="7 6"/>
   </g>
   <g font-size="20" fill="#172b4d">
     <text x="300" y="138">/v1/jobs</text>
     <text x="300" y="323">/v1/queue</text>
     <text x="300" y="503">/metrics</text>
-    <text x="815" y="128">first</text>
-    <text x="856" y="350" text-anchor="middle">when the</text>
-    <text x="856" y="374" text-anchor="middle">cloud fails</text>
+    <text x="855" y="124" text-anchor="middle">/api/chat</text>
   </g>
 </svg>

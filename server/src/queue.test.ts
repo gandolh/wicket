@@ -48,7 +48,7 @@ describe("the queue", () => {
     const { queue, calls } = setup();
     queue.submit("app", ask());
     queue.submit("app", ask());
-    calls[0]!.fail("the cloud and the backup both failed");
+    calls[0]!.fail("the cloud model answered 500");
     await settle();
     expect(calls).toHaveLength(2);
     expect(queue.snapshot().running?.ticket).toBe(2);
@@ -71,7 +71,7 @@ describe("the queue", () => {
       status: "done",
       position: 0,
       nowServing: 42,
-      result: { text: "first", model: "stub-model", backup: false },
+      result: { text: "first", model: "stub-model" },
     });
     expect(queue.get(c.id, "app")).toMatchObject({ position: 1, nowServing: 42 });
   });
@@ -102,7 +102,7 @@ describe("the queue", () => {
     expect(queue.get(c.id, "app")!.position).toBe(1);
     expect(calls).toHaveLength(1);
     expect(records).toHaveLength(1);
-    expect(records[0]).toMatchObject({ ticket: b.ticket, outcome: "cancelled", provider: null, model: null, runMs: null });
+    expect(records[0]).toMatchObject({ ticket: b.ticket, outcome: "cancelled", model: null, runMs: null });
   });
 
   it("cancels a running job at once, aborts its request and starts the next", async () => {
@@ -119,7 +119,7 @@ describe("the queue", () => {
     expect(queue.get(a.id, "app")).toMatchObject({ status: "cancelled" });
     expect(queue.get(a.id, "app")!.result).toBeUndefined();
     expect(records).toHaveLength(1);
-    expect(records[0]).toMatchObject({ outcome: "cancelled", provider: "cloud", model: "stub-model" });
+    expect(records[0]).toMatchObject({ outcome: "cancelled", model: "stub-model" });
   });
 
   it("leaves a finished job as it was when cancelled", async () => {
@@ -169,14 +169,14 @@ describe("the queue", () => {
     queue.submit("just-a-bot", ask());
     queue.submit("ro-housing", ask());
     tick(1500);
-    calls[0]!.answer({ backup: true, model: "backup-model" });
+    calls[0]!.answer({ model: "another-model" });
     await settle();
     tick(500);
-    calls[1]!.fail("both failed");
+    calls[1]!.fail("the cloud model took longer than 120 s");
     await settle();
     expect(records).toEqual([
-      expect.objectContaining({ app: "just-a-bot", outcome: "ok", provider: "backup", model: "backup-model", waitMs: 0, runMs: 1500 }),
-      expect.objectContaining({ app: "ro-housing", outcome: "failed", provider: "cloud", model: "stub-model", waitMs: 1500, runMs: 500 }),
+      expect.objectContaining({ app: "just-a-bot", outcome: "ok", model: "another-model", waitMs: 0, runMs: 1500 }),
+      expect.objectContaining({ app: "ro-housing", outcome: "failed", model: "stub-model", waitMs: 1500, runMs: 500 }),
     ]);
   });
 

@@ -1,13 +1,14 @@
 # Getting started
 
-Running Wicket on your own machine, with the API, the queue page and a backup
-model of your own. Putting it on a VPS is [owner-setup.md](owner-setup.md).
+Running Wicket on your own machine: the API and the queue page. Putting it on
+a VPS is [owner-setup.md](owner-setup.md).
 
 ## Prerequisites
 
 - Node 24 or later.
-- An Ollama of your own, with a model already pulled. Wicket asks it as the
-  backup. Pull nothing for Wicket, since any small model you have will do.
+- For answers, an Ollama Cloud key. Wicket asks Ollama Cloud only. Without a
+  key it still runs: every call ends `failed` with "OLLAMA_API_KEY is not
+  set", and the queue, the page and sign-in all work.
 - Optional: Docker, to run the two containers locally (step 7), and a local
   Ward, for "Sign in with Ward" (step 6).
 
@@ -31,12 +32,11 @@ cp .env.example .env
 | Variable | What | Value for local use |
 |---|---|---|
 | `WICKET_APP_TOKENS` | Secret. `app=token` pairs, comma-separated, each token at least 32 characters | `my-app=` plus the output of `openssl rand -hex 32` |
-| `WICKET_BACKUP_MODEL` | The backup model's name | a model your Ollama already has, such as `llama3.2:1b` |
-| `WICKET_BACKUP_URL` | Your Ollama | default `http://127.0.0.1:11434` |
-| `OLLAMA_API_KEY` | Secret. The Ollama Cloud key | leave empty: every call then goes to the backup |
+| `OLLAMA_API_KEY` | Secret. The Ollama Cloud key | yours, or empty: every call then fails saying so |
+| `WICKET_CLOUD_MODEL` | The cloud model | default `gpt-oss:120b` |
 | `PUBLIC_ORIGIN` | The page's origin as the browser sees it | empty for `npm run dev`; `http://127.0.0.1:8808` for `npm start` |
 
-The cloud and backup settings and their defaults are in
+The cloud settings and their defaults are in
 [providers.md](../corpus/wiki/providers.md); the sign-in settings in
 [sign-in.md](../corpus/wiki/sign-in.md).
 
@@ -75,8 +75,10 @@ curl -s -X POST http://127.0.0.1:8808/v1/jobs -H "Authorization: Bearer $TOKEN" 
 curl -s "http://127.0.0.1:8808/v1/jobs/<id>?wait=25" -H "Authorization: Bearer $TOKEN"
 ```
 
-The second call returns once the job is done, with `"backup":true` when no
-cloud key is set. The call shows on the page under "Recent calls". The whole
+The second call returns once the job has finished: `done` with the answer, or
+`failed` with the reason (with no key, "the cloud model can't be asked:
+OLLAMA_API_KEY is not set"). The call shows on the page under "Recent
+calls". The whole
 contract is [api.md](../corpus/wiki/api.md).
 
 ## 6. Sign in with Ward (optional)
@@ -87,11 +89,11 @@ terminal. It writes the five `WARD_OIDC_*` values into this repo's `.env`.
 Restart `npm run dev` and the login page shows "Sign in with Ward". With
 `WARD_OIDC_ISSUER` empty, Wicket runs with local accounts only.
 
-## 7. Run the containers (optional)
+## 7. Run the container (optional)
 
-To check the two images before a deploy, with no model pulled, follow section
-5 of [owner-setup.md](owner-setup.md#5-check-the-containers-locally). It reuses
-your Ollama's model store read-only and cleans up after itself.
+To check the image before a deploy, follow section 4 of
+[owner-setup.md](owner-setup.md#4-check-the-container-locally). It cleans up
+after itself.
 
 ## Checks
 
@@ -101,9 +103,8 @@ npm run lint
 npm test
 ```
 
-`npm test` runs the server's and the page's tests against stub Ollama
-servers. One test asks your real Ollama and is skipped unless
-`WICKET_LIVE_OLLAMA=1` (model `llama3.2:1b`, or `WICKET_LIVE_BACKUP_MODEL`).
+`npm test` runs the server's and the page's tests against a stub Ollama
+server. No test asks a real model.
 
 ## The docs site
 
