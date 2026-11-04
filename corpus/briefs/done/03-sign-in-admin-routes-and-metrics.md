@@ -74,3 +74,28 @@ Depends on 01.
   `X-Forwarded-For`; the rename route is gone.
 - `wzd_auth` has no changes.
 - `bash corpus/lint.sh` passes.
+
+## Outcome (2026-11-04)
+
+Built as specified; how it works is in [sign-in.md](../../wiki/sign-in.md).
+
+- **Vendoring.** Wicket's `server/vendor/ward/` came from the Ward repo's
+  `npm run vendor` (ward-auth 0.7.0). It is byte-identical to brief-board's
+  copy, and `git status` in `wzd_auth` showed no change afterwards. The
+  generated headers name the library's GitHub repository and the LICENSE its
+  author, as the upstream attribution; vendored files are never edited.
+- **`GET /v1/queue`** also answers `serverTime`, so the page ticks the
+  running call's elapsed time on the server's clock.
+- **`GET /v1/records`** counts per app: `total`, `ok`, `failed`,
+  `cancelled` and `backup` (how many the backup answered), for the last 24
+  hours and 7 days.
+- **`/metrics`** is also refused with a `Forwarded` header, and through
+  `/wicket-api/metrics`.
+- Signed out, an unknown `/auth` route (a `register`) is a 401; signed in,
+  a 404. Either way there is no sign-up.
+
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (6 files, 79 tests,
+1 skipped: 13 for the admin routes, sign-in and metrics, 3 for the sign-in
+settings). The seed ran twice against a scratch database: it created the user,
+then left it alone. A Ward sign-in was not tried: Wicket isn't in Ward's local
+seed yet (an owner step).

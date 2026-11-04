@@ -41,3 +41,13 @@ so a force close never falls back. Tested against stub servers, and once by
 hand against a local `llama3.2:1b`. See
 [wiki/providers.md](wiki/providers.md) and
 [briefs/done/02-cloud-and-backup-providers.md](briefs/done/02-cloud-and-backup-providers.md).
+
+## [2026-11-04] done | Brief 03: sign-in, the admin routes, and /metrics
+
+ward-auth 0.7.0 vendored into `server/vendor/ward` with the Ward repo's own
+script (no change in that repo). Sessions guard `/v1/queue` (force close,
+clear) and `/v1/records`; app tokens guard `/v1/jobs`, and neither opens the
+other's routes. Unlike brief-board, sessions may write, with an Origin check
+on the two POSTs. `/metrics` serves Prometheus text and is refused through a
+proxy. See [wiki/sign-in.md](wiki/sign-in.md) and
+[briefs/done/03-sign-in-admin-routes-and-metrics.md](briefs/done/03-sign-in-admin-routes-and-metrics.md).

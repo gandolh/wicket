@@ -2,39 +2,68 @@ import {
   jobParamsSchema,
   jobQuerySchema,
   jobRequestSchema,
+  MAX_RECORDS,
+  recordsQuerySchema,
+  type ClearResponse,
   type ErrorBody,
+  type ForceCloseResponse,
   type HealthResponse,
   type JobView,
+  type QueueResponse,
+  type RecordsResponse,
 } from "@wicket/shared";
-import Fastify, { type FastifyInstance, type FastifyReply, type FastifyServerOptions } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest, type FastifyServerOptions } from "fastify";
 import type { z } from "zod";
+import { createWardClient, wardAuth, type Accounts, type WardClientOptions } from "../vendor/ward/ward-auth.js";
+import { openAccounts, USER_ROLE } from "./accounts.js";
+import { AUTH_ROUTE_PREFIX, DEV_ORIGIN } from "./config.js";
 import { openDatabase } from "./db.js";
+import { Metrics } from "./metrics.js";
 import { Queue, QueueClosedError, QueueFullError, type Runner } from "./queue.js";
 import { Records } from "./records.js";
 import { AppTokens } from "./tokens.js";
 
 /**
- * The Wicket API. Apps reach the job routes with their own bearer token:
+ * The Wicket API. Two families of routes, each with its own guard:
  *
+ * Apps, with their own bearer token (never a session):
  *   POST   /v1/jobs       put a job in the queue (202)
  *   GET    /v1/jobs/:id   the job, long-polled with ?wait=N (N up to 25)
  *   DELETE /v1/jobs/:id   cancel it
- *   GET    /v1/health     open, for the deploy's check
  *
- * The browser and the apps reach these under `/wicket-api`; Caddy strips that
- * prefix in production, and this server strips it too (`stripApiPrefix`), so
- * the same build works behind Caddy and on its own.
+ * The queue page, with a signed-in session (never a token):
+ *   GET    /v1/queue                  now serving, the running job, the waiting line
+ *   POST   /v1/queue/running/cancel   force close
+ *   POST   /v1/queue/clear            clear the queue
+ *   GET    /v1/records                recent records and counts per app
+ *
+ * Open: `GET /v1/health` for the deploy's check, and `GET /metrics` for the
+ * box's Prometheus, which is refused on any request that came through a proxy.
+ * Sign-in lives under `/auth`, from the vendored ward-auth plugin.
+ *
+ * The browser and the apps reach all of it under `/wicket-api`; Caddy strips
+ * that prefix in production, and this server strips it too (`stripApiPrefix`),
+ * so the same build works behind Caddy and on its own.
  *
  * Nothing here logs a body: Fastify's request log has the method and URL,
- * never the headers or the payload, so neither a token nor a prompt is
- * written anywhere.
+ * never the headers or the payload, so neither a token, a cookie nor a prompt
+ * is written anywhere.
  */
 
-/** The API prefix as the browser and the apps see it. */
+/** The API prefix as the browser and the apps see it, unless `WICKET_API_PREFIX` moves it. */
 export const API_PREFIX = "/wicket-api";
+/** Where the built page is served, unless `WICKET_BASE` moves it. */
+export const PAGE_PATH = "/wicket/";
+/** The session cookie's name. Unique in the estate: every app shares one origin. */
+export const SESSION_COOKIE = "wicket_session";
 
 /** The largest job body accepted: a listing page fits with room to spare. */
 export const BODY_LIMIT = 1024 * 1024;
+
+/** How many records the page gets when it doesn't say. */
+const DEFAULT_RECORDS = 50;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** A URL without a leading API prefix, when `/`, `?` or the end follows it; any other URL as it is. */
 export function stripApiPrefix(url: string, prefix: string = API_PREFIX): string {
@@ -53,8 +82,16 @@ export interface AppOptions {
   run: Runner;
   /** The apps and their tokens. Default: none, so every job call is refused. */
   appTokens?: AppTokens;
-  /** The API prefix as the browser sees it. Default `/wicket-api`. */
+  /** The page's origin as the browser sees it. Default `http://localhost:5179`, the Vite dev server. */
+  publicOrigin?: string;
+  /** The API prefix as the browser sees it, and the session cookie's path. Default `/wicket-api`. */
   apiPrefix?: string;
+  /** The page's base path, with a trailing slash. Default `/wicket/`. */
+  webBase?: string;
+  /** "Sign in with Ward". Unset, local accounts only. */
+  ward?: WardClientOptions;
+  /** Peers besides loopback whose `X-Forwarded-For` the login lockout believes. Default none. */
+  trustedProxies?: readonly string[];
   /** How many jobs may wait at once. Default 200. */
   maxWaiting?: number;
   /** How long a finished job is kept for its caller, in milliseconds. Default 10 minutes. */
@@ -66,10 +103,12 @@ export interface AppOptions {
 
 declare module "fastify" {
   interface FastifyInstance {
-    /** The one queue, for the admin routes and the tests. */
+    /** The one queue, for the tests. */
     queue: Queue;
-    /** The records, for the page and the tests. */
+    /** The records, for the tests. */
     records: Records;
+    /** The local accounts, for the seed's tests. */
+    accounts: Accounts;
   }
   interface FastifyRequest {
     /** The app whose token the request carried, on the job routes. */
@@ -102,13 +141,43 @@ export function parse<S extends z.ZodType>(schema: S, value: unknown, reply: Fas
   return undefined;
 }
 
-const UNAUTHORIZED_MESSAGE = "send your app's token as Authorization: Bearer <token>";
+/**
+ * Whether a browser said the request came from this origin. Absent headers
+ * pass (a script or curl sends neither); a browser that sent them and named
+ * another site does not. On top of the cookie's `SameSite=Lax`, for the two
+ * admin writes.
+ */
+export function sameOrigin(request: FastifyRequest, publicOrigin: string): boolean {
+  const fetchSite = request.headers["sec-fetch-site"];
+  if (typeof fetchSite === "string" && fetchSite !== "" && fetchSite !== "same-origin") return false;
+  const origin = request.headers.origin;
+  if (typeof origin === "string" && origin !== "") {
+    try {
+      return new URL(origin).origin === publicOrigin;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** A request that came through a proxy: Caddy always adds `X-Forwarded-For`. */
+function forwarded(request: FastifyRequest): boolean {
+  return request.headers["x-forwarded-for"] !== undefined || request.headers.forwarded !== undefined;
+}
+
+const UNAUTHORIZED_TOKEN = "send your app's token as Authorization: Bearer <token>";
+const UNAUTHORIZED_SESSION = "sign in to Wicket's page; app tokens don't open the admin routes";
 
 export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   const db = openDatabase(options.dbPath);
   const records = new Records(db);
+  const metrics = new Metrics();
   const appTokens = options.appTokens ?? AppTokens.parse(undefined);
   const apiPrefix = options.apiPrefix ?? API_PREFIX;
+  const webBase = options.webBase ?? PAGE_PATH;
+  const publicOrigin = options.publicOrigin ?? DEV_ORIGIN;
+  const now = options.now ?? Date.now;
   const app = Fastify({
     logger: options.logger ?? false,
     bodyLimit: BODY_LIMIT,
@@ -117,11 +186,14 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
 
   const queue = new Queue({
     run: options.run,
-    record: (record) => records.add(record),
+    record: (record) => {
+      metrics.observe(record);
+      records.add(record);
+    },
     firstTicket: records.maxTicket() + 1,
     maxWaiting: options.maxWaiting,
     keepFinishedMs: options.keepFinishedMs,
-    now: options.now,
+    now,
     onError: (message, error) => app.log.error({ err: error }, message),
   });
   app.decorate("queue", queue);
@@ -151,15 +223,75 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     return fail(reply, status, { code: "invalid_request", message });
   });
 
-  // The job routes: an app's token, or 401. The token names the app.
+  // The session guard, first, so every route after it is behind it.
+  const accounts = openAccounts(db);
+  app.decorate("accounts", accounts);
+  // Checks the settings and imports the key now; talks to Ward only on first use, so Wicket starts while Ward is down.
+  const ward = options.ward && (await createWardClient(options.ward));
+  await app.register(wardAuth, {
+    accounts,
+    cookieName: SESSION_COOKIE,
+    // The API prefix as the browser sees it: every request that needs the session is under it.
+    cookiePath: apiPrefix,
+    publicOrigin,
+    routePrefix: AUTH_ROUTE_PREFIX,
+    publicRoutes: ["GET /v1/health", "GET /metrics"],
+    // The page offers no rename, and the seed matches accounts by name.
+    allowRename: false,
+    isPublic: (request) => {
+      const path = pathOf(request.url);
+      // The apps' routes: their token decides (the hook below), never a session.
+      if (isUnder(path, "/v1/jobs")) return true;
+      // Every other API route needs a session; the plugin's own list decides under /auth.
+      if (isUnder(path, "/v1") || isUnder(path, AUTH_ROUTE_PREFIX)) return false;
+      // The page's files, the redirect to them, /metrics and a 404: the login page has to load.
+      return true;
+    },
+    trustedProxies: options.trustedProxies ?? [],
+    ...(ward && {
+      ward: {
+        client: ward,
+        loginPath: `${webBase}login`,
+        settingsPath: `${webBase}account`,
+        afterSignInPath: webBase,
+        roleFor: () => USER_ROLE,
+      },
+    }),
+  });
+
+  // The guard answers `{ error: "unauthorized" }`; under `/v1` the contract's
+  // error shape is `{ code, message }`. The sign-in routes keep the plugin's
+  // shape for its hooks.
+  app.addHook("onSend", async (request, reply, payload) => {
+    if (reply.statusCode !== 401 || typeof payload !== "string" || !isUnder(pathOf(request.url), "/v1")) return payload;
+    let body: unknown;
+    try {
+      body = JSON.parse(payload);
+    } catch {
+      return payload;
+    }
+    if (typeof body !== "object" || body === null || !("error" in body) || "code" in body) return payload;
+    const refused: ErrorBody = { code: "unauthorized", message: UNAUTHORIZED_SESSION };
+    return JSON.stringify(refused);
+  });
+
+  // The apps' routes: a token, or 401. The token names the app.
   app.addHook("onRequest", async (request, reply) => {
     if (!isUnder(pathOf(request.url), "/v1/jobs")) return;
     const name = appTokens.appFor(request.headers.authorization);
-    if (name === undefined) return fail(reply, 401, { code: "unauthorized", message: UNAUTHORIZED_MESSAGE });
+    if (name === undefined) return fail(reply, 401, { code: "unauthorized", message: UNAUTHORIZED_TOKEN });
     request.wicketApp = name;
   });
 
   app.get("/v1/health", async (): Promise<HealthResponse> => ({ ok: true }));
+
+  app.get("/metrics", async (request, reply) => {
+    // Loopback only: through Caddy it would publish app names and counts.
+    if (forwarded(request)) return fail(reply, 404, { code: "not_found", message: `no route GET ${pathOf(request.url)}` });
+    return reply.type("text/plain; version=0.0.4; charset=utf-8").send(metrics.render(queue.snapshot()));
+  });
+
+  // ---- the apps' routes ---------------------------------------------------
 
   app.post("/v1/jobs", async (request, reply) => {
     const body = parse(jobRequestSchema, request.body, reply);
@@ -178,7 +310,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     }
   });
 
-  const notFound = (reply: FastifyReply) =>
+  const noSuchJob = (reply: FastifyReply) =>
     fail(reply, 404, { code: "not_found", message: "no such job for this app (a restart forgets every job)" });
 
   app.get("/v1/jobs/:id", async (request, reply) => {
@@ -201,13 +333,51 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     } else {
       view = queue.get(params.id, caller);
     }
-    return view ?? notFound(reply);
+    return view ?? noSuchJob(reply);
   });
 
   app.delete("/v1/jobs/:id", async (request, reply) => {
     const params = parse(jobParamsSchema, request.params, reply);
     if (!params) return reply;
-    return queue.cancel(params.id, request.wicketApp!) ?? notFound(reply);
+    return queue.cancel(params.id, request.wicketApp!) ?? noSuchJob(reply);
+  });
+
+  // ---- the queue page's routes (a session) --------------------------------
+
+  /** The two writes refuse a browser that says it came from another site. */
+  const crossSite = (request: FastifyRequest, reply: FastifyReply): boolean => {
+    if (sameOrigin(request, publicOrigin)) return false;
+    void fail(reply, 403, { code: "cross_site", message: "open Wicket's page from its own address" });
+    return true;
+  };
+
+  app.get("/v1/queue", async (): Promise<QueueResponse> => ({ serverTime: now(), ...queue.snapshot() }));
+
+  app.post("/v1/queue/running/cancel", async (request, reply) => {
+    if (crossSite(request, reply)) return reply;
+    const closed = queue.forceClose();
+    if (closed) request.log.info("force closed the running job from the queue page");
+    const body: ForceCloseResponse = { closed };
+    return body;
+  });
+
+  app.post("/v1/queue/clear", async (request, reply) => {
+    if (crossSite(request, reply)) return reply;
+    const cleared = queue.clear();
+    if (cleared > 0) request.log.info(`cleared ${cleared} waiting job(s) from the queue page`);
+    const body: ClearResponse = { cleared };
+    return body;
+  });
+
+  app.get("/v1/records", async (request, reply) => {
+    const query = parse(recordsQuerySchema, request.query, reply);
+    if (!query) return reply;
+    const at = now();
+    const body: RecordsResponse = {
+      records: records.recent(Math.min(query.limit ?? DEFAULT_RECORDS, MAX_RECORDS)),
+      counts: { day: records.countsSince(at - DAY_MS), week: records.countsSince(at - 7 * DAY_MS) },
+    };
+    return body;
   });
 
   app.setNotFoundHandler((request, reply) =>

@@ -1,8 +1,7 @@
-import type { Provider } from "@wicket/shared";
+import type { AppCounts, Outcome, Provider } from "@wicket/shared";
 import type { Db } from "./db.js";
 
-/** How a record's job ended. `ok` is a job whose status was `done`. */
-export type Outcome = "ok" | "failed" | "cancelled";
+export type { Outcome };
 
 /**
  * One finished job, as kept: who, which ticket, where it ran and how long it
@@ -62,6 +61,7 @@ export class Records {
   private readonly insert;
   private readonly maxTicketStmt;
   private readonly recentStmt;
+  private readonly countsStmt;
 
   constructor(db: Db) {
     this.insert = db.prepare(
@@ -70,6 +70,18 @@ export class Records {
     );
     this.maxTicketStmt = db.prepare("SELECT COALESCE(MAX(ticket), 0) AS max FROM records");
     this.recentStmt = db.prepare("SELECT * FROM records ORDER BY finished_at DESC, id DESC LIMIT ?");
+    this.countsStmt = db.prepare(
+      `SELECT app,
+              COUNT(*) AS total,
+              SUM(outcome = 'ok') AS ok,
+              SUM(outcome = 'failed') AS failed,
+              SUM(outcome = 'cancelled') AS cancelled,
+              SUM(provider = 'backup') AS backup
+         FROM records
+        WHERE finished_at >= ?
+        GROUP BY app
+        ORDER BY app`,
+    );
   }
 
   add(record: JobRecord): void {
@@ -84,5 +96,17 @@ export class Records {
   /** The newest records first. */
   recent(limit: number): StoredRecord[] {
     return (this.recentStmt.all(limit) as Row[]).map(fromRow);
+  }
+
+  /** Per app, the calls that finished at or after `since` (epoch milliseconds). */
+  countsSince(since: number): AppCounts[] {
+    return (this.countsStmt.all(since) as AppCounts[]).map((row) => ({
+      app: row.app,
+      total: row.total,
+      ok: row.ok ?? 0,
+      failed: row.failed ?? 0,
+      cancelled: row.cancelled ?? 0,
+      backup: row.backup ?? 0,
+    }));
   }
 }

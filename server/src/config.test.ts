@@ -55,3 +55,29 @@ describe("provider settings", () => {
     expect(message).not.toContain("the-secret-key");
   });
 });
+
+describe("sign-in settings", () => {
+  it("defaults to the Vite dev server, the sub-paths and local accounts only", () => {
+    const config = loadConfig({});
+    expect(config).toMatchObject({ publicOrigin: "http://localhost:5179", apiPrefix: "/wicket-api", webBase: "/wicket/", ward: undefined, trustedProxies: [] });
+  });
+
+  it("refuses an origin with a path, and a half-set Ward", () => {
+    expect(() => loadConfig({ PUBLIC_ORIGIN: "https://example.com/wicket" })).toThrow(/PUBLIC_ORIGIN/);
+    expect(() => loadConfig({ WARD_OIDC_ISSUER: "https://ward.example.com" })).toThrow(/WARD_OIDC_ISSUER empty/);
+  });
+
+  it("wants Ward's callback under the API prefix", () => {
+    const ward = {
+      WARD_OIDC_ISSUER: "https://ward.example.com",
+      WARD_OIDC_CLIENT_ID: "wicket",
+      // Not a usable key; config only checks it is set, the client imports it at start.
+      WARD_OIDC_CLIENT_KEY: "not-checked-here",
+      WARD_OIDC_POST_LOGOUT_REDIRECT_URI: "https://example.com/wicket/",
+    };
+    expect(() => loadConfig({ ...ward, WARD_OIDC_REDIRECT_URI: "https://example.com/auth/ward/callback" })).toThrow(
+      /\/wicket-api\/auth\/ward\/callback/,
+    );
+    expect(loadConfig({ ...ward, WARD_OIDC_REDIRECT_URI: "https://example.com/wicket-api/auth/ward/callback" }).ward).toBeDefined();
+  });
+});

@@ -92,3 +92,93 @@ export type ErrorBody = { code: ErrorCode; message: string };
 
 export const healthResponseSchema = z.object({ ok: z.literal(true) });
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
+
+/*
+ * The admin routes, for the queue page. A signed-in session only, never an
+ * app token. Times are epoch milliseconds; `serverTime` lets the page tick an
+ * elapsed time without trusting the browser's clock.
+ */
+
+export const runningJobSchema = z.object({
+  id: z.string(),
+  app: z.string(),
+  ticket: z.number().int().positive(),
+  /** Null for the instant before the runner names where it asks. */
+  provider: providerSchema.nullable(),
+  model: z.string().nullable(),
+  startedAt: z.number(),
+});
+export type RunningJob = z.infer<typeof runningJobSchema>;
+
+export const waitingJobSchema = z.object({
+  id: z.string(),
+  app: z.string(),
+  ticket: z.number().int().positive(),
+  queuedAt: z.number(),
+});
+export type WaitingJob = z.infer<typeof waitingJobSchema>;
+
+/** `GET /v1/queue`. */
+export const queueResponseSchema = z.object({
+  serverTime: z.number(),
+  nowServing: z.number().int().nonnegative(),
+  running: runningJobSchema.nullable(),
+  waiting: z.array(waitingJobSchema),
+});
+export type QueueResponse = z.infer<typeof queueResponseSchema>;
+
+/** `POST /v1/queue/running/cancel`: false when nothing ran. */
+export const forceCloseResponseSchema = z.object({ closed: z.boolean() });
+export type ForceCloseResponse = z.infer<typeof forceCloseResponseSchema>;
+
+/** `POST /v1/queue/clear`: how many waiting jobs were dropped. */
+export const clearResponseSchema = z.object({ cleared: z.number().int().nonnegative() });
+export type ClearResponse = z.infer<typeof clearResponseSchema>;
+
+export const OUTCOMES = ["ok", "failed", "cancelled"] as const;
+export const outcomeSchema = z.enum(OUTCOMES);
+export type Outcome = z.infer<typeof outcomeSchema>;
+
+/** One finished job as kept: names and numbers, never text. */
+export const recordSchema = z.object({
+  id: z.number().int(),
+  app: z.string(),
+  ticket: z.number().int(),
+  model: z.string().nullable(),
+  provider: providerSchema.nullable(),
+  outcome: outcomeSchema,
+  queuedAt: z.number(),
+  startedAt: z.number().nullable(),
+  finishedAt: z.number(),
+  waitMs: z.number(),
+  runMs: z.number().nullable(),
+});
+export type RecordView = z.infer<typeof recordSchema>;
+
+/** Per app, over a window: how many calls, how they ended, how many the backup answered. */
+export const appCountsSchema = z.object({
+  app: z.string(),
+  total: z.number().int(),
+  ok: z.number().int(),
+  failed: z.number().int(),
+  cancelled: z.number().int(),
+  backup: z.number().int(),
+});
+export type AppCounts = z.infer<typeof appCountsSchema>;
+
+/** The most records `GET /v1/records` answers with. */
+export const MAX_RECORDS = 200;
+
+export const recordsQuerySchema = z.object({
+  limit: z.coerce.number<string>().int().min(1).max(MAX_RECORDS).optional(),
+});
+
+/** `GET /v1/records`. */
+export const recordsResponseSchema = z.object({
+  records: z.array(recordSchema),
+  counts: z.object({
+    day: z.array(appCountsSchema),
+    week: z.array(appCountsSchema),
+  }),
+});
+export type RecordsResponse = z.infer<typeof recordsResponseSchema>;

@@ -1,6 +1,16 @@
 import { z } from "zod";
+import { wardClientOptionsFromEnv, type WardClientOptions } from "../vendor/ward/ward-auth.js";
 import type { BackupSettings, CloudSettings } from "./providers.js";
 import { AppTokens, TokenConfigError } from "./tokens.js";
+
+/** Where the auth plugin's routes sit as Fastify sees them; the browser reaches them under the API prefix. */
+export const AUTH_ROUTE_PREFIX = "/auth";
+
+/** The Ward callback, under the API prefix: `WARD_OIDC_REDIRECT_URI` is the origin, the prefix, then this. */
+export const WARD_CALLBACK_PATH = `${AUTH_ROUTE_PREFIX}/ward/callback`;
+
+/** The Vite dev server, where the page runs in development. */
+export const DEV_ORIGIN = "http://localhost:5179";
 
 /** The server's settings, read once at startup from the environment (and the repo's `.env`). */
 export interface Config {
@@ -13,6 +23,16 @@ export interface Config {
   /** Ollama Cloud, or undefined when `OLLAMA_API_KEY` is unset and every job goes to the backup. */
   cloud: CloudSettings | undefined;
   backup: BackupSettings;
+  /** The page's own origin as the browser sees it, bare. Default is the Vite dev server. */
+  publicOrigin: string;
+  /** The API prefix as the browser sees it, and the session cookie's path. Default `/wicket-api`. */
+  apiPrefix: string;
+  /** The page's base path, with a trailing slash. Default `/wicket/`. */
+  webBase: string;
+  /** "Sign in with Ward", or undefined for local accounts only. `clientKey` is a secret. */
+  ward: WardClientOptions | undefined;
+  /** `AUTH_TRUSTED_PROXIES`: peers besides loopback whose `X-Forwarded-For` the login lockout believes. */
+  trustedProxies: string[];
 }
 
 /** The environment cannot run the server. The message names every variable at fault. */
@@ -79,6 +99,21 @@ const envSchema = z.object({
   WICKET_BACKUP_TIMEOUT_SECONDS: optional(seconds("WICKET_BACKUP_TIMEOUT_SECONDS")).transform(
     (value) => value ?? DEFAULTS.backupTimeoutSeconds,
   ),
+  PUBLIC_ORIGIN: optional(
+    z.string().refine((value) => URL.canParse(value) && new URL(value).origin === value, {
+      message: "PUBLIC_ORIGIN must be a bare origin such as https://example.com: no path and no trailing slash.",
+    }),
+  ).transform((value) => value ?? DEV_ORIGIN),
+  WICKET_API_PREFIX: optional(
+    z.string().regex(/^\/[^\s?#]*[^/\s?#]$/, {
+      message: "WICKET_API_PREFIX must be a path such as /wicket-api: a leading slash and no trailing slash.",
+    }),
+  ).transform((value) => value ?? "/wicket-api"),
+  WICKET_BASE: optional(
+    z.string().regex(/^\/([^\s?#]*\/)?$/, {
+      message: "WICKET_BASE must be a path such as /wicket/: a leading and a trailing slash.",
+    }),
+  ).transform((value) => value ?? "/wicket/"),
 });
 
 export function describeIssue(issue: z.core.$ZodIssue): string {
@@ -86,11 +121,43 @@ export function describeIssue(issue: z.core.$ZodIssue): string {
   return issue.message.startsWith(key) ? issue.message : `${key}: ${issue.message}`;
 }
 
+/**
+ * The Ward settings, read by the library's own reader so the rules are its
+ * (an empty `WARD_OIDC_ISSUER` means off; with it set, the client id, key and
+ * redirect URI must be too). On top: the redirect URI must be the callback
+ * under the API prefix, where the session cookie and the dev proxy are.
+ * Messages never repeat the key.
+ */
+function wardSettings(env: NodeJS.ProcessEnv, apiPrefix: string | undefined, problems: string[]): WardClientOptions | undefined {
+  let ward: WardClientOptions | undefined;
+  try {
+    ward = wardClientOptionsFromEnv(env);
+  } catch (error) {
+    problems.push(`${error instanceof Error ? error.message : String(error)}. Set all of them, or leave WARD_OIDC_ISSUER empty for local accounts only.`);
+    return undefined;
+  }
+  if (ward === undefined || apiPrefix === undefined) return ward;
+  const expected = `${apiPrefix}${WARD_CALLBACK_PATH}`;
+  if (!URL.canParse(ward.redirectUri) || new URL(ward.redirectUri).pathname !== expected) {
+    problems.push(`WARD_OIDC_REDIRECT_URI must be the callback as the browser reaches it: the page's origin, then ${expected}.`);
+  }
+  return ward;
+}
+
+/** `AUTH_TRUSTED_PROXIES`, comma-separated, blanks dropped. The plugin checks each entry when it registers. */
+function trustedProxies(value: string | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== "");
+}
+
 /** The settings from `env`, or a `ConfigError` naming every variable that is wrong. Messages never repeat a secret. */
 export function loadConfig(env: NodeJS.ProcessEnv): Config {
   const problems: string[] = [];
   const parsed = envSchema.safeParse(env);
   if (!parsed.success) problems.push(...parsed.error.issues.map(describeIssue));
+  const ward = wardSettings(env, parsed.success ? parsed.data.WICKET_API_PREFIX : undefined, problems);
   let appTokens: AppTokens | undefined;
   try {
     appTokens = AppTokens.parse(env.WICKET_APP_TOKENS);
@@ -119,5 +186,10 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
       keepAlive: values.WICKET_BACKUP_KEEP_ALIVE,
       timeoutMs: values.WICKET_BACKUP_TIMEOUT_SECONDS * 1000,
     },
+    publicOrigin: values.PUBLIC_ORIGIN,
+    apiPrefix: values.WICKET_API_PREFIX,
+    webBase: values.WICKET_BASE,
+    ward,
+    trustedProxies: trustedProxies(env.AUTH_TRUSTED_PROXIES),
   };
 }

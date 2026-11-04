@@ -75,14 +75,19 @@ token that names the app).
 
 ## For the page and the box
 
-- `GET /v1/queue`: now serving, the running call (id, app, ticket, cloud or
-  backup, model, when it started) and the waiting tickets (id, app, ticket,
-  when each joined). No message text.
+- `GET /v1/queue`: the server's clock (`serverTime`), now serving, the
+  running call (id, app, ticket, cloud or backup, model, when it started) and
+  the waiting tickets (id, app, ticket, when each joined). Times are epoch
+  milliseconds. No message text.
 - `POST /v1/queue/running/cancel`: force close. 200 with `{ closed: true }`,
   or `{ closed: false }` when nothing runs.
 - `POST /v1/queue/clear`: 200 with `{ cleared: <how many> }`.
-- `GET /v1/records`: an addition for the page, session only: recent records and
-  counts per app, outcome and provider.
+- `GET /v1/records?limit=N` (default 50, at most 200): an addition for the
+  page, session only: the newest records, and per app for the last 24 hours
+  and 7 days the total, `ok`, `failed`, `cancelled` and how many the backup
+  answered.
+- The two admin POSTs refuse a browser that says it came from another site
+  (403 `cross_site`).
 - `GET /v1/health`: open, `{ ok: true }`, for the deploy's check.
 - `GET /metrics`: Prometheus text, refused (404) on a request that came
   through a proxy. The box's Prometheus scrapes `127.0.0.1:8808/metrics`.

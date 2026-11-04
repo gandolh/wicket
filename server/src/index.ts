@@ -5,9 +5,9 @@ import { ConfigError, loadConfig, type Config } from "./config.js";
 import { createRunner } from "./providers.js";
 
 /**
- * Start Wicket: the API under `/v1`, on 127.0.0.1:8808 by default. Locally
- * the owner runs it with `npm start` or `npm run dev`; on the VPS it is the
- * `wicket-api` container.
+ * Start Wicket: the API under `/v1`, sign-in under `/auth` and `/metrics`, on
+ * 127.0.0.1:8808 by default. Locally the owner runs it with `npm start` or
+ * `npm run dev`; on the VPS it is the `wicket-api` container.
  *
  * Settings come from the environment, and from the repo root's `.env` for
  * what the environment leaves unset. `config.ts` lists them and stops the
@@ -44,6 +44,11 @@ const app = await buildApp({
     log: { warn: (message) => app.log.warn(message), error: (message) => app.log.error(message) },
   }),
   appTokens: config.appTokens,
+  publicOrigin: config.publicOrigin,
+  apiPrefix: config.apiPrefix,
+  webBase: config.webBase,
+  ward: config.ward,
+  trustedProxies: config.trustedProxies,
   logger: true,
 });
 app.log.info(`database: ${dbPath}`);
@@ -55,6 +60,7 @@ app.log.info(
     : "no OLLAMA_API_KEY: every job goes straight to the backup model",
 );
 app.log.info(`backup: ${config.backup.model} at ${config.backup.url}, keep-alive ${config.backup.keepAlive}`);
+app.log.info(config.ward ? "Sign in with Ward is on" : "WARD_OIDC_ISSUER is not set: local accounts only, no Sign in with Ward");
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => {
