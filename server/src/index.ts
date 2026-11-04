@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildApp } from "./app.js";
 import { ConfigError, loadConfig, type Config } from "./config.js";
-import type { Runner } from "./queue.js";
+import { createRunner } from "./providers.js";
 
 /**
  * Start Wicket: the API under `/v1`, on 127.0.0.1:8808 by default. Locally
@@ -35,20 +35,26 @@ try {
 
 const dbPath = config.dbPath ? resolve(config.dbPath) : resolve(REPO_ROOT, "data/wicket.sqlite");
 
-/** No provider is wired yet: every job fails with this. */
-const noProvider: Runner = async () => {
-  throw new Error("no provider is configured yet");
-};
-
 const app = await buildApp({
   dbPath,
-  run: noProvider,
+  run: createRunner({
+    cloud: config.cloud,
+    backup: config.backup,
+    // Called only once jobs run, after `app` exists.
+    log: { warn: (message) => app.log.warn(message), error: (message) => app.log.error(message) },
+  }),
   appTokens: config.appTokens,
   logger: true,
 });
 app.log.info(`database: ${dbPath}`);
 const apps = config.appTokens.apps;
 app.log.info(apps.length > 0 ? `apps: ${apps.join(", ")}` : "no WICKET_APP_TOKENS: every job call is refused");
+app.log.info(
+  config.cloud
+    ? `cloud: ${config.cloud.model} at ${config.cloud.url}`
+    : "no OLLAMA_API_KEY: every job goes straight to the backup model",
+);
+app.log.info(`backup: ${config.backup.model} at ${config.backup.url}, keep-alive ${config.backup.keepAlive}`);
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => {

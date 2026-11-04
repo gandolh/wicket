@@ -24,3 +24,34 @@ describe("config", () => {
     expect(message).toContain("WICKET_APP_TOKENS");
   });
 });
+
+describe("provider settings", () => {
+  it("sends every job to the backup without a key, with the settled defaults", () => {
+    const config = loadConfig({});
+    expect(config.cloud).toBeUndefined();
+    expect(config.backup).toEqual({ url: "http://127.0.0.1:11434", model: "gemma3:1b", keepAlive: "1m", timeoutMs: 300_000 });
+  });
+
+  it("asks the cloud with a key, gpt-oss:120b by default", () => {
+    const config = loadConfig({ OLLAMA_API_KEY: "a-key", WICKET_CLOUD_URL: "https://ollama.example.com/" });
+    expect(config.cloud).toEqual({ url: "https://ollama.example.com", model: "gpt-oss:120b", apiKey: "a-key", timeoutMs: 120_000 });
+  });
+
+  it("reads keep-alive as seconds or a duration", () => {
+    expect(loadConfig({ WICKET_BACKUP_KEEP_ALIVE: "0" }).backup.keepAlive).toBe(0);
+    expect(loadConfig({ WICKET_BACKUP_KEEP_ALIVE: "30s" }).backup.keepAlive).toBe("30s");
+    expect(() => loadConfig({ WICKET_BACKUP_KEEP_ALIVE: "soon" })).toThrow(/WICKET_BACKUP_KEEP_ALIVE/);
+  });
+
+  it("names a bad URL or timeout, never the key", () => {
+    let message = "";
+    try {
+      loadConfig({ OLLAMA_API_KEY: "the-secret-key", WICKET_BACKUP_URL: "ftp://x", WICKET_CLOUD_TIMEOUT_SECONDS: "0" });
+    } catch (error) {
+      message = (error as Error).message;
+    }
+    expect(message).toContain("WICKET_BACKUP_URL");
+    expect(message).toContain("WICKET_CLOUD_TIMEOUT_SECONDS");
+    expect(message).not.toContain("the-secret-key");
+  });
+});

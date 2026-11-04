@@ -67,3 +67,26 @@ Depends on 01.
   backup set to the local Ollama with `llama3.2:1b` answers with
   `backup: true`. Run it once by hand and say so; it is skipped by default.
 - `bash corpus/lint.sh` passes.
+
+## Outcome (2026-11-04)
+
+Built as specified; how it works is in
+[providers.md](../../wiki/providers.md).
+
+- **Failures** also include an `error` field in a 200 answer.
+- **The caller's error** carries Ollama's own error text, cut to 120
+  characters; the **log** carries only a status code or a kind, since
+  Ollama's text could in principle quote the prompt.
+- **Keep-alive** is sent as a number when the setting is whole seconds (`0`
+  unloads at once) and as a string for a duration (`1m`), because Ollama reads
+  a bare `"60"` string as a bad duration.
+- `index.ts` logs at start which cloud model and backup model are in use, and
+  says so when there is no key.
+
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (5 files, 63 tests,
+1 skipped: 17 new for the providers, 4 for their settings). The opt-in live
+test ran once by hand (`WICKET_LIVE_OLLAMA=1`) against the developer's Ollama
+with `llama3.2:1b` and passed in about 4 s. By hand: the built server with no
+key took a `format: "json"` job and answered `{"ok": true}` from
+`llama3.2:1b` with `backup: true`; its record held app, ticket, model,
+provider, outcome and times only. No model was pulled.

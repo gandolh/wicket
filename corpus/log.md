@@ -31,3 +31,13 @@ take per-app tokens from `WICKET_APP_TOKENS`; records keep counts and timings
 only, proved by a test that searches every table, the raw file and a
 trace-level log for the prompt and the answer. No provider yet. See
 [briefs/done/01-queue-and-jobs-api.md](briefs/done/01-queue-and-jobs-api.md).
+
+## [2026-11-04] done | Brief 02: the cloud, the backup, and falling back
+
+The runner asks Ollama Cloud (`gpt-oss:120b`) and, on any failure but a
+cancel, the backup Ollama (`gemma3:1b`, keep-alive `1m`); with no key it goes
+straight to the backup. A cancel is told from a timeout by which signal fired,
+so a force close never falls back. Tested against stub servers, and once by
+hand against a local `llama3.2:1b`. See
+[wiki/providers.md](wiki/providers.md) and
+[briefs/done/02-cloud-and-backup-providers.md](briefs/done/02-cloud-and-backup-providers.md).
