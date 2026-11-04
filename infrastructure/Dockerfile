@@ -26,8 +26,10 @@
 # deps: full workspace install, with the toolchain native modules may need
 # ---------------------------------------------------------------------------
 FROM node:24-alpine AS deps
-# better-sqlite3 13 ships Node-API prebuilds including linuxmusl-x64, so this is
-# a fallback rather than the normal path.
+# better-sqlite3 13 ships Node-API prebuilds including linuxmusl-x64, and that
+# prebuilt file is what loads: npm 11 skips its `node-gyp rebuild` install
+# script (it warns that the script isn't in allowScripts). The toolchain is a
+# fallback for a later npm or lockfile that does run it.
 RUN apk add --no-cache python3 make g++
 WORKDIR /app
 # Manifests first, for layer caching: one root lockfile, one npm ci. Every

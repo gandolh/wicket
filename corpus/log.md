@@ -90,3 +90,16 @@ which is empty again:
 - **The backup's context length** stays at Ollama's default until the scoring
   todo measures real listings; noted in [wiki/providers.md](wiki/providers.md).
   The todo stays open for a quiet machine.
+
+## [2026-11-04] done | Brief 06: the images build and run locally
+
+Docker Desktop answered, so both images were built and run together for the
+first time, as the compose project `wicket-smoke`, with a new local override
+that reuses the machine's own Ollama model store read-only instead of pulling
+a model. Health, a seeded dummy account, a call answered by the backup with
+`backup: true`, Clear queue and Force close from the page, and `/metrics` all
+passed; nothing in the images had to change. Measured: the API image 206 MB
+and about 40-50 MB of memory; the upstream Ollama image 6.55 GB, mostly GPU
+libraries, now an open question. "Sign in with Ward" wasn't walked: Ward's
+local seed hadn't been run. Filed brief 07 (README, docs, docs site). See
+[briefs/done/06-images-build-and-run-locally.md](briefs/done/06-images-build-and-run-locally.md).

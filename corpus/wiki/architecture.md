@@ -1,5 +1,5 @@
 ---
-summary: How Wicket is put together, as built 2026-11-04 (briefs 01-05). Three npm workspaces (shared contract, Fastify + SQLite server, React page); how a job moves through the queue, the providers and the records; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS as two containers (the API and a capped backup Ollama).
+summary: How Wicket is put together, as built 2026-11-04 (briefs 01-06). Three npm workspaces (shared contract, Fastify + SQLite server, React page); how a job moves through the queue, the providers and the records; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS as two containers (the API and a capped backup Ollama), and what the first local run of both images measured.
 updated: 2026-11-04
 ---
 
@@ -81,5 +81,14 @@ container can't reach the host's loopback; callers in containers use the
 public `/wicket-api` address for the same reason. Caddy serves the built page
 at `/wicket/` and forwards `/wicket-api/` to the API with the prefix stripped.
 vps-deploy's stack is written from
-[`docs/owner-setup.md`](../../docs/owner-setup.md). Not built or deployed as
-of 2026-11-04.
+[`docs/owner-setup.md`](../../docs/owner-setup.md).
+
+Both images were built and run together locally on 2026-11-04, with
+[`infrastructure/docker-compose.local.yml`](../../infrastructure/docker-compose.local.yml)
+laid over the compose file: it mounts a developer's own Ollama model store
+read-only into the backup (no model pulled) and keeps the data in a
+throwaway volume. Measured then: the API image about 210 MB and 40-50 MB of
+memory; the upstream Ollama image 6.55 GB, mostly GPU libraries; the backup
+about 120-190 MB idle and its model's full size while loaded, since Ollama
+loads weights without mmap and sizes itself to the container's limit. Not
+deployed as of 2026-11-04.

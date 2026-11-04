@@ -66,7 +66,7 @@ With vps-deploy, these go in its secrets file for the stack
 | Setting | Value |
 |---|---|
 | Source repo | `wicket`, built from the workspace root |
-| Containers | `wicket-api` (built from `infrastructure/Dockerfile`, image `wicket-api:1.0`) and `wicket-ollama` (`ollama/ollama:0.24.0`), both from `infrastructure/docker-compose.yml` |
+| Containers | `wicket-api` (built from `infrastructure/Dockerfile`, image `wicket-api:1.0`) and `wicket-ollama` (`ollama/ollama:0.24.0`), both from `infrastructure/docker-compose.yml` alone (`docker-compose.local.yml` is for a local check, step 5) |
 | Server dir | `/srv/wicket-api` (the compose file's `.env` goes in `infrastructure/`, 0600) |
 | Ports | `127.0.0.1:8808` (API), `127.0.0.1:11434` (backup Ollama). Loopback only; the deploy's loopback check should cover both |
 | Page | `web/dist`, built with `WICKET_BASE=/wicket/`, served at `/wicket/` with an SPA fallback to `index.html` |
@@ -97,6 +97,18 @@ GB limit), and that the daemon accepts `cpus` (it needs the `cpu` controller
 delegated to the services account; if `compose up` refuses it, drop the line
 and note it).
 
+Sizes, measured in a local run on 2026-11-04:
+
+- **Disk.** `wicket-api:1.0` is about 210 MB. `ollama/ollama:0.24.0` is
+  **6.55 GB** unpacked, 6.1 GB of it GPU libraries the box never loads. Check
+  the box has the room before the first deploy.
+- **Memory.** The API sits at about 40-50 MB. The backup Ollama sits at about
+  120-190 MB with no model loaded. Ollama reads the container's memory limit
+  and loads a model's weights into plain memory (no mmap), so the model plus
+  its context must fit under `mem_limit`: gemma3:1b (about 0.8 GB) fits
+  1300m; a bigger backup model needs a bigger cap. The model leaves memory
+  one minute after its last call (`OLLAMA_KEEP_ALIVE=1m`).
+
 ## 4. Pull the backup model
 
 Once, after the first deploy, on the box as the services account:
@@ -112,19 +124,69 @@ back. Check with `curl -s http://127.0.0.1:11434/api/tags`.
 
 ## 5. Check the containers locally
 
-Docker Desktop's WSL integration must be on. From the repo root, with a
-scratch data directory, and the backup on another port if your own Ollama
-holds 11434:
+Optional, on your own machine, before the first deploy. It builds both images
+and runs them as the compose project `wicket-smoke`, pulling no model: the
+override [`infrastructure/docker-compose.local.yml`](../infrastructure/docker-compose.local.yml)
+mounts the model store of an Ollama you already run, read-only, into the
+backup container, and keeps the API's data in a volume the teardown removes.
+Docker Desktop's WSL integration must be on. Its `--network host` is its own
+VM, so everything here goes through compose networks and loopback ports.
 
-```
-touch infrastructure/.env
-WICKET_DATA_DIR="$(mktemp -d)" WICKET_OLLAMA_PORT=11435 docker compose -f infrastructure/docker-compose.yml up --build -d
-curl -s http://127.0.0.1:8808/v1/health
-```
+1. Write `infrastructure/.env` (git-ignored) with a model your Ollama
+   already has, another port if your own Ollama holds 11434, and throwaway
+   tokens. No `OLLAMA_API_KEY`: every call then goes to the backup.
 
-Expect `{"ok":true}`. Stop it with
-`docker compose -f infrastructure/docker-compose.yml down`. Stop a local
-`npm start` first: it uses the same port.
+   ```
+   umask 077
+   printf 'WICKET_OLLAMA_PORT=11435\nWICKET_BACKUP_MODEL=llama3.2:1b\nWICKET_APP_TOKENS=just-a-bot=%s,ro-housing=%s\n' \
+     "$(openssl rand -hex 32)" "$(openssl rand -hex 32)" > infrastructure/.env
+   ```
+
+2. Point the override at your model store (the Linux service keeps it in
+   `/usr/share/ollama/.ollama/models`, a user install in `~/.ollama/models`),
+   then build and start. A model bigger than gemma3:1b needs more than the
+   production cap; the override raises it to 2500m for this check.
+
+   ```
+   export WICKET_LOCAL_MODELS=/usr/share/ollama/.ollama/models
+   C="docker compose -p wicket-smoke -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.local.yml"
+   $C config --quiet && $C up --build -d
+   curl -s http://127.0.0.1:8808/v1/health
+   ```
+
+   Expect `{"ok":true}`. Stop a local `npm start` or `npm run dev` first:
+   they use port 8808.
+3. Make a throwaway account: `$C exec -it wicket-api node server/dist/seed.js`
+   asks for a username and password.
+4. Serve the page the way Caddy will, from the repo root:
+   `npm run dev -w @wicket/web` (only the page; the root `npm run dev` would
+   start a second API on 8808). Open <http://localhost:5179/wicket/> and sign
+   in. Vite forwards `/wicket-api` to the container.
+5. Send a call with one of the tokens in `infrastructure/.env` and wait for
+   it. The result should say `"backup":true` and name your model:
+
+   ```
+   TOKEN=$(sed -n 's/.*just-a-bot=\([0-9a-f]*\).*/\1/p' infrastructure/.env)
+   curl -s -X POST http://127.0.0.1:8808/v1/jobs -H "Authorization: Bearer $TOKEN" \
+     -H 'content-type: application/json' -d '{"messages":[{"role":"user","content":"Say hi"}]}'
+   curl -s "http://127.0.0.1:8808/v1/jobs/<id>?wait=25" -H "Authorization: Bearer $TOKEN"
+   ```
+
+   To try Force close and Clear queue on the page, send a long call ("count
+   to 400") and two more behind it.
+6. `curl -s http://127.0.0.1:8808/metrics` answers Prometheus text; with an
+   `X-Forwarded-For` header it answers 404.
+7. Tear it down and drop the tokens:
+
+   ```
+   $C down -v --remove-orphans
+   rm infrastructure/.env
+   ```
+
+"Sign in with Ward" can't be checked this way: the API in the container would
+have to reach the local Ward at its `localhost` address, which inside the
+container is the container itself. Check it with `npm run dev` instead
+([Local development](#local-development)).
 
 ## 6. Deploy
 
@@ -194,21 +256,10 @@ only from the box's own shell. The contract the callers code against is in
    send every call to the backup, and set `WICKET_BACKUP_MODEL` to a model your
    own Ollama already has (pull nothing for this).
 2. Make your local account: `npm run seed -w @wicket/server`.
-3. For "Sign in with Ward" against the local Ward: add Wicket to Ward's local
-   seed (`wzd_auth`, `infrastructure/local/seed.mjs`), in `APPS`:
-
-   ```
-   { slug: "wicket", name: "Wicket", repo: "wicket", envFiles: [".env"], dev: "http://localhost:5179/wicket/", api: "/wicket-api" },
-   ```
-
-   and this row in that folder's README table:
-
-   ```
-   | wicket | http://localhost:5179/wicket/ | `wicket/.env` |
-   ```
-
-   Then run `node seed.mjs` there. It writes the five `WARD_OIDC_*` values
-   into this repo's `.env`.
+3. For "Sign in with Ward" against the local Ward: Ward's local seed
+   (`wzd_auth`, `infrastructure/local/seed.mjs`) lists Wicket since
+   2026-11-04. Run `node seed.mjs` there, in a terminal (it needs the owner
+   account). It writes the five `WARD_OIDC_*` values into this repo's `.env`.
 4. `npm run dev`: the API on `127.0.0.1:8808` and the page at
    <http://localhost:5179/wicket/>. For `npm start` (the built page on the
    server's own port), set `PUBLIC_ORIGIN=http://127.0.0.1:8808`.

@@ -1,0 +1,34 @@
+# A local check of the stack, laid over docker-compose.yml. It pulls no model:
+# the backup container reads the model store of an Ollama you already run,
+# read-only, and the API's data sits in a volume that `down -v` removes.
+#
+#   export WICKET_LOCAL_MODELS=<your Ollama's model store>
+#   docker compose -p wicket-smoke -f infrastructure/docker-compose.yml \
+#     -f infrastructure/docker-compose.local.yml up --build -d
+#   docker compose -p wicket-smoke -f infrastructure/docker-compose.yml \
+#     -f infrastructure/docker-compose.local.yml down -v
+#
+# infrastructure/.env sets WICKET_BACKUP_MODEL to a model that store holds,
+# WICKET_OLLAMA_PORT when your own Ollama already has 11434, and
+# WICKET_APP_TOKENS. docs/owner-setup.md has the whole check.
+services:
+  wicket-api:
+    volumes:
+      # Replaces the bind mount (same target), so the check leaves no files
+      # behind and never touches the repo's data/.
+      - wicket-data:/data
+
+  wicket-ollama:
+    environment:
+      OLLAMA_MODELS: /models
+      # The store is mounted read-only; don't try to tidy it at start.
+      OLLAMA_NOPRUNE: "1"
+    volumes:
+      - ${WICKET_LOCAL_MODELS:?set WICKET_LOCAL_MODELS to your Ollama model store}:/models:ro
+    # The production cap (1300m) is sized for gemma3:1b, about 0.8 GB. A model
+    # you already have is likely bigger: llama3.2:1b is 1.3 GB and would only
+    # thrash under that cap. The CPU cap stays as in production.
+    mem_limit: 2500m
+
+volumes:
+  wicket-data:
