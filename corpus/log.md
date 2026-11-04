@@ -51,3 +51,13 @@ other's routes. Unlike brief-board, sessions may write, with an Origin check
 on the two POSTs. `/metrics` serves Prometheus text and is refused through a
 proxy. See [wiki/sign-in.md](wiki/sign-in.md) and
 [briefs/done/03-sign-in-admin-routes-and-metrics.md](briefs/done/03-sign-in-admin-routes-and-metrics.md).
+
+## [2026-11-04] done | Brief 04: the queue page
+
+The React page at `/wicket/` behind brief-board's sign-in shell: now serving,
+the running call with Force close, the waiting tickets with Clear queue (both
+behind a Base UI confirm dialog), calls per app for 24 hours or 7 days, and
+recent calls. The server serves the built page for `npm start`. Walked through
+in a browser against a stand-in Ollama: both buttons ended the callers' jobs as
+`cancelled`. Filed a todo to move `@fastify/static` to 10.1.9 once it is two
+weeks old. See [briefs/done/04-the-queue-page.md](briefs/done/04-the-queue-page.md).

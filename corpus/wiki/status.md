@@ -1,5 +1,5 @@
 ---
-summary: Snapshot as of 2026-11-04, per area. The design settled in a grill with the owner on 2026-11-04; corpus and briefs 01-05 written the same day. Built: briefs 01 (queue, jobs API, app tokens, records), 02 (cloud and backup providers) and 03 (sign-in, admin routes, /metrics). Owner steps (Ward registration, secrets, the vps-deploy stack, the model pull, Ward's local seed entry) and the one open todo (score the backup model on a quiet machine).
+summary: Snapshot as of 2026-11-04, per area. The design settled in a grill with the owner on 2026-11-04; corpus and briefs 01-05 written the same day. Built: briefs 01 (queue, jobs API, app tokens, records), 02 (cloud and backup providers), 03 (sign-in, admin routes, /metrics) and 04 (the queue page). Owner steps (Ward registration, secrets, the vps-deploy stack, the model pull, Ward's local seed entry) and the one open todo (score the backup model on a quiet machine).
 updated: 2026-11-04
 ---
 
@@ -8,8 +8,9 @@ updated: 2026-11-04
 _2026-11-04_. The owner settled the design in a grill
 ([decisions.md](decisions.md)); the corpus and five briefs are written.
 Briefs 01 and 02 are built: the queue, the job routes, app tokens, records,
-the providers (Ollama Cloud, then the backup), sign-in, the admin routes and
-`/metrics`. The page is next.
+the providers (Ollama Cloud, then the backup), sign-in, the admin routes,
+`/metrics` and the queue page. The containers and the owner's setup are
+next.
 
 ## By area
 
@@ -25,13 +26,14 @@ the providers (Ollama Cloud, then the backup), sign-in, the admin routes and
   vendored ward-auth 0.7.0 guards the admin routes; app tokens guard the job
   routes; sessions may force close and clear, with an Origin check;
   `/metrics` refused through a proxy ([sign-in.md](sign-in.md)).
-- **Queue page**: brief 04, not started.
+- **Queue page** (2026-11-04): brief 04, built. Now serving, the running
+  call, the waiting tickets, calls per app and recent calls; Force close and
+  Clear queue behind a confirm dialog. Walked through in a browser.
 - **Containers and owner setup**: brief 05, not started.
 
 ## Open briefs
 
-1. [04, the queue page](../briefs/todo/04-the-queue-page.md)
-2. [05, the containers and the owner's setup](../briefs/todo/05-container-and-owner-setup.md)
+1. [05, the containers and the owner's setup](../briefs/todo/05-container-and-owner-setup.md)
 
 ## Next (owner)
 
@@ -46,3 +48,5 @@ Brief 05 writes the full steps into `docs/owner-setup.md`. Known already:
 
 - [Score gemma3:1b on Romanian listings](../todos/score-the-backup-model.md),
   on a quiet machine.
+- [Move @fastify/static to 10.1.9 or later](../todos/update-fastify-static.md),
+  from about 2026-11-18.

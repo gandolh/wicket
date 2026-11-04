@@ -200,3 +200,23 @@ describe("/metrics", () => {
     expect((await app.inject({ url: "/metrics", headers: { forwarded: "for=203.0.113.9" } })).statusCode).toBe(404);
   });
 });
+
+describe("the built page", () => {
+  it("is served at /wicket/ signed out, so the login page loads, and / leads there", async () => {
+    const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const dist = mkdtempSync(join(tmpdir(), "wicket-web-"));
+    writeFileSync(join(dist, "index.html"), "<!doctype html><title>Wicket</title>");
+    const served = await buildApp({ dbPath: ":memory:", run: stubRunner().run, webDist: dist });
+    try {
+      expect((await served.inject({ url: "/wicket/" })).body).toContain("<title>Wicket</title>");
+      expect((await served.inject({ url: "/wicket/login" })).body).toContain("<title>Wicket</title>");
+      expect((await served.inject({ url: "/" })).headers.location).toBe("/wicket/");
+      expect((await served.inject({ url: "/wicket-api/v1/queue" })).statusCode).toBe(401);
+    } finally {
+      await served.close();
+      rmSync(dist, { recursive: true, force: true });
+    }
+  });
+});

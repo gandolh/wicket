@@ -37,6 +37,7 @@ const dbPath = config.dbPath ? resolve(config.dbPath) : resolve(REPO_ROOT, "data
 
 const app = await buildApp({
   dbPath,
+  webDist: resolve(REPO_ROOT, "web/dist"),
   run: createRunner({
     cloud: config.cloud,
     backup: config.backup,

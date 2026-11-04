@@ -12,6 +12,8 @@ import {
   type QueueResponse,
   type RecordsResponse,
 } from "@wicket/shared";
+import { existsSync } from "node:fs";
+import fastifyStatic from "@fastify/static";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest, type FastifyServerOptions } from "fastify";
 import type { z } from "zod";
 import { createWardClient, wardAuth, type Accounts, type WardClientOptions } from "../vendor/ward/ward-auth.js";
@@ -39,7 +41,9 @@ import { AppTokens } from "./tokens.js";
  *
  * Open: `GET /v1/health` for the deploy's check, and `GET /metrics` for the
  * box's Prometheus, which is refused on any request that came through a proxy.
- * Sign-in lives under `/auth`, from the vendored ward-auth plugin.
+ * Sign-in lives under `/auth`, from the vendored ward-auth plugin. The built
+ * page is served at `/wicket/` (in production Caddy serves it instead), and
+ * `/` redirects there.
  *
  * The browser and the apps reach all of it under `/wicket-api`; Caddy strips
  * that prefix in production, and this server strips it too (`stripApiPrefix`),
@@ -80,6 +84,8 @@ export interface AppOptions {
   dbPath: string;
   /** Runs one job: the providers. */
   run: Runner;
+  /** The built page, served at `webBase`; skipped when the directory does not exist. */
+  webDist?: string;
   /** The apps and their tokens. Default: none, so every job call is refused. */
   appTokens?: AppTokens;
   /** The page's origin as the browser sees it. Default `http://localhost:5179`, the Vite dev server. */
@@ -380,9 +386,19 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     return body;
   });
 
-  app.setNotFoundHandler((request, reply) =>
-    fail(reply, 404, { code: "not_found", message: `no route ${request.method} ${pathOf(request.url)}` }),
-  );
+  // The built page at `webBase`; any other path under it is the page too (index.html).
+  const webDist = options.webDist;
+  const serving = webDist !== undefined && existsSync(webDist);
+  if (serving) await app.register(fastifyStatic, { root: webDist, prefix: webBase });
+  if (webBase !== "/") app.get("/", async (_request, reply) => reply.redirect(webBase));
+  app.setNotFoundHandler((request, reply) => {
+    const path = pathOf(request.url);
+    if (serving && request.method === "GET" && webBase !== "/" && path === webBase.slice(0, -1)) return reply.redirect(webBase);
+    if (serving && (request.method === "GET" || request.method === "HEAD") && path.startsWith(webBase)) {
+      return reply.sendFile("index.html");
+    }
+    return fail(reply, 404, { code: "not_found", message: `no route ${request.method} ${path}` });
+  });
 
   return app;
 }

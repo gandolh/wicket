@@ -1,7 +1,7 @@
 {
   "name": "@wicket/server",
   "version": "0.1.0",
-  "description": "The Wicket API (Fastify + SQLite): the queue, the providers and the records.",
+  "description": "The Wicket API (Fastify + SQLite): the queue, the providers and the records; it also serves the built page.",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -12,6 +12,7 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
+    "@fastify/static": "10.1.5",
     "@wicket/shared": "0.1.0",
     "better-sqlite3": "13.0.3",
     "fastify": "5.12.7",

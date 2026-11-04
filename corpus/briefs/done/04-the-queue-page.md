@@ -59,3 +59,39 @@ Depends on 03.
   `cancelled`.
 - No password or token in any file.
 - `bash corpus/lint.sh` passes.
+
+## Outcome (2026-11-04)
+
+Built as specified.
+
+- **Shell.** `AuthGate`, `LoginPage`, `AccountPage`, `auth.ts`, `route.ts`,
+  `messages.ts` copied from brief-board with the names changed; the pages are
+  `queue`, `login` and `account`. `web/vendor/ward/` came from the Ward repo's
+  `npm run vendor`, the same 0.7.0 build as the server's; `wzd_auth` unchanged.
+- **The page** is `QueuePage.tsx` (fetching, the two buttons) over
+  `QueueView.tsx` (pure pieces, rendered to markup in `QueueView.test.tsx`).
+  Elapsed and waited times run on the server's clock (`serverTime` plus what
+  passed since). The two buttons sit in `ConfirmAction.tsx`, a Base UI
+  `AlertDialog`; the page says what happened ("Force closed ticket 1.") and
+  asks the API again at once. The calls-per-app period is a native `<select>`.
+- **Outside the owned files:** `server/src/app.ts` and `index.ts` serve the
+  built page at `/wicket/` with `@fastify/static` (as brief-board does), so
+  `npm start` shows it; `/` redirects there. `@fastify/static` is pinned at
+  brief-board's 10.1.5: `npm audit` flags its `glob`, fixed in 10.1.9, which
+  came out the same day and was too new to take (todo
+  [update-fastify-static](../../todos/update-fastify-static.md)). The root
+  `package.json` gained the `web` workspace, `concurrently` with
+  brief-board's `shell-quote` override, and `eslint-plugin-react-hooks`.
+
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (7 files, 84 tests,
+1 skipped; 4 new for the page's pieces, 1 for serving the built page) and
+`npm run build`. By hand, in a browser against the built server on a scratch
+database with a seeded test account and a stand-in Ollama that takes 120 s to
+answer: `/wicket/` went to `/wicket/login`; signing in showed now serving 1,
+the running call (ro-housing, Backup, gemma3:1b, elapsed ticking) and two
+waiting; Force close asked first, the caller's `GET` then said `cancelled`
+("force closed from the queue page"), the stand-in saw its connection close,
+and ticket 2 started; Clear queue dropped ticket 3 (`cancelled`, "the queue
+was cleared") and left ticket 2 running; the records and counts showed both.
+The server log held neither a prompt nor the token. Fixed after the walk: the
+clear dialog's wording for one ticket, and the Waited header's alignment.

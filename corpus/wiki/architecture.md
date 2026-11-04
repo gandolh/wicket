@@ -1,5 +1,5 @@
 ---
-summary: How Wicket is put together, planned 2026-11-04; the queue, jobs API, tokens, records, providers, sign-in, admin routes and metrics built the same day (briefs 01-03). Three npm workspaces (shared contract, Fastify + SQLite server, React page); the queue, the providers and the records inside the server and how a job moves through them; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS with its backup Ollama container. Updated as each brief lands.
+summary: How Wicket is put together, planned 2026-11-04; the queue, jobs API, tokens, records, providers, sign-in, admin routes, metrics and the queue page built the same day (briefs 01-04). Three npm workspaces (shared contract, Fastify + SQLite server, React page); the queue, the providers and the records inside the server and how a job moves through them; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS with its backup Ollama container. Updated as each brief lands.
 updated: 2026-11-04
 ---
 
@@ -12,8 +12,10 @@ queue ([queue.ts](../../server/src/queue.ts)), the job routes
 ([records.ts](../../server/src/records.ts), [db.ts](../../server/src/db.ts)),
 the providers ([providers.ts](../../server/src/providers.ts),
 [providers.md](providers.md)), sign-in and the admin routes
-([sign-in.md](sign-in.md)), and `/metrics`
-([metrics.ts](../../server/src/metrics.ts)). Each brief updates the part it builds; the code wins where this page and it
+([sign-in.md](sign-in.md)), `/metrics`
+([metrics.ts](../../server/src/metrics.ts)), and the queue page
+([QueuePage.tsx](../../web/src/QueuePage.tsx) over
+[QueueView.tsx](../../web/src/QueueView.tsx)). Each brief updates the part it builds; the code wins where this page and it
 disagree.
 
 ## Workspaces
