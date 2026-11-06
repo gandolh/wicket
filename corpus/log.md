@@ -137,3 +137,9 @@ one service, `wicket-api`; the image rebuilt and ran with no key, and a job
 failed with the no-key reason. The docs and captures follow (the captures
 against a loopback stand-in for the cloud). See
 [briefs/done/08-ollama-cloud-only.md](briefs/done/08-ollama-cloud-only.md).
+
+## [2026-11-06] todo | Brief 09: @fastify/static to 10.1.9, not before 2026-11-18
+
+Promoted from the todo `update-fastify-static` at the owner's ask, with a
+start date: 10.1.9 came out on 2026-11-04 and waits until 2026-11-18.
+brief-board gets the same bump as a brief of its own.

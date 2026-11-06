@@ -75,5 +75,5 @@ None.
 
 ## Todos
 
-- [Move @fastify/static to 10.1.9 or later](../todos/update-fastify-static.md),
-  from about 2026-11-18.
+None. The last one became brief 09 on 2026-11-06 (@fastify/static to
+10.1.9 or later, not before 2026-11-18).
