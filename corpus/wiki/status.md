@@ -75,5 +75,7 @@ None.
 
 ## Todos
 
-None. The last one became brief 09 on 2026-11-06 (@fastify/static to
-10.1.9 or later, not before 2026-11-18).
+None. The last one became brief 09 on 2026-11-06 and was built on
+2026-11-09: @fastify/static is pinned at 10.1.10 (the owner lifted the
+2026-11-18 date gate and chose the version brief-board ships). Not deployed;
+the owner runs `node cli.ts wicket all` from vps-deploy.

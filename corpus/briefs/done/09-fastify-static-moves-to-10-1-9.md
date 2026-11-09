@@ -34,3 +34,17 @@ brief for the same bump.
 - `npm audit` no longer lists GHSA-3g3m-2fjr-6pw4; the tests pass.
 - **Owner step:** `node cli.ts wicket all` from vps-deploy, with the next
   deploy that suits.
+
+## Outcome
+
+Built on 2026-11-09, early: the owner lifted the "not before 2026-11-18" gate
+that day and chose 10.1.10, the version brief-board already ships, over 10.1.9.
+`@fastify/static` is pinned exactly at 10.1.10 in `server/package.json`; the
+lockfile moved `glob` from 13.0.6 to 14.0.4 (with `minimatch` 11.0.5 under it).
+`npm audit` no longer lists GHSA-3g3m-2fjr-6pw4 or anything under `glob` or
+`@fastify/static`. It reports 10 moderate findings, all in the dev-only
+`typescript-eslint` chain (`minimatch`, GHSA-g3hv-75wg-m249). `npm test`: 86
+passed, including the built-page test. A local `npm start` was not run (it
+needs the sign-in and key settings); the tests cover the static route.
+Owner step: `node cli.ts wicket all` from vps-deploy, with the next deploy that
+suits.

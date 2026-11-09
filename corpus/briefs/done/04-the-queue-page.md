@@ -79,7 +79,7 @@ Built as specified.
   `npm start` shows it; `/` redirects there. `@fastify/static` is pinned at
   brief-board's 10.1.5: `npm audit` flags its `glob`, fixed in 10.1.9, which
   came out the same day and was too new to take (todo
-  [update-fastify-static](../todo/09-fastify-static-moves-to-10-1-9.md)). The root
+  [update-fastify-static](09-fastify-static-moves-to-10-1-9.md)). The root
   `package.json` gained the `web` workspace, `concurrently` with
   brief-board's `shell-quote` override, and `eslint-plugin-react-hooks`.
 

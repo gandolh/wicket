@@ -143,3 +143,11 @@ against a loopback stand-in for the cloud). See
 Promoted from the todo `update-fastify-static` at the owner's ask, with a
 start date: 10.1.9 came out on 2026-11-04 and waits until 2026-11-18.
 brief-board gets the same bump as a brief of its own.
+
+## [2026-11-09] brief | Brief 09 built early: @fastify/static 10.1.10
+
+The owner lifted the 2026-11-18 date gate on 2026-11-09 and chose 10.1.10, the
+version brief-board ships. Pinned exactly; `glob` moved to 14.0.4 and the
+GHSA-3g3m-2fjr-6pw4 finding is gone. 86 tests pass. `npm audit` still shows 10
+moderate findings in the dev-only `typescript-eslint` chain. Not deployed. See
+[briefs/done/09-fastify-static-moves-to-10-1-9.md](briefs/done/09-fastify-static-moves-to-10-1-9.md).
