@@ -4,11 +4,11 @@
 
 - In Wicket: nothing. This brief runs first.
 - In the owner's skills library:
-  - brief 27, *A house style, and a quality harness that enforces it*: the `house-style` package at `v1.0.0`, the `house-style` skill, and the plugin's `Stop` and `PostToolUse` hooks. **This brief is the proof run that brief 27's step 4 asks for**: Wicket is the first repo to adopt the harness.
+  - brief 27, *A house style, and a quality harness that enforces it*: the `house-style` configs at `v1.0.0` (vendored into each repo, decision 1), its `house-style:sync` script, the `house-style` skill, and the plugin's `Stop` and `PostToolUse` hooks. **This brief is the proof run that brief 27's step 4 asks for**: Wicket is the first repo to adopt the harness.
   - brief 15, *Enforce the base-ui and code-structure skills in every repo*: how the convention checkers are wired, and when they run `--warn-only`.
-- The owner's grilling of 2026-11-10, questions Q5-Q14 of the skills library's open questions.
+- The owner's grilling of 2026-11-10: Q5-Q14 and Q45-Q51 of the skills library's open questions (decided; see Owner decisions).
 
-**Runs before:** 11, 12 and 13. The reformat touches 13 TypeScript and CSS files, and those briefs rewrite or move most of them. Formatting first gives one clean reformat commit, and the formatter hook keeps every later diff formatted.
+**Runs before:** 11, 12 and 13. The reformat at width 120 touches 20 files, and those briefs rewrite or move most of them. Formatting first gives one clean reformat commit, and the formatter hook keeps every later diff formatted.
 
 **Before you start:** run `brief-board guide` ([corpus/CLAUDE.md](../../CLAUDE.md)). Until the owner's first sync puts Wicket on the board, skip the board and say so in the hand-back.
 
@@ -46,7 +46,7 @@ Taken on a scratch copy of commit `456609e` with `npm ci` done, TypeScript 6.0.3
 | 130 | 39 (0.8%) | 13 | 157 |
 | 140 | 32 (0.6%) | 12 | 82 |
 
-Brief 27's table says 2.5% for Wicket at 120. The file set and the counting differ; the ranking is the same. Of the 130 column's 13 files, seven are tests. `infrastructure/docker-compose.yml` changes one line more. At every width the same ten files keep a floor of about 30 lines, because Prettier also joins hand-wrapped lines (the `eslint.config.js` rule array, `font-family` in `web/src/styles.css:20`, and the like).
+Brief 27's table says 2.5% for Wicket at 120. The file set and the counting differ; the ranking is the same. **The estate width is 120** (decision 2), so the one-off cost of the reformat is the 120 row: 68 old lines (1.4%) in 20 files, 288 new lines. The 130 column is kept as the measurement that was made, not as a choice. `infrastructure/docker-compose.yml` changes one line more. At every width the same ten files keep a floor of about 30 lines, because Prettier also joins hand-wrapped lines (the `eslint.config.js` rule array, `font-family` in `web/src/styles.css:20`, and the like).
 
 Markdown, if it were formatted at 120: 107 lines in 10 of Wicket's own files (`corpus/routing.md` 28, `docs/owner-setup.md` 23, `docs/README.md` 14, `README.md` 11, and others), one of them an immutable done brief. Not worth it (decision 3).
 
@@ -97,63 +97,66 @@ Markdown, if it were formatted at 120: 107 lines in 10 of Wicket's own files (`c
 
 **knip** with `**/vendor/**` ignored and `docs/images/*.mjs` as an entry: **0 unused files and 0 unused dependencies**, 20 unused exports and 3 unused types (`isUnder`, `pathOf`, `fail`, `parse`, `sameOrigin`, `API_PREFIX`, `PAGE_PATH`, `BODY_LIMIT` in `server/src/app.ts`; `optional`, `DEFAULTS`, `describeIssue`, `WARD_CALLBACK_PATH` in `config.ts`; and others). Exports are a warning (brief 27's rule). Without the `docs/images/*.mjs` entry, `stand-in-cloud.mjs` is reported as an unused file; with default config the vendored Ward bundles are reported as 6 more.
 
-## Owner decisions (defaults this brief builds)
+## Owner decisions
 
-1. **Where the configs come from** (skills library Q6). Default: the `house-style` package. Wicket's constraint is the same as in any repo with this Dockerfile: both `npm ci` stages run without `git`, so a `github:` dependency fails the image build. Default within that: the tagged GitHub tarball URL, which npm fetches without git. If the owner prefers `github:`, add `git` to both `apk add` lines (32 and 56) in the same commit. If Q6 goes the other way, the same rules land as local files with a version header and steps 3-5 don't change. The tag and owner name come from brief 27, never written here.
-2. **Width** (Q8). Default: the estate's one width. If it isn't settled, **130**: it changes 39 lines, and 140 saves seven lines more for a looser wrap. Record the choice.
-3. **Markdown stays out of Prettier.** Default: `.prettierignore` lists `*.md`. *New question for the grilling.*
-4. **tsconfig** (Q11). Default: add `verbatimModuleSyntax` and `erasableSyntaxOnly`, and not `exactOptionalPropertyTypes`.
-5. **Typed lint** (Q12). Default: the six rules through `projectService`, with `considerDefaultExhaustiveForUnions: true` on `switch-exhaustiveness-check` (its four findings are all the open-union case). *New question for the grilling*: the option, because it is a loosening.
-6. **The house shapes as errors** (Q13). All of them, with one exception that goes back to the owner: **the 51 test-file `!` assertions are over brief 27's "about 20" line.** Source's 7 are fixed. Default for the tests: a `nth(array, index)` helper in `server/src/testing.ts` (it throws a named error instead of returning `undefined`), so `calls[0]!` becomes `nth(calls, 0)`. The alternative is `no-non-null-assertion` as a warning in `*.test.ts`. *New question for the grilling.* `no-process-env` (from `eslint-plugin-n`) starts as a **warning** (brief 13 turns it into an error).
-7. **`check:fast`** (Q10). Default: typecheck plus ESLint on the files changed against `HEAD` and the untracked ones. Measured parts: 5-6 s of typecheck and 2-3 s for one typed file, so about 8 s.
-8. **The Claude Code layer** (Q7). Default: the plugin's hooks. If the owner chooses committed hooks, add them to `.claude/settings.json` here.
-9. **A root `CLAUDE.md`.** Default: create one, and move the repo-wide **Hard rules** and **brief-board** sections out of [corpus/CLAUDE.md](../../CLAUDE.md) into it, because they apply outside the corpus. *New question for the grilling.*
-10. **`docs-site/` stays outside** Prettier, ESLint, knip and `check`. It has its own `typecheck` and `docs` scripts.
+Decided on 2026-11-10 unless marked as a default.
+
+1. **Where the configs come from** (Q6, decided 2026-11-10, technical call). `house-style` is **vendored**: Wicket holds a copy with a version header, refreshed by a `house-style:sync` script that finds the `house-style` checkout by name, the way Ward's library is shared today. It is not a git, `github:` or tarball dependency. Both `npm ci` stages of `infrastructure/Dockerfile` run without `git`, and npm locks GitHub dependencies as git URLs, so a dependency would need `git` (or SSH) in every Docker build. So **the Dockerfile is not touched by this brief**, and the two `apk add` lines stay as they are. The copy, its sync script (`package.json` script `house-style:sync`) and the version header come from brief 27; the tag and owner name are never written here. The vendored copy is excluded from Prettier, ESLint and knip, like `server/vendor/`.
+2. **Width: 120** (Q8 and Q51, decided 2026-11-10, technical call). One estate width. It changes 68 lines in 20 files and writes 288 (the 120 row above); that reformat is the one-off cost, taken in its own commit (step 2). Record the choice in the decisions entry.
+3. **Markdown stays out of Prettier** (Q45, decided 2026-11-10, technical call). `.prettierignore` lists `*.md`.
+4. **tsconfig** (Q11, decided 2026-11-10, technical call). Add `verbatimModuleSyntax` and `erasableSyntaxOnly` now; the three parameter properties become declared fields. `exactOptionalPropertyTypes` is not added here: it comes after a count, in a later brief. `strict` is already on, and TypeScript is 6.0.3, past 5.8. `noUncheckedIndexedAccess` is already on (Q50 defers it only where it is off).
+5. **Typed lint** (Q12 and Q48, decided 2026-11-10, technical calls). The six typed rules through `projectService`, with `considerDefaultExhaustiveForUnions: true` on `switch-exhaustiveness-check` (its four findings are all the open-union case). `no-floating-promises` names `node:test`'s `describe`, `it` and `test` in `allowForKnownSafeCalls`, which Wicket (vitest) doesn't need.
+6. **The house shapes** (Q13 and Q47, decided 2026-11-10, technical calls). All as errors, with these allowances: `console` is allowed in scripts and CLIs; a default export is allowed where a framework needs one (config files). **`!` (`no-non-null-assertion`) is an error in source and a warning in tests**: the seven in source are fixed, and the 51 in `*.test.ts` stay as warnings, with no `nth` helper. `no-process-env` (from `eslint-plugin-n`) starts as a **warning** and brief 13 turns it into an error (a default). Comments as prose are checked by the review gate (Q14), not by lint. Components use named exports (Q49); Wicket has none with a default export.
+7. **`check:fast`** (Q10, decided 2026-11-10, technical call). A typecheck plus ESLint on the files changed against `HEAD` and the untracked ones, built incrementally (`tsc -b`). Target 15 s; up to about 30 s is accepted where `tsc` alone is slower. Measured parts: 5-6 s of typecheck and 2-3 s for one typed file, so about 8 s.
+8. **The Claude Code layer** (Q7, decided 2026-11-10, technical call). The plugin's hooks: `Stop` runs `check:fast`, `PostToolUse` formats the saved file. Nothing is committed to `.claude/settings.json`.
+9. **A root `CLAUDE.md`** (Q46, decided 2026-11-10, technical call). Create one, and move the repo-wide **Hard rules** and **brief-board** sections out of [corpus/CLAUDE.md](../../CLAUDE.md) into it, because they apply outside the corpus. No `features/` question arises here; the server's layout is brief 13's.
+10. **`docs-site/` stays outside** Prettier, ESLint, knip and `check`. It has its own `typecheck` and `docs` scripts (default).
+11. **No PRs, no branches** (Q4, decided 2026-11-10, owner). Each step is a commit on `main`, pushed to `main`; the owner reviews `main`.
 
 ## Files you OWN
 
 - `tsconfig.base.json`, and `web/tsconfig.json` (only to add `incremental` with a `tsBuildInfoFile`).
 - `eslint.config.js`.
-- New: the Prettier config, `.prettierignore`, `.git-blame-ignore-revs`, `knip.json`.
+- New: the Prettier config, `.prettierignore`, `.git-blame-ignore-revs`, `knip.json`, the vendored `house-style` copy and the `house-style:sync` script entry.
 - The root `package.json` (scripts, devDependencies, `typescript-eslint` to 8.72.2) and `package-lock.json`.
 - The reformat: whitespace-only changes to every file Prettier covers.
 - The fixes the rules ask for:
   - `server/src/providers.ts`, `queue.ts`, `tokens.ts` (the three parameter properties);
-  - the seven `!` in source, and the 51 in the tests (decision 6);
+  - the seven `!` in source (decision 6); the 51 in the tests stay, as warnings;
   - `web/src/usePolling.ts:43`;
   - `server/src/config.test.ts:20`, `server/src/tokens.test.ts:36`.
 - New: `.claude/rules/web.md`, `.claude/rules/server.md`, `CLAUDE.md`, `scripts/`.
 - [corpus/CLAUDE.md](../../CLAUDE.md): its Hard rules and brief-board sections move out.
-- `infrastructure/Dockerfile`: only the two `apk add` lines, and only under decision 1's `github:` branch.
 - Corpus: [wiki/decisions.md](../../wiki/decisions.md) (a new entry), [wiki/status.md](../../wiki/status.md), [log.md](../../log.md), and [.planned-roots](../../.planned-roots) (drop `.claude` and `scripts` once they exist).
 
 ## Files you must NOT touch
 
 - Behaviour. Apart from the fixes above, every change is formatting or configuration.
 - `server/vendor/` and `web/vendor/`: generated copies of the Ward library, ignored by ESLint and Prettier.
+- `infrastructure/Dockerfile`: decision 1 needs no change to it.
 - The layout of `server/src` and the CSS, which are briefs 13 and 12.
 - `docs-site/`.
 - The skills library and the `house-style` repo.
 
 ## What to do
 
-One commit per step, each with `npm run typecheck`, `npm test`, `npm run lint` and `npm run build` green.
+One commit per step, straight on `main`, each with `npm run typecheck`, `npm test`, `npm run lint` and `npm run build` green.
 
-1. **Re-measure.** The numbers above came from a scratch copy; record in the `log.md` entry that they still hold at the commit you start from, and add what brief 27's final configs change (its rule set, the `projectService` allow-list). Any rule that finds more than about 20 real problems, or mostly false ones, goes to the owner before it is turned on: the `!` rule and the exhaustiveness rule are the two this brief already brings.
+1. **Re-measure.** The numbers above came from a scratch copy; record in the `log.md` entry that they still hold at the commit you start from, and add what brief 27's final configs change (its rule set, the `projectService` allow-list). Any rule that finds more than about 20 real problems, or mostly false ones, goes to the owner before it is turned on. The two this brief already brings are settled (decisions 5 and 6): the `!` rule (error in source, warning in tests) and the exhaustiveness rule (with its option).
 2. **Prettier, and the reformat.**
-   1. Add `prettier` (pinned) and the config: `printWidth` per decision 2, `trailingComma: "all"`.
-   2. Add `.prettierignore`: `*.md`, `server/vendor/`, `web/vendor/`, `package-lock.json`, `dist/`, `data/`, `coverage/`, `docs-site/`.
+   1. Vendor `house-style` (decision 1) and add `prettier` (pinned) with the config: `printWidth: 120`, `trailingComma: "all"`, from the vendored copy.
+   2. Add `.prettierignore`: `*.md`, `server/vendor/`, `web/vendor/`, the vendored `house-style` copy, `package-lock.json`, `dist/`, `data/`, `coverage/`, `docs-site/`.
    3. Add `format` (`prettier --write .`) and `format:check`, and commit this alone.
-   4. Run `npm run format` and commit only that, as `style: format with Prettier`.
+   4. Run `npm run format` and commit only that, as `style: format with Prettier`. This is the one-off reformat at width 120: about 68 old lines in 20 files.
    5. Put that commit's full hash in `.git-blame-ignore-revs`, in its own commit.
    6. Hand the owner `git config blame.ignoreRevsFile .git-blame-ignore-revs`, as a git setting is an owner step ([corpus/CLAUDE.md](../../CLAUDE.md)).
-3. **tsconfig.** Add the two flags. Fix the three parameter properties with a declared field assigned in the constructor, keeping `readonly` and `private`. Add `incremental` and a `tsBuildInfoFile` under `node_modules/.tmp/` to `web/tsconfig.json`. The Dockerfile's `npx tsc -b server` must still build.
+3. **tsconfig.** Add the two flags. The three parameter properties become declared fields assigned in the constructor, keeping `readonly` and `private`. Add `incremental` and a `tsBuildInfoFile` under `node_modules/.tmp/` to `web/tsconfig.json`. The Dockerfile's `npx tsc -b server` must still build.
 4. **ESLint.** Extend the house config with Wicket's roots: web is `web/src`, server is `server/src`, the CLI files are `server/src/index.ts` (later `server.ts`), `server/src/seed.ts` and `docs/images/*.mjs`. The diff in effect:
 
    | Rule | Today | After | Findings today |
    |---|---|---|---|
    | the six typed rules | off | error, `projectService` | 1 real, 4 false (decision 5) |
-   | `no-non-null-assertion` | off | error | 58 |
+   | `no-non-null-assertion` | off | **error in source, warn in `*.test.ts`** (Q47) | 7 in source (fixed), 51 in tests (left as warnings) |
    | `no-restricted-syntax` (enum), `no-warning-comments`, `no-default-export` (from `eslint-plugin-import-x`) outside `*.config.*` | off | error | 0 |
    | `no-console` outside the CLI files | off | error | 0 outside them |
    | `no-process-env` (from `eslint-plugin-n`) on `server/src` outside `config.ts` and tests | off | **warn** | 4 |
@@ -162,22 +165,22 @@ One commit per step, each with `npm run typecheck`, `npm test`, `npm run lint` a
    | `better-tailwindcss` | absent | brief 12 | |
 
    Typed linting needs `allowDefaultProject` for `vitest.config.ts` and `eslint.config.js`; the `.mjs` files take `disableTypeChecked`.
-5. **The gate.** `check` runs `typecheck`, `lint`, `format:check`, `check:conventions` and `test`. `check:conventions` is knip (`knip.json` ignores `**/vendor/**`, lists `docs/images/*.mjs` as an entry, and reports exports as a warning) plus the two checkers, with `check-base-ui` `--warn-only` until brief 12 is done and `check-structure` `--warn-only` until brief 13 is done. `check:fast` runs `typecheck`, then ESLint on the changed and untracked `*.ts`, `*.tsx`, `*.mjs` files that exist, from a small Node script in `scripts/`: no shell-only syntax. Time `check:fast` warm with one changed file, and `check` in full; record both.
+5. **The gate.** `check` runs `typecheck`, `lint`, `format:check`, `check:conventions` and `test`. `check:conventions` is knip (`knip.json` ignores `**/vendor/**`, lists `docs/images/*.mjs` as an entry, and reports exports as a warning) plus the two checkers, with `check-base-ui` `--warn-only` until brief 12 is done and `check-structure` `--warn-only` until brief 13 is done. Add the `house-style:sync` script beside them. `check:fast` runs `typecheck`, then ESLint on the changed and untracked `*.ts`, `*.tsx`, `*.mjs` files that exist, from a small Node script in `scripts/`: no shell-only syntax. Time `check:fast` warm with one changed file, and `check` in full; record both.
 6. **`.claude/rules/`**, each under about 40 lines.
-   - **`web.md`** (`paths: ["web/src/**"]`): read the `base-ui` skill; Base UI only through `web/src/components/ui/` wrappers (brief 11); a trigger around a component uses `render`; the confirm dialog is the one `ConfirmDialog` wrapper; colours are tokens only; dark mode comes from `prefers-color-scheme`; the vendored Ward hooks are never edited; tests render `QueueView`'s pieces to markup and assert on text, not class names.
+   - **`web.md`** (`paths: ["web/src/**"]`): read the `base-ui` skill; Base UI only through `web/src/components/ui/` wrappers (brief 11); a trigger around a component uses `render`; the confirm dialog is the one `ConfirmDialog` wrapper; colours are tokens only; dark mode follows the system until brief 12 replaces it with the Light / Dark / System switch (brief 12 rewrites this line); the vendored Ward hooks are never edited; tests render `QueueView`'s pieces to markup and assert on text, not class names.
    - **`server.md`** (`paths: ["server/src/**", "shared/src/**"]`): read the `code-structure` skill; `config.ts` is the only reader of the environment; **no prompt or answer text at rest and none in a log or an error**, with the test that proves it; errors are `{ code, message }` (`ErrorBody` in `shared/src/api.ts`); app tokens guard `/v1/jobs`, sessions guard the rest of `/v1`, and neither opens the other; `server/vendor/` is generated; `GET /v1/health` stays open for the deploy's check.
    Briefs 12 and 13 add their own lines.
 7. **`CLAUDE.md`** at the root, under about 60 lines: one line on what Wicket is; "read [corpus/index.md](../../index.md) first"; the commands (`npm run dev`, `npm run check` before every hand-back, `npm run check:fast`, `npx vitest run <file>`, `npm run seed -w @wicket/server`, `npm run docs`); the places that mislead (the dev ports 8808 and 5179, `.env` at the repo root, the typecheck is two runs, `docs-site/` is a separate package with its own lockfile, the `/wicket-api` prefix is stripped by Caddy and by the server); and the moved Hard rules and brief-board sections. [corpus/CLAUDE.md](../../CLAUDE.md) keeps layout, retrieval, frontmatter, briefs, source of truth, decisions and writing.
 8. **Corpus.** Add the decisions entry "The house style, formatted and checked" with the width, the config source, and what was rejected. Update status and the log. Drop `.claude` and `scripts` from [.planned-roots](../../.planned-roots) once they exist. Run `bash corpus/lint.sh` until it is clean.
-9. **Report to brief 27.** List every finding in the outcome note for the skills library: the `!` count in tests, the open-union exhaustiveness case, and `no-misused-promises` on a `setTimeout` callback.
+9. **Report to brief 27.** List every finding in the outcome note for the skills library: the `!` count in tests (kept as warnings), the open-union exhaustiveness case, and `no-misused-promises` on a `setTimeout` callback.
 
 ## Acceptance
 
 - [ ] `npm run check` passes. Its run time and `check:fast`'s (warm, one changed file) are in the outcome note, and `check:fast` is under about 15 s.
-- [ ] `npx prettier --check .` passes. `git diff -w <hash>^ <hash>` shows nothing for the reformat commit, and its hash is in `.git-blame-ignore-revs`.
+- [ ] `npx prettier --check .` passes at width 120. `git diff -w <hash>^ <hash>` shows nothing for the reformat commit, and its hash is in `.git-blame-ignore-revs`.
 - [ ] `grep -n "verbatimModuleSyntax\|erasableSyntaxOnly" tsconfig.base.json` prints both. `npm run typecheck` passes, and so does `docker build -f infrastructure/Dockerfile .` (not run in the session that wrote this brief: no Docker daemon).
-- [ ] `npx eslint .` reports zero errors under step 4's table. Counts before and after are in the outcome note, with every finding left and its reason.
-- [ ] A deliberate `enum`, `!`, `console.log` in `server/src/app.ts`, `// TODO` and an `export default` in a non-config file each fail `npm run lint`. Revert them after.
+- [ ] `npx eslint .` reports zero errors under step 4's table; the 51 test-file `!` are the only warnings left (plus `no-process-env`'s four until brief 13). Counts before and after are in the outcome note, with every finding left and its reason.
+- [ ] A deliberate `enum`, `!` in a source file, `console.log` in `server/src/app.ts`, `// TODO` and an `export default` in a non-config file each fail `npm run lint`. Revert them after.
 - [ ] `.claude/rules/web.md` and `server.md` have `paths:` frontmatter. The root `CLAUDE.md` is under about 60 lines and names `npm run check`.
 - [ ] With the plugin's hooks on, an agent's edit is formatted on save, and a deliberate type error stops it at `Stop`.
 - [ ] `bash corpus/lint.sh` ends clean.
@@ -186,4 +189,5 @@ One commit per step, each with `npm run typecheck`, `npm test`, `npm run lint` a
 
 - Brief 11 adds nothing to the gate but its wrapper. Brief 12 adds `better-tailwindcss` and drops `check-base-ui`'s `--warn-only`. Brief 13 adds dependency-cruiser, drops `check-structure`'s `--warn-only`, and turns `no-process-env` (from `eslint-plugin-n`) into an error.
 - The reformat changes `web/src/styles.css` by one line (`font-family`). Brief 12 deletes that file.
-- `server/src/testing.ts` gains `nth` here and moves to `server/src/testing/` in brief 13.
+- `server/src/testing.ts` moves to `server/src/testing/` in brief 13. Brief 12 rewrites the `web.md` dark-mode line, and its decisions record the family token names (`surface`, `ink`, `accent`, `line`, `danger`).
+- The skills library's brief 27 owns the vendored copy and `house-style:sync`; a rule that looks wrong for Wicket is reported there, not patched here.

@@ -7,7 +7,7 @@
   - brief 03, *A code-structure skill for the Fastify + React apps*: rules 1-11, `server-skeleton.md`, `zod-type-provider.md`, `migrating-a-server.md`, `check-structure.mjs`, and the dependency-cruiser and knip presets;
   - brief 16, *The Fastify servers adopt the code structure*: Wicket's row and the method;
   - brief 15, *Enforce the base-ui and code-structure skills in every repo*: `check-structure` runs `--warn-only` until this brief is done.
-- The owner's grilling of 2026-11-10: Q1 (how vps-deploy starts the service), Q23 (`features/`), Q24 (plugin options, explicit registration), Q25 (response schemas everywhere), Q27 (the test runner), and the new questions in decisions 2, 4, 6 and 7.
+- The owner's grilling of 2026-11-10: Q1 (how the service starts), Q23 (`features/`), Q24 (plugin options, explicit registration), Q25 and Q53 (response schemas, and their exemptions), Q27 (the test runner), Q43 (one error handler), Q55 and Q56 (where schemas live, `ApiError`, no decorators as a test seam). All decided; see Owner decisions.
 
 **Order:** after 10. It touches no file that 11 or 12 touch except `package-lock.json`, so it may run before them, but never at the same time as either.
 
@@ -68,7 +68,7 @@ A bare name is at the root of `server/src/`; other paths are from the repo root.
 | (from `app.ts:292`) | | `server/src/features/health/routes.ts` | `GET /v1/health`. |
 | (from `app.ts:126-142`) | | `server/src/lib/paths.ts` | `stripApiPrefix`, `isUnder`, `pathOf`: pure string functions, no Fastify import. `app.test.ts:9` imports `stripApiPrefix` from here. |
 | `seed.ts` | 81 | the same | A CLI; the container runs `node server/dist/seed.js` (`docs/owner-setup.md:123, 184`). Its environment reads go through `config.ts`. |
-| `testing.ts` | 34 | `server/src/testing/stub-runner.ts` | `stubRunner`, `settle`, and brief 10's `nth`. The Dockerfile's `find … -name 'testing.js'` (lines 101-102) becomes a path match on `dist/testing/` (step 3). |
+| `testing.ts` | 34 | `server/src/testing/stub-runner.ts` | `stubRunner` and `settle`. The Dockerfile's `find … -name 'testing.js'` (lines 101-102) becomes a path match on `dist/testing/` (step 3). |
 
 **Feature boundaries after the move** (rule 5: only through `index.ts`): `jobs` imports from `queue`; `metrics` from `queue` and `records`; `queue` imports the `JobRecord` type from `records`. No cycle: `records` imports nothing from the other features. `config.ts` imports `AppTokens` and `CloudSettings` (not a feature, so allowed).
 
@@ -103,7 +103,7 @@ The vendored plugin's `/auth/*` routes are generated code and out of scope. Stat
 | queue | `POST /v1/queue/clear` | session, same origin | | | | `200` `clearResponseSchema`, `403` |
 | records | `GET /v1/records` | session | | `recordsQuerySchema` | | `200` `recordsResponseSchema` |
 
-All schemas already exist in `shared/src/api.ts`: **`shared/` gains nothing.** `GET /` (`app.ts:393`) redirects with no body and has no schema; it is the one route listed in `scripts/conventions.json` as an exception.
+All schemas already exist in `shared/src/api.ts`, where the page imports them too (Q55): **`shared/` gains nothing.** `GET /` (`app.ts:393`) redirects with no body and has no schema; it is the one route listed in `scripts/conventions.json` as an exception (Q53's mechanism: a `conventions.json` entry with its reason). `/metrics` is plain text but has a `z.string()` response schema, so it needs no entry.
 
 **Hand parsing removed:** the `parse()` helper (`app.ts:139-148`, one `safeParse`) and its five calls, `app.ts:303, 323, 325, 346, 379`. Brief 16's table reads "hand-parse 0" for Wicket because `check-structure`'s pattern, `.parse(request.` and `.safeParse(request.`, doesn't match a helper that takes `request.body` as an argument. **The acceptance below uses a grep that does** (it counts `safeParse(` anywhere in `server/src` outside tests and `config.ts`).
 
@@ -122,7 +122,7 @@ The 404 handler stays, in `server/src/plugins/page.ts`, with its single-page fal
 
 `server.ts`: `loadEnvFile()` and `loadConfig()`, then `buildApp({ …, logger: true, server })`, the startup log lines (`index.ts:54-62`), `close-with-grace`, `listen`. `app.ts` registers in a fixed order: errors; the provider's compilers (`setValidatorCompiler`, `setSerializerCompiler`); `server/src/plugins/auth`; `server/src/plugins/app-tokens`; the features (`health`, `metrics`, `jobs`, `queue`, `records`); `server/src/plugins/page`. That is today's hook order (guard, then token check), with the page last.
 
-`AppOptions` stays: it already carries what the tests need (`dbPath: ":memory:"`, `run`, `now`, `maxWaiting`). It gains `server?: FastifyServerOptions` for the timeouts and `trustProxy` (decision 8). `buildApp` keeps returning the Fastify instance.
+`AppOptions` stays: it already carries what the tests need (`dbPath: ":memory:"`, `run`, `now`, `maxWaiting`). It gains `server?: FastifyServerOptions` for the timeouts and `trustProxy` (decision 8), and optional `records` and `accounts` handles for the tests (decision 7). `buildApp` keeps returning the Fastify instance.
 
 **Renaming the entry moves the built file** from `server/dist/index.js` to `server/dist/server.js`. These name it:
 
@@ -130,43 +130,46 @@ The 404 handler stays, in `server/src/plugins/page.ts`, with its single-page fal
 - the root `package.json:18`: `start`;
 - `server/package.json`: `main` (line 7), `dev` (`tsx watch src/index.ts`, line 10), `start` (line 11).
 
-`infrastructure/docker-compose.yml` has no `command:`, so the Dockerfile's `CMD` is what runs on the VPS. That answers Q1 for Wicket on the evidence in this repo; vps-deploy's `wicket` stack wasn't readable here, so the step that checks its compose invocation is an owner step (decision 6).
+`infrastructure/docker-compose.yml` has no `command:`, so the Dockerfile's `CMD` is what runs on the VPS. Q1 (a fact, 2026-11-10) confirms it: pm2 is gone, every service runs in a container built from its repo's `infrastructure/Dockerfile` and started by a file path, and the build runs only `npm ci` and `npx tsc -b`, no tests or lint. So the `CMD` change below is Wicket's own and needs no owner step (decision 6).
 
 ### Test impact
 
 - 8 test files, 86 tests, `pool: "forks"`. `inject()` is called 30 times, in `app.test.ts` and `admin.test.ts`.
 - Imports to update: the two suites (`./app.js`, `./testing.js`, `./tokens.js`, `./accounts.js`), `queue.test.ts`, `providers.test.ts`, `db.test.ts`, `config.test.ts`, `tokens.test.ts`.
-- **The three test decorators** (`app.queue`, `app.records`, `app.accounts`, `app.ts:109-120`): `app.records` is read once (`app.test.ts:195`), `app.accounts` once (`admin.test.ts:35`), and **`app.queue` never**. Decision 7.
+- **The three test decorators** (`app.queue`, `app.records`, `app.accounts`, `app.ts:109-120`): `app.records` is read once (`app.test.ts:195`), `app.accounts` once (`admin.test.ts:35`), and **`app.queue` never**. All three go (decision 7): those two tests build their own handles and pass them in as options.
 - New tests: a 400 names the field and never echoes a value (a bad body whose `content` is `PROMPT-…`); a response schema strips an extra field (the `records` feature on a bare Fastify instance with a stand-in context whose rows carry an extra `prompt` field); a reply that fails its schema is a 500 `internal` whose body and log hold no `ANSWER-` text (the log capture `app.test.ts:169-220` already does for records); a signed-out call to every `/v1` route still gets `{ code: "unauthorized", … }` (a regression test for the 401 rule); `connectionTimeout` is above `MAX_WAIT_SECONDS * 1000` (a constants test in `config.test.ts`).
 
-## Owner decisions (defaults this brief builds)
+## Owner decisions
 
-1. **`server/src/features/<name>/`** (Q23). Default: yes, as in the move map: `health`, `metrics`, `jobs`, `queue`, `records`. Plugins in `server/src/plugins/`, pure helpers in `lib/`.
-2. **Typed plugin options and explicit registration** (Q24). Default: a `FeatureContext` built in `app.ts` (`queue`, `records`, `metrics`, `now`, `publicOrigin`), passed to each feature as its options; `FEATURES` lists them by name. Wicket has no such object today (it closes over locals in one function), so this is an addition. *New question for the grilling*: whether `ApiError`, rule 8's thrown error, is also added. Default: **no**. Wicket's handlers `return fail(reply, status, body)` and one code (`internal`) goes out as both 500 and 503 (`QueueClosedError`, `app.ts:312`), so a code-to-status table doesn't fit without carrying a status. `fail()` moves to `server/src/plugins/errors.ts`.
-3. **A response schema on every route** (Q25). Default: yes, for the statuses a handler sends. No route sends pass-through JSON.
-4. **The error body.** Rule 8 names `{ error, message, issues? }`; Wicket sends `{ code, message }`, which its page and its callers (just-a-bot, ro-housing) parse and the API contract page documents. Default: keep it. *New question for the grilling*: does the skill prescribe a shape or only the handler? (Almanac's brief asks the same.)
-5. **The token guard stays a root hook.** Default: path-based, as today (`isUnder(path, "/v1/jobs")`), in `server/src/plugins/app-tokens`. Moving it into the `jobs` feature's scope would answer an unknown method under `/v1/jobs` (a `PATCH`) with 404 instead of 401, because the not-found handler is a root handler that never runs a feature's hooks. That is a behaviour change, so it is not made here.
-6. **The entry file** (Q1). Default: rename to `server.ts` and change the Dockerfile and both `package.json` files in one commit. Owner step, handed over: check that vps-deploy's `wicket` stack starts the compose service, not a file path.
-7. **The three test decorators.** Default: keep `accounts` and `records` as they are (a test seam, two uses), drop the never-read `queue`. *New question for the grilling*: whether decorators are acceptable as a test seam under rule 2, or the tests should build their own handles (`buildApp` would then need to take or return them).
-8. **Timeouts and proxy.** Defaults, from the measurements above:
-   - `connectionTimeout: 35_000`: above the longest idle response (25 s) with 10 s of margin. **Not 10 s.**
+Decided on 2026-11-10 unless marked as a default.
+
+1. **`server/src/features/<name>/`** (Q23, decided 2026-11-10, technical call). As in the move map: `health`, `metrics`, `jobs`, `queue`, `records`. Plugins in `server/src/plugins/`, pure helpers in `lib/`.
+2. **Typed plugin options and explicit registration** (Q24, decided 2026-11-10, technical call). A `FeatureContext` built in `app.ts` (`queue`, `records`, `metrics`, `now`, `publicOrigin`), passed to each feature as its typed options; `FEATURES` lists them by name. Wicket has no such object today (it closes over locals in one function), so this is an addition. **`ApiError`** (default): not added. Wicket's handlers `return fail(reply, status, body)` and one code (`internal`) goes out as both 500 and 503 (`QueueClosedError`, `app.ts:312`), so a code-to-status table doesn't fit without carrying a status. `fail()` moves to `server/src/plugins/errors.ts` and is the one error mechanism, so no second error class is introduced (Q56's "one `ApiError` class stays" applies to repos that throw it).
+3. **A response schema on every route** (Q25 and Q53, decided 2026-11-10, technical calls), for the statuses a handler sends. No route sends pass-through JSON, and no route streams or serves binary, so only `GET /` is exempt.
+4. **The error body** (Q43, decided 2026-11-10, technical call). One error handler, keeping the repo's body shape: Wicket sends `{ code, message }`, which its page and its callers (just-a-bot, ro-housing) parse and the API contract page documents. It passes Fastify's own 4xx through and never echoes a thrown message to the client.
+5. **The token guard stays a root hook** (default). Path-based, as today (`isUnder(path, "/v1/jobs")`), in `server/src/plugins/app-tokens`. Moving it into the `jobs` feature's scope would answer an unknown method under `/v1/jobs` (a `PATCH`) with 404 instead of 401, because the not-found handler is a root handler that never runs a feature's hooks. That is a behaviour change, so it is not made here.
+6. **The entry file** (Q1, decided 2026-11-10, fact). Rename to `server.ts` and change the Dockerfile's `CMD` and both `package.json` files in one commit. The deploy is left alone: it runs no tests or lint, so there is nothing else to change and no owner step for the start command.
+7. **No decorators as a test seam** (Q56, decided 2026-11-10, technical call). All three test decorators are deleted. Tests pass dependencies as plugin options: `AppOptions` accepts the `Records` and accounts handles, and the two tests that read them (`app.test.ts:195`, `admin.test.ts:35`) open the in-memory database, build the handles and pass them in. The `wicketApp` request decoration in `app-tokens` is runtime, not a test seam, and stays.
+8. **Timeouts and proxy** (technical call, from the measurements above). **The long poll keeps its `connectionTimeout`: 35_000**, above the longest idle response (25 s, `MAX_WAIT_SECONDS`) with 10 s of margin. Not 10 s.
    - `requestTimeout: 30_000`: bounds receiving a request (bodies are at most 1 MiB, `BODY_LIMIT`); it does not bound a response.
    - `keepAliveTimeout: 125_000`, above Caddy's two-minute idle keep-alive to its upstream. Check the deploy's Caddy snippet for its own value.
    - `trustProxy`: loopback plus `AUTH_TRUSTED_PROXIES`. Wicket reads no `request.ip`; the lockout reads the socket itself and `/metrics` reads the headers, so the only effect is the request log's address.
    - `close-with-grace` with `delay: 5_000`, under compose's default 10 s stop period, so the process exits before Docker kills it. The queue's `close()` cancels what waits or runs.
-   *New question for the grilling*: the skill's brief should state that `connectionTimeout` must exceed the longest idle response; it matters for Wicket's long poll, newspapper's SSE and Satchel's live socket.
-9. **Logging.** Default: JSON as today, no `pino-pretty`.
-10. **Fastify 5.12.8.** Default: not in this brief.
+   The skills library's brief should state that `connectionTimeout` must exceed the longest idle response; it matters for Wicket's long poll, newspapper's SSE and Satchel's live socket.
+9. **Logging** (default). JSON as today, no `pino-pretty`.
+10. **Fastify 5.12.8** (default). Not in this brief.
+11. **The test runner** (Q27, decided 2026-11-10, technical call). vitest stays; only atrium stays on `node:test`.
+12. **No PRs, no branches** (Q4, decided 2026-11-10, owner). One commit per step, straight on `main`.
 
 ## Files you OWN
 
 - `server/src/**`: the moves, the new plugins, the schemas wired in.
 - `server/package.json` (scripts, `main`, the new dependencies pinned: `@fastify/type-provider-zod` 1.0.3, `@fastify/swagger` 9.9.3, `openapi-types` 12.1.3, `fastify-plugin` 6.0.1, `close-with-grace` 2.5.0) and `package-lock.json`.
-- `infrastructure/Dockerfile`: the `CMD` line, and the `find` that deletes test code.
+- `infrastructure/Dockerfile`: the `CMD` line, and the `find` that deletes test code. Nothing else, and no deploy file outside the repo.
 - The root `package.json`: `start`, and `check:conventions` (dependency-cruiser added, `check-structure`'s `--warn-only` dropped).
 - `.dependency-cruiser.cjs` (new, from the skill's preset), `knip.json` (the entries).
 - `eslint.config.js`: `no-process-env` (from `eslint-plugin-n`) from warning to error.
-- `scripts/conventions.json`, for the `GET /` exception and any from decisions 5-7.
+- `scripts/conventions.json`, for the `GET /` exception and any from decision 5.
 - `.claude/rules/server.md`: the structure lines.
 - Corpus: [wiki/architecture.md](../../wiki/architecture.md) (the file list, lines 9-18), [wiki/providers.md](../../wiki/providers.md) (line 8), [wiki/sign-in.md](../../wiki/sign-in.md) (lines 11, 25, 63, 77), `docs/architecture.md` (lines 30-33), [wiki/decisions.md](../../wiki/decisions.md), [wiki/status.md](../../wiki/status.md), [log.md](../../log.md).
 
@@ -175,17 +178,17 @@ The 404 handler stays, in `server/src/plugins/page.ts`, with its single-page fal
 - `web/`. A response schema that drops a field the page reads is a finding: fix the schema, not the page.
 - `shared/` schemas and their behaviour.
 - `server/vendor/`: generated.
-- The deploy, beyond the `CMD` line. vps-deploy edits are handed to the owner.
+- The deploy, beyond the `CMD` line. Nothing in vps-deploy changes (Q1).
 - Behaviour: status codes, error codes, every route's JSON apart from leaks the comparison shows. The one known message change is the no-body 400 text.
 - [wiki/api.md](../../wiki/api.md)'s contract: callers build against it. If a step changes anything it says, stop and tell the owner ([corpus/CLAUDE.md](../../CLAUDE.md)).
 
 ## What to do
 
-One commit per step; after each, `npm run check` and `npm run build` pass, and `npm start` serves `GET /v1/health`.
+One commit per step, straight on `main`; after each, `npm run check` and `npm run build` pass, and `npm start` serves `GET /v1/health`.
 
 1. **Before.** Run `check-structure` strict and record the counts by rule; expect rule 3 at 4 (the readers above), rule 11 at 1 (`app.ts`, 404 lines) and rule 6 at 9 routes with no schema. Seed a scratch `WICKET_DB` per [docs/images/shots.md](../../../docs/images/shots.md) with the stand-in cloud, post a few jobs (one `done`, one `failed`, one cancelled), and save the JSON of every route above, signed in as `demo` and with an app token. Build the image and record its size (about 210 MB per [wiki/status.md](../../wiki/status.md)).
-2. **`config.ts` and the split.** The helpers in `config.ts`; `seed.ts` uses them; `index.ts` becomes `server.ts` with `close-with-grace`, the timeouts and `trustProxy`; the constants move. `no-process-env` (from `eslint-plugin-n`) now finds nothing: make it an error.
-3. **Plugins.** `server/src/plugins/errors.ts`, `server/src/plugins/auth/`, `server/src/plugins/app-tokens/`, `server/src/plugins/page.ts`, `server/src/lib/paths.ts`, the `testing/` folder, and the Dockerfile's `find`. Every test passes unchanged.
+2. **`config.ts` and the split.** The helpers in `config.ts`; `seed.ts` uses them; `index.ts` becomes `server.ts` with `close-with-grace`, the timeouts and `trustProxy` (decision 8: `connectionTimeout` stays 35_000); the constants move; the Dockerfile `CMD` and both `package.json` files change in this commit (decision 6). `no-process-env` (from `eslint-plugin-n`) now finds nothing: make it an error.
+3. **Plugins.** The three test decorators go here too (decision 7). `server/src/plugins/errors.ts`, `server/src/plugins/auth/`, `server/src/plugins/app-tokens/`, `server/src/plugins/page.ts`, `server/src/lib/paths.ts`, the `testing/` folder, and the Dockerfile's `find`. Every test passes unchanged.
 4. **Feature folders**, `git mv` file by file per the map, with the `index.ts` files. Add `.dependency-cruiser.cjs`, and check that a deliberate import of `server/src/features/queue/queue.js` from `server/src/features/jobs/` fails it.
 5. **The type provider and the schemas, one feature per commit:** health, metrics, records, queue, jobs. Each commit declares params, querystring, body and the response statuses above, removes that route's `parse()` call, types the plugin as `FastifyPluginAsyncZod<FeatureContext>`, and adds the tests that apply. Delete `parse()` with the last one.
 6. **After.** Save the same JSON again and diff against step 1. A field that disappeared is a leak (keep it dropped and list it) or a missing schema field (add it). Put the summary in the `log.md` entry.
@@ -204,11 +207,13 @@ One commit per step; after each, `npm run check` and `npm run build` pass, and `
 - [ ] The five new tests pass, with every existing one unchanged, including the privacy tests (`app.test.ts:169-220`): no prompt or answer text in the database, in a log, or in an error body.
 - [ ] A real-socket check: a `GET /v1/jobs/:id?wait=25` against `npm start` with nothing happening returns after about 25 s, not a reset (the step-1 JSON run includes it).
 - [ ] The before and after JSON comparison is in `log.md`, with every dropped field named.
-- [ ] `npm run build` writes `server/dist/server.js`. `docker build -f infrastructure/Dockerfile .` succeeds, the container answers its health check, and the image size is recorded against step 1's. The vps-deploy step is handed to the owner as exact commands.
+- [ ] `npm run build` writes `server/dist/server.js`. `docker build -f infrastructure/Dockerfile .` succeeds, the container answers its health check, and the image size is recorded against step 1's. No vps-deploy change is needed (decision 6).
+- [ ] `grep -rn "app\.queue\|app\.records\|app\.accounts\|decorate(" server/src --include=*.ts` finds no test seam decorator (only `wicketApp`).
 - [ ] dependency-cruiser fails on a deliberate cross-feature import and passes clean.
 - [ ] `npm run check` passes, and `bash corpus/lint.sh` ends clean.
 
 ## Interplay
 
 - If brief 10's knip run calls `server/package.json`'s `main` unused, step 2 has one line fewer to change.
+- The long-poll `connectionTimeout` (decision 8) is the one setting that must not be copied from other servers' briefs.
 - The skills library should hear about the `401` finding, the `connectionTimeout` finding and the helper-wrapped-parse blind spot before the other servers run its brief 16: the first applies to every repo on the vendored Ward plugin, the second to every server with long-lived responses, the third to any repo that parses through a helper.

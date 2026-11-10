@@ -169,3 +169,19 @@ estate's assumptions are in each brief: a declared 401 response schema turns
 the Ward guard's reply into a 500, `connectionTimeout` cuts a long poll, and
 the code-structure checker's pattern misses parsing done through a helper.
 Nothing was changed outside `corpus/`.
+
+## [2026-11-10] brief | Briefs 10-13 revised to the owner's answers; brief 14 added
+
+The owner's grilling of 2026-11-10 answered the open questions the briefs were
+built on. Brief 10: `house-style` is vendored (no git dependency, so the
+Dockerfile is untouched), Prettier width 120 (68 lines in 20 files, the
+one-off reformat), `!` is an error in source and a warning in tests (no `nth`
+helper). Brief 11: the period filter becomes a `RadioGroup` and jsdom comes in
+for `ConfirmDialog`, the one wrapper with logic. Brief 12: token names
+`page`, `surface`, `ink`, `accent`, `line`, `danger` (no `bg-bg`), a Light /
+Dark / System switch on `data-theme` (light first), the 14 px on `body`,
+`max-sm:` for the phone, "close enough" parity. Brief 13: the start command is
+Wicket's own (Q1), the three test decorators go (plugin options instead), and
+the 25 s long poll keeps its `connectionTimeout` of 35 s. Brief 14 is new: a
+redesign with Hallmark on the estate board. Work happens on `main`, with no
+PRs. Nothing was changed outside `corpus/`.
