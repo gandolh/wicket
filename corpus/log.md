@@ -151,3 +151,21 @@ version brief-board ships. Pinned exactly; `glob` moved to 14.0.4 and the
 GHSA-3g3m-2fjr-6pw4 finding is gone. 86 tests pass. `npm audit` still shows 10
 moderate findings in the dev-only `typescript-eslint` chain. Not deployed. See
 [briefs/done/09-fastify-static-moves-to-10-1-9.md](briefs/done/09-fastify-static-moves-to-10-1-9.md).
+
+## [2026-11-10] todo | Briefs 10-13: the owner's three calls of 2026-11-09, as four briefs
+
+The owner decided on 2026-11-09 that every web app gets Base UI 1.9.0, is
+styled with Tailwind v4 as a whole, and has its conventions enforced in the
+repo. Four briefs, in order: 10 the house style and the quality harness
+(Wicket is the proof run for the skills library's house-style brief; Prettier
+churn 0.8% of lines at width 130, 58 non-null assertions of which 51 are in
+tests, 5 typed-lint findings of which 4 are false); 11 Base UI by the
+conventions (one wrapper to move, one native select to decide; no version bump
+is needed, the pin and the lockfile are already 1.9.0); 12 the web app to
+Tailwind (544 lines of CSS, and the token names Wicket, the-board and lantern
+share); 13 the server in the code structure (nine routes, `server.ts`,
+feature folders, route and response schemas). Findings that change the
+estate's assumptions are in each brief: a declared 401 response schema turns
+the Ward guard's reply into a 500, `connectionTimeout` cuts a long poll, and
+the code-structure checker's pattern misses parsing done through a helper.
+Nothing was changed outside `corpus/`.

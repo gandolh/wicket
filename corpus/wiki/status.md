@@ -1,6 +1,6 @@
 ---
-summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); no open briefs; the open todo (bump @fastify/static).
-updated: 2026-11-04
+summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); briefs 10-13 open (planned 2026-11-10: the house-style harness, Base UI by the conventions, the web app to Tailwind, the server in the code structure).
+updated: 2026-11-10
 ---
 
 # Status
@@ -45,6 +45,15 @@ turned out to be 6.55 GB. **Not deployed.** Everything the deploy needs is in
   ([open-questions.md](open-questions.md)).
 
 86 tests; typecheck, lint and the docs build clean (2026-11-04).
+
+## Open briefs (planned 2026-11-10)
+
+Four briefs carry the owner's calls of 2026-11-09 (Base UI 1.9.0, Tailwind
+v4, enforced conventions), to run in number order: 10 the house style and the
+quality harness (Wicket is the proof run), 11 Base UI by the conventions, 12
+the web app to Tailwind, 13 the server in the code structure. They wait on the
+owner's grilling of 2026-11-10. No bump brief is needed: `@base-ui/react` is
+already exactly 1.9.0 and the lockfile resolves it.
 
 ## Next (owner)
 
