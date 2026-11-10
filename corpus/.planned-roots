@@ -1,0 +1,3 @@
+# Directories the todo briefs 10-13 will create; lint skips them until they exist.
+.claude
+scripts
