@@ -1,5 +1,5 @@
 ---
-summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); brief 10 built 2026-11-11 (the house-style harness: vendored house-style configs, Prettier at 120, typed ESLint, npm run check and check:fast; ready for deploy); brief 11 built 2026-11-11 (Base UI by the conventions: ConfirmDialog and RadioGroup under components/ui, jsdom test; ready for deploy); brief 13 built 2026-11-11 (the server in the code structure: server.ts, config.ts, plugins, features, zod route schemas, check-structure strict; ready for deploy); briefs 12 and 14 open (the web app to Tailwind, a Hallmark redesign).
+summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); brief 10 built 2026-11-11 (the house-style harness: vendored house-style configs, Prettier at 120, typed ESLint, npm run check and check:fast; ready for deploy); brief 11 built 2026-11-11 (Base UI by the conventions: ConfirmDialog and RadioGroup under components/ui, jsdom test; ready for deploy); brief 13 built 2026-11-11 (the server in the code structure: server.ts, config.ts, plugins, features, zod route schemas, check-structure strict; ready for deploy); brief 12 built 2026-11-11 (the web app to Tailwind, the Light / Dark / System switch, the shared token names; ready for deploy); brief 14 open (a Hallmark redesign).
 updated: 2026-11-11
 ---
 
@@ -52,8 +52,8 @@ turned out to be 6.55 GB. **Not deployed.** Everything the deploy needs is in
   `.git-blame-ignore-revs`); `verbatimModuleSyntax` and `erasableSyntaxOnly`;
   the house ESLint config with its six typed rules. `npm run check` (about
   19 s) runs the typecheck, lint, format check, `check:conventions` (knip,
-  dependency-cruiser, and the two house-style checkers, `check-base-ui`
-  `--warn-only` until brief 12) and the tests; `npm run check:fast` (about 6 s) is
+  dependency-cruiser, and the two house-style checkers, `check-base-ui`,
+  strict since brief 12) and the tests; `npm run check:fast` (about 6 s) is
   what the Claude Code plugin's Stop hook runs. A root `CLAUDE.md` and
   `.claude/rules/` carry the commands and the area rules. Left as warnings:
   non-null assertions in tests. `no-process-env` (from `eslint-plugin-n`)
@@ -125,3 +125,11 @@ None. The last one became brief 09 on 2026-11-06 and was built on
 2026-11-09: @fastify/static is pinned at 10.1.10 (the owner lifted the
 2026-11-18 date gate and chose the version brief-board ships). Not deployed;
 the owner runs `node cli.ts wicket all` from vps-deploy.
+
+## [2026-11-11] done | Brief 12: the web app to Tailwind
+
+The page's 626-line stylesheet became utilities on the JSX plus one stylesheet, `web/src/styles/index.css` (tokens in
+`@theme`, three base rules). The token names are the small tools' shared list ([decisions.md](decisions.md)). A
+Light / Dark / System switch is on the account page, light on a first visit. `check-base-ui` and `better-tailwindcss`
+(unknown classes, deprecated classes, class order) run strict in `npm run check`; 107 tests, 3 Playwright specs. Not
+pushed or deployed. See [briefs/done/12-the-web-app-to-tailwind.md](../briefs/done/12-the-web-app-to-tailwind.md).

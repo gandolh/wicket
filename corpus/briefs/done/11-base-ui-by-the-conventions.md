@@ -70,7 +70,7 @@ Decided on 2026-11-10 unless marked as a default.
 | `ConfirmDialog.tsx` | Base UI `AlertDialog`, props unchanged; `initialFocus` on Cancel (a ref); the pending guard and "Working…" label as today | `web/src/ConfirmAction.tsx`, moved |
 | `RadioGroup.tsx` | Base UI `RadioGroup` as a segmented group; `value`, `onValueChange`, `items` (value and label), an accessible group label (decision 3) | new; `QueuePage.tsx:148` uses it |
 
-`Button` stays native for now: Wicket has four button variants and no Base UI `Button` need ([brief 12](../todo/12-the-web-app-to-tailwind.md) builds `buttonClass()`).
+`Button` stays native for now: Wicket has four button variants and no Base UI `Button` need ([brief 12](12-the-web-app-to-tailwind.md) builds `buttonClass()`).
 
 ## Files you OWN
 

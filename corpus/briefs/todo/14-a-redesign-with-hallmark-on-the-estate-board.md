@@ -2,7 +2,7 @@
 
 **Depends on:**
 
-- In Wicket: [brief 12](12-the-web-app-to-tailwind.md), which puts the page in Tailwind with the family token names and adds the Light / Dark / System switch, on the wrappers from [brief 11](../done/11-base-ui-by-the-conventions.md). A redesign is then mostly a new token set and layout.
+- In Wicket: [brief 12](../done/12-the-web-app-to-tailwind.md), which puts the page in Tailwind with the family token names and adds the Light / Dark / System switch, on the wrappers from [brief 11](../done/11-base-ui-by-the-conventions.md). A redesign is then mostly a new token set and layout.
 - In the owner's skills library:
   - brief 24, which vendors Hallmark as the design skill and adopts taste-skill 2.5's ideas (palettes and type dealt by trade, its copy layer);
   - the estate redesign board: one artifact with a page per app, owned by the skills library.

@@ -31,7 +31,12 @@ Like brief-board, without its CLI:
   records (better-sqlite3), sign-in (vendored ward-auth), `/metrics`, and the
   built page.
 - `web`: the React 19 page at `/wicket/`, on Vite, with Base UI and the
-  vendored ward-auth hooks.
+  vendored ward-auth hooks, styled with Tailwind 4: one stylesheet,
+  [styles/index.css](../../web/src/styles/index.css), holds the tokens; the
+  rest is utilities. [cn.ts](../../web/src/lib/cn.ts) merges classes,
+  [theme.ts](../../web/src/lib/theme.ts) holds the Light / Dark / System
+  choice, and [components/](../../web/src/components/) has the shared pieces
+  (`Facts`, `Table`, `ThemeSwitch`) and the Base UI wrappers with `buttonClass`. `web/e2e/` is the Playwright theme spec.
 
 Beside them, `docs-site/` is the Docusaurus docs site: its own npm package
 with its own lockfile, not a workspace, so the API image's `npm ci` never

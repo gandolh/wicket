@@ -187,3 +187,42 @@ Follow the skill's `migrating-from-plain-css.md`. One commit per numbered step, 
 - The-board's and lantern's briefs and brief-board's brief 18 copy this brief's `@theme` names (decision 1). If a name changes while building, tell them: this list wins wherever theirs differ.
 - Brief 11's `RadioGroup` is the theme control's base. Brief 14 (the redesign) changes the tokens and layout on top of this brief and must keep the switch working in both themes.
 - Brief 13 doesn't touch `web/`; they conflict only in `package-lock.json`, so don't run them at the same time.
+
+## Outcome (2026-11-11)
+
+Built in four code commits, 3393d65 to e5b35a1, then the closeout; local, not pushed. Board: ready for deploy.
+
+- **Parity.** A script took 24 states at 1280 x 800 and 390 x 844 in light (login and its error and Ward states, the
+  gate's loading and unreachable screens, the queue idle, busy, down, with a notice, the 7-day period, every dialog,
+  the account page, a focus ring on a button and on a field), with the API stubbed through `page.route` and the clock
+  frozen. After pixel comparison, every state matched the old page at 0 px except the account page, which gained the
+  theme switch and drifts 1 to 2 px under the heading (its `h2` had the browser's 0.83em margin; `my-4.5` is 18 px
+  against 17.4). Dark was read by eye on the queue, a dialog, the login error and the account page: no unreadable text.
+- **Sizes.** Built CSS 7,572 bytes (2,228 gzip) before, 19,327 (4,808) after. JS 387,804 (118,089) before, 420,999
+  (129,297) after (`tailwind-merge` and `clsx`).
+- **Checks.** `npm run check` exit 0 (typecheck, ESLint with `better-tailwindcss`, Prettier, knip, dependency-cruiser,
+  `check-base-ui` strict at 0, `check-structure`, 107 tests); `npm run test:e2e -w @wicket/web` 3 passed.
+
+### Deviations
+
+- **The theme follows the base-ui skill's `theme.md`, not decision 2's wording.** `data-theme` is `light`, `dark` or
+  `system`; the colour tokens are `light-dark()` pairs and `color-scheme` follows the attribute, so System follows the
+  operating system in CSS, with no `matchMedia` listener. The store is `web/src/lib/theme.ts`, not `web/src/theme.ts`.
+  Because of that, `@custom-variant dark` in `index.css` mentions `prefers-color-scheme`, so the acceptance grep finds
+  it there as well as in the script; no `dark:` class is used.
+- **Extra tokens** beyond the brief's table: `--color-scrim`, `--color-ok-wash`, `--color-danger-wash`,
+  `--color-danger-line` (the three `color-mix()` colours and the backdrop's rgb), `--shadow-dialog`, `--radius-group`
+  (the segmented control's 6 px), `--text-page-title` (the account page's `h2` is 1.5em, 21 px), `--leading-ticket`,
+  `--tracking-label`. The family list in `index.css`'s comment is unchanged.
+- **Commits are by area, not by component.** The brief's step 3 (eight component commits) went in one commit, because
+  the old stylesheet's rules shared selectors across components and one pass was quicker to verify than eight.
+- **A `legacy` layer** held the old stylesheet for one commit only; the final layer order is
+  `theme, base, vendor, components, utilities` (the skill's), with `vendor` empty.
+- **The screenshots stub the API completely** (session, queue, records, login), so no server and no scratch database
+  ran, and no `.env` was involved. The brief's recipe named a scratch `WICKET_DB`; nothing needed it.
+- **Playwright is new to this repo** (`@playwright/test` 1.62.0 in `web/`, `web/playwright.config.ts`, `web/e2e/`, a
+  port 5189 dev server). `@tailwindcss/vite` is also a root devDependency, because `vitest.config.ts` (the stylesheet
+  test) imports it and knip wants it listed where it is imported.
+- **No `color-scheme` meta tag**: the skill's mechanism sets `color-scheme` in CSS from `data-theme`.
+- **86 tests** in the brief became 107: the repo had 102 at the start.
+- `web/src/gate.ts` holds two class strings in bare constants, which `better-tailwindcss` doesn't lint.

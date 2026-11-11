@@ -232,3 +232,14 @@ The server follows the skills library's code-structure skill. `index.ts` became 
 The before-and-after comparison: 108 replies captured through `inject()` (every route in every job state, each refusal, 20 bad requests, the sign-in replies and the page's paths), compared after every step. 107 stayed byte-identical. One changed on purpose: a `POST /v1/jobs` with no body now answers `request: Invalid input: expected object, received null` where it said `received undefined`, with the same 400 and `invalid_request`. No field dropped, so the response schemas found no leak. Dropping `waitMs` from the records schema once changed the two records replies, which shows the schemas are live.
 
 On a real socket, `?wait=25` answered after 25.0 s. A SIGTERM during a held poll first ended at close-with-grace's 5 s delay with exit 1 and nothing recorded, because the queue was cancelled in `onClose`, after Fastify waits for requests in flight; the queue now closes in `preClose`, and the poll answers `cancelled` at once. The why is in [wiki/decisions-server.md](wiki/decisions-server.md). Not pushed or deployed; the image wasn't built here (local Docker fails). See [briefs/done/13-the-server-in-the-code-structure.md](briefs/done/13-the-server-in-the-code-structure.md).
+
+## [2026-11-11] done | Brief 12: the web app to Tailwind, a theme switch, the shared tokens
+
+`web/src/styles.css` (626 lines, 101 `className` lines) is gone: Tailwind 4.3.5 and `@tailwindcss/vite`, `clsx`,
+`tailwind-merge`, one stylesheet at `web/src/styles/index.css`. Decisions in [wiki/decisions-web.md](wiki/decisions-web.md):
+the page is Tailwind, with the family token names, and the theme is Light / Dark / System, light first. The light
+screenshots at 1280 and 390 px (24 states each, stubbed API, frozen clock) match the old page to the pixel apart from the
+account page, which gained the theme switch and drifts 1 to 2 px under the heading. Built CSS 7,572 bytes (2,228 gzip)
+before, 19,327 (4,808) after; JS 387,804 (118,089) before, 420,999 (129,297) after, of which `tailwind-merge` and `clsx`
+are most. See [briefs/done/12-the-web-app-to-tailwind.md](briefs/done/12-the-web-app-to-tailwind.md).
+
