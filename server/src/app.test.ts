@@ -8,10 +8,10 @@ import type { FastifyInstance, InjectOptions } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
-import { openDatabase } from "./db.js";
+import { openDatabase } from "./db/open.js";
 import { stripApiPrefix } from "./lib/paths.js";
 import { AppTokens } from "./plugins/app-tokens/tokens.js";
-import { Records } from "./records.js";
+import { Records } from "./features/records/index.js";
 import { settle, stubRunner, type StubCall } from "./testing/stub-runner.js";
 
 const BOT_TOKEN = "b".repeat(64);

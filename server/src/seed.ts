@@ -2,7 +2,7 @@ import { createInterface } from "node:readline/promises";
 import { Writable } from "node:stream";
 import { openAccounts, seedUser } from "./plugins/auth/accounts.js";
 import { loadEnvFile, loadSeedConfig } from "./config.js";
-import { openDatabase } from "./db.js";
+import { openDatabase } from "./db/open.js";
 
 /**
  * Creates one local user. There is no sign-up page: this is how the owner

@@ -2,10 +2,10 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import type { AddressInfo } from "node:net";
 import { FINAL_STATUSES, type JobRequest, type JobResult, type JobView } from "@wicket/shared";
 import { afterEach, describe, expect, it } from "vitest";
-import type { CloudSettings } from "./config.js";
-import { createRunner, NO_KEY_ERROR } from "./providers.js";
+import type { CloudSettings } from "../../config.js";
+import type { JobRecord } from "../records/index.js";
 import { Queue, type RunContext } from "./queue.js";
-import type { JobRecord } from "./records.js";
+import { createRunner, NO_KEY_ERROR } from "./runner.js";
 
 /**
  * The cloud runner against stub Ollama servers on loopback. No real model is

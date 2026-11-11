@@ -1,5 +1,5 @@
 import { createAccounts, createSqliteStore, seedUsers, type Accounts } from "../../../vendor/ward/ward-auth.js";
-import type { Db } from "../../db.js";
+import type { Db } from "../../db/open.js";
 
 /**
  * Wicket's local accounts, on the vendored ward-auth library. Every signed-in
@@ -13,7 +13,7 @@ export const USER_ROLE = "user";
  * The accounts on Wicket's own database. The library migrates its own tables
  * (`auth_users`, `auth_sessions`, `auth_ward_links`, tracked in
  * `auth_migrations`) on this call, beside the records; it never touches
- * `PRAGMA user_version`, which is Wicket's (`db.ts`).
+ * `PRAGMA user_version`, which is Wicket's (`db/open.ts`).
  */
 export function openAccounts(db: Db): Accounts {
   return createAccounts({ store: createSqliteStore(db) });

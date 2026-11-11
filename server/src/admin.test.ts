@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Accounts } from "../vendor/ward/ward-auth.js";
 import { buildApp } from "./app.js";
 import { loadConfig, SESSION_COOKIE } from "./config.js";
-import { openDatabase, type Db } from "./db.js";
+import { openDatabase, type Db } from "./db/open.js";
 import { AppTokens } from "./plugins/app-tokens/tokens.js";
 import { openAccounts, seedUser } from "./plugins/auth/accounts.js";
 import { settle, stubRunner, type StubCall } from "./testing/stub-runner.js";

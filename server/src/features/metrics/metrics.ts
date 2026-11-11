@@ -1,5 +1,5 @@
-import type { QueueSnapshot } from "./queue.js";
-import type { JobRecord } from "./records.js";
+import type { QueueSnapshot } from "../queue/index.js";
+import type { JobRecord } from "../records/index.js";
 
 /**
  * Prometheus text for the box's Grafana, written by hand: a handful of

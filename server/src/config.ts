@@ -52,7 +52,7 @@ export const SHUTDOWN_DELAY_MS = 5_000;
 export const AUTH_ROUTE_PREFIX = "/auth";
 
 /** The Ward callback, under the API prefix: `WARD_OIDC_REDIRECT_URI` is the origin, the prefix, then this. */
-export const WARD_CALLBACK_PATH = `${AUTH_ROUTE_PREFIX}/ward/callback`;
+const WARD_CALLBACK_PATH = `${AUTH_ROUTE_PREFIX}/ward/callback`;
 
 /** The Vite dev server, where the page runs in development. */
 const DEV_ORIGIN = "http://localhost:5179";
@@ -98,7 +98,7 @@ export class ConfigError extends Error {
 }
 
 /** An empty value (`KEY=` copied from `.env.example`) counts as not set. */
-export const optional = <T extends z.ZodType>(schema: T) =>
+const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((value) => (typeof value === "string" && value.trim() === "" ? undefined : value), schema.optional());
 
 /** An http(s) base URL, without a trailing slash. */
@@ -118,7 +118,7 @@ const seconds = (name: string) =>
     .max(3600, { message: `${name} must be a whole number of seconds, 1 to 3600.` });
 
 /** The defaults the owner settled: just-a-bot's cloud model. */
-export const DEFAULTS = {
+const DEFAULTS = {
   cloudUrl: "https://ollama.com",
   cloudModel: "gpt-oss:120b",
   cloudTimeoutSeconds: 120,
@@ -153,7 +153,7 @@ const envSchema = z.object({
   ).transform((value) => value ?? PAGE_PATH),
 });
 
-export function describeIssue(issue: z.core.$ZodIssue): string {
+function describeIssue(issue: z.core.$ZodIssue): string {
   const key = String(issue.path[0] ?? "");
   return issue.message.startsWith(key) ? issue.message : `${key}: ${issue.message}`;
 }

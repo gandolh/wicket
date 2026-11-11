@@ -1,5 +1,5 @@
 import type { JobRequest, JobResult } from "@wicket/shared";
-import type { CloudSettings } from "./config.js";
+import type { CloudSettings } from "../../config.js";
 import type { Runner } from "./queue.js";
 
 /**
@@ -21,7 +21,7 @@ import type { Runner } from "./queue.js";
  * the kind of failure, never a message or Ollama's error text.
  */
 
-export interface ProviderLog {
+interface ProviderLog {
   error(message: string): void;
 }
 
@@ -34,7 +34,7 @@ export interface ProviderOptions {
 }
 
 /** Why one Ollama call failed. `detail` is for the caller only, never the log. */
-export class ProviderFailure extends Error {
+class ProviderFailure extends Error {
   /** For the log: a status code or a kind of failure, never text from the call. */
   readonly kind: string;
 

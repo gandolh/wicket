@@ -1,5 +1,5 @@
 import type { JobRequest, JobResult } from "@wicket/shared";
-import type { Runner } from "../queue.js";
+import type { Runner } from "../features/queue/index.js";
 
 /**
  * Test helpers: a runner the test drives by hand. Each call waits until the

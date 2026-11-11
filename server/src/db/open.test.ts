@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
-import { MIGRATIONS, openDatabase } from "./db.js";
+import { MIGRATIONS, openDatabase } from "./open.js";
 
 const dirs: string[] = [];
 afterEach(() => {

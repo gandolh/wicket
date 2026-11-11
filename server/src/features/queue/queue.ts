@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { FINAL_STATUSES, type JobRequest, type JobResult, type JobStatus, type JobView } from "@wicket/shared";
-import type { JobRecord, Outcome } from "./records.js";
+import type { JobRecord, Outcome } from "../records/index.js";
 
 /**
  * The one queue. Every job from every app waits here, first come first
@@ -73,7 +73,7 @@ export interface QueueOptions {
 }
 
 /** The running job, as the queue page shows it. No text. */
-export interface RunningJob {
+interface RunningJob {
   id: string;
   app: string;
   ticket: number;
@@ -82,7 +82,7 @@ export interface RunningJob {
 }
 
 /** A waiting job, as the queue page shows it. No text. */
-export interface WaitingJob {
+interface WaitingJob {
   id: string;
   app: string;
   ticket: number;
@@ -111,8 +111,8 @@ interface Job {
   controller: AbortController | undefined;
 }
 
-export const DEFAULT_MAX_WAITING = 200;
-export const DEFAULT_KEEP_FINISHED_MS = 10 * 60 * 1000;
+const DEFAULT_MAX_WAITING = 200;
+const DEFAULT_KEEP_FINISHED_MS = 10 * 60 * 1000;
 
 /** The short message a failed job carries. The runner's own messages never hold the prompt. */
 function failureMessage(error: unknown): string {

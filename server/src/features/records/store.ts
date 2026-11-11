@@ -1,11 +1,11 @@
 import type { AppCounts, Outcome } from "@wicket/shared";
-import type { Db } from "./db.js";
+import type { Db } from "../../db/open.js";
 
 export type { Outcome };
 
 /**
  * One finished job, as kept: who, which ticket, which model and how long it
- * took. Never any text; see `db.ts`.
+ * took. Never any text; see `db/open.ts`.
  */
 export interface JobRecord {
   app: string;

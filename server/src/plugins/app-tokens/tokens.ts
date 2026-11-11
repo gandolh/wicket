@@ -12,7 +12,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
  */
 
 /** The shortest token accepted: `openssl rand -hex 32` makes 64 characters. */
-export const MIN_TOKEN_LENGTH = 32;
+const MIN_TOKEN_LENGTH = 32;
 
 /** An app name: lowercase words joined by dashes, like `just-a-bot`. */
 const APP_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
