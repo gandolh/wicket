@@ -70,7 +70,7 @@ Decided on 2026-11-10 unless marked as a default.
 | `ConfirmDialog.tsx` | Base UI `AlertDialog`, props unchanged; `initialFocus` on Cancel (a ref); the pending guard and "Working…" label as today | `web/src/ConfirmAction.tsx`, moved |
 | `RadioGroup.tsx` | Base UI `RadioGroup` as a segmented group; `value`, `onValueChange`, `items` (value and label), an accessible group label (decision 3) | new; `QueuePage.tsx:148` uses it |
 
-`Button` stays native for now: Wicket has four button variants and no Base UI `Button` need ([brief 12](12-the-web-app-to-tailwind.md) builds `buttonClass()`).
+`Button` stays native for now: Wicket has four button variants and no Base UI `Button` need ([brief 12](../todo/12-the-web-app-to-tailwind.md) builds `buttonClass()`).
 
 ## Files you OWN
 
@@ -116,3 +116,50 @@ One commit per step, straight on `main`. After each, `npm run check` passes with
 - Brief 12 styles `web/src/components/ui/` with Tailwind and deletes the `.dialog*` rules this brief renamed. It reuses `RadioGroup.tsx` for its Light / Dark / System control, so keep the wrapper's props general.
 - Brief 14 (the redesign) comes after 12 and keeps these wrappers.
 - The skills library's `check-base-ui` heuristic for rule 9 may flag `AlertDialog.Description render={<div />}`. That is a false positive, to report to the skill and not to except here.
+
+## Outcome
+
+Built on 2026-11-11 on `main`, committed and not pushed. Commits, in order:
+`8b79814` move the dialog to `components/ui/ConfirmDialog.tsx`, `fe32b29`
+`initialFocus` on Cancel, `ee887c5` the period `RadioGroup`, `0292bba` the
+jsdom test and its pinned dependencies (`jsdom` 31.0.0, Testing Library
+react 16.3.3, dom 10.4.2, user-event 14.6.9), `50fc823` the web rules and the
+corpus pages, then this closeout.
+
+**Checks.** `check-base-ui` strict before: rule 3 at 1, rule 5 at 1 (the
+checker counts the one plain stylesheet, `web/src/styles.css`). After: rules
+1, 2, 3, 9, 10 and 11 at 0, rule 5 at 1; rules 4, 6 and 7 are review-only and
+brief 12's (the `.dialog*` and `.radio-*` classes, and the literal z-indexes
+at `styles.css`). The three greps (Base UI outside `components/ui/`,
+`ConfirmAction`, `<select`) print nothing. `ConfirmDialog.test.tsx` has three
+tests: Cancel has focus at open; Cancel and Esc close it while idle; Esc, an
+outside press, Cancel and the busy confirm button leave it open while the
+action is held (and run it once), and it closes when it settles. Removing the
+pending guard makes the third fail. `npm run check` exits 0 (89 tests).
+
+**Playwright pass** against the dev server with the queue and records routes
+stubbed (no call left the machine), at 1280 and 390 px in light and dark.
+Before and after: Cancel has focus at open; Esc, an outside press and Cancel
+leave both dialogs open while the action is held, with Cancel disabled and the
+label "Working…"; both close when it settles. After: the period
+`RadioGroup` shows 24 hours' counts, ArrowRight moves to Last 7 days and shows
+the week's counts, ArrowLeft returns. Screenshots stay out of git.
+
+**Visible differences.** The period filter only: a segmented pair replaces the
+"Period" label and select, and the group's name is read by a screen reader
+only. At 390 px the pair is wider than the select, so it wraps under the
+"Calls per app" heading instead of sitting beside it. Brief 12 can restyle it.
+
+## Deviations
+
+- The wrapper's prop is `options`, not the brief's `items`, following the
+  skill's `RadioGroup`; `look` (`segmented` or `list`) is there so brief 12's
+  theme control uses the same wrapper. Only the segmented look is used today.
+- `RadioGroup` has `.radio-*` plain-CSS rules (state through `[data-checked]`)
+  because Wicket has no Tailwind yet; brief 12 turns them into utilities.
+- No Testing Library `jest-dom`: the test asserts on `document.activeElement`
+  and `.disabled`, to keep one dependency fewer.
+- The "Period" label is visible no longer (the skill's segmented look hides
+  it); the brief's decision 3 asked only for an accessible name.
+- `ConfirmDialog` keeps today's `run().finally()` rather than the skill's
+  failed state: Wicket's `run` is `act`, which already catches and reports.

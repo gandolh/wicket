@@ -212,3 +212,15 @@ empty (rewrapped lines); the esbuild bundle compare differs in one file,
 `web/src/QueuePage.tsx`, with the same rendered text. Ten findings went back
 to brief 27. Not pushed or deployed. See
 [briefs/done/10-the-house-style-harness.md](briefs/done/10-the-house-style-harness.md).
+
+## [2026-11-11] done | Brief 11: Base UI by the conventions
+
+`ConfirmAction` moved to `web/src/components/ui/ConfirmDialog.tsx` with
+`initialFocus` on Cancel; the period `<select>` became a segmented Base UI
+`RadioGroup` (`components/ui/RadioGroup.tsx`, props general for brief 12's
+theme control); `ConfirmDialog` has a jsdom test (`jsdom` and Testing Library,
+pinned). `check-base-ui` strict reports 0 for rules 1, 2, 3, 9, 10 and 11;
+rule 5 (the plain stylesheet) is brief 12's. The decision on the filter is in
+[wiki/decisions.md](wiki/decisions.md). A Playwright pass against stubbed
+queue data showed no visible change but the filter. Not pushed or deployed. See
+[briefs/done/11-base-ui-by-the-conventions.md](briefs/done/11-base-ui-by-the-conventions.md).
