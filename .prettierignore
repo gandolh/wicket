@@ -14,3 +14,7 @@ coverage/
 
 # A separate package with its own lockfile and checks.
 docs-site/
+
+# Playwright output.
+web/test-results/
+web/playwright-report/

@@ -92,8 +92,15 @@
 }
 
 @layer base {
-  /* Light on a first visit (base-ui rule 14). */
+  /* Light on a first visit; the theme switch sets data-theme on <html> (base-ui rule 14), and System lets the
+     operating system pick, live. The tokens are light-dark() pairs, so this is the only place the theme is read. */
   :root {
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+  :root[data-theme="system"] {
     color-scheme: light dark;
   }
 

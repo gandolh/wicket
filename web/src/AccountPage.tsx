@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLogout, useSession, useWardLink, useWardResult, useWardSignOut } from "../vendor/ward/ward-auth-react.js";
 import { Fact, Facts } from "./components/Facts";
+import { ThemeSwitch } from "./components/ThemeSwitch";
 import { buttonClass } from "./components/ui/buttonClass";
 import { accountMessage } from "./messages";
 import { navigate } from "./route";
@@ -49,6 +50,10 @@ export function AccountPage() {
           <Fact term="Ward">{ward.linked || link.linked || result.result === "linked" ? "Linked" : "Not linked"}</Fact>
         )}
       </Facts>
+
+      <div className="mt-4">
+        <ThemeSwitch />
+      </div>
 
       {result.result === "linked" && (
         <p className="my-3.5 rounded-control bg-banner-bg px-3 py-2 text-banner-text" role="status">

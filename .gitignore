@@ -5,3 +5,6 @@ data/
 !.env.example
 *.local
 *.tsbuildinfo
+
+test-results/
+playwright-report/
