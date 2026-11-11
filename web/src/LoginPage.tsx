@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLogin, useSession, useWardSignIn } from "../vendor/ward/ward-auth-react.js";
 import { appBase } from "./base";
+import { buttonClass } from "./components/ui/buttonClass";
+import { GATE, GATE_CARD } from "./gate";
 import { loginMessage, sessionReasonMessage, wardSignInMessage } from "./messages";
+
+const INPUT = "rounded-control border border-line bg-surface px-2.5 py-2 text-ink aria-invalid:border-danger";
 
 /**
  * The login page: username, password and "Sign in", and "Sign in with Ward"
@@ -50,21 +54,22 @@ export function LoginPage() {
   };
 
   return (
-    <main className="gate" aria-busy={pending || ward.pending || undefined}>
-      <div className="gate-card">
-        <h1 className="brand">Wicket</h1>
-        <p className="muted">Sign in to see the queue.</p>
+    <main className={GATE} aria-busy={pending || ward.pending || undefined}>
+      <div className={GATE_CARD}>
+        <h1 className="mr-2 text-title font-title">Wicket</h1>
+        <p className="text-ink-muted">Sign in to see the queue.</p>
         {notice !== null && (
-          <p className="gate-notice" role="status">
+          <p className="rounded-control bg-banner-bg px-3 py-2 text-banner-text" role="status">
             {notice}
           </p>
         )}
 
-        <form className="login-form" onSubmit={submit} noValidate aria-label="Sign in">
-          <label className="field">
+        <form className="flex flex-col gap-3" onSubmit={submit} noValidate aria-label="Sign in">
+          <label className="flex flex-col gap-1 text-ink-muted">
             <span>Username</span>
             <input
               ref={usernameRef}
+              className={INPUT}
               name="username"
               autoComplete="username"
               autoCapitalize="none"
@@ -78,12 +83,13 @@ export function LoginPage() {
                 if (missing === "username") setMissing(null);
               }}
             />
-            {missing === "username" && <span className="field-error">Enter your username.</span>}
+            {missing === "username" && <span className="text-danger">Enter your username.</span>}
           </label>
-          <label className="field">
+          <label className="flex flex-col gap-1 text-ink-muted">
             <span>Password</span>
             <input
               ref={passwordRef}
+              className={INPUT}
               name="password"
               type="password"
               autoComplete="current-password"
@@ -94,26 +100,26 @@ export function LoginPage() {
                 if (missing === "password") setMissing(null);
               }}
             />
-            {missing === "password" && <span className="field-error">Enter your password.</span>}
+            {missing === "password" && <span className="text-danger">Enter your password.</span>}
           </label>
           {error !== null && (
-            <p className="auth-error" role="alert">
+            <p className="text-danger" role="alert">
               {loginMessage(error)}
             </p>
           )}
-          <button type="submit" className="button button-primary" disabled={pending}>
+          <button type="submit" className={buttonClass("primary")} disabled={pending}>
             {pending ? "Signing in…" : "Sign in"}
           </button>
         </form>
 
         {signedOut?.ward.enabled && (
-          <div className="login-ward">
-            <p className="login-or" aria-hidden="true">
+          <div className="flex flex-col gap-2">
+            <p className="text-center text-ink-muted" aria-hidden="true">
               or
             </p>
             <button
               type="button"
-              className="button"
+              className={buttonClass()}
               disabled={ward.pending}
               onClick={() => void ward.signIn({ returnTo: appBase() })}
             >
@@ -122,9 +128,9 @@ export function LoginPage() {
           </div>
         )}
         {ward.error !== null && (
-          <p className="auth-error" role="alert">
+          <p className="text-danger" role="alert">
             {wardSignInMessage(ward.error)}{" "}
-            <button type="button" className="link-button" onClick={ward.reset}>
+            <button type="button" className={buttonClass("link")} onClick={ward.reset}>
               Dismiss
             </button>
           </p>

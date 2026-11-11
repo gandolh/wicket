@@ -1,5 +1,6 @@
 import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { useRef, useState, type ReactNode } from "react";
+import { buttonClass } from "./buttonClass";
 
 /**
  * A button that asks first: a Base UI `AlertDialog` saying what happens to
@@ -38,21 +39,22 @@ export function ConfirmDialog({
 
   return (
     <AlertDialog.Root open={open} onOpenChange={(next) => !pending && setOpen(next)}>
-      <AlertDialog.Trigger className={`button${danger ? " button-danger" : ""}`}>{label}</AlertDialog.Trigger>
+      <AlertDialog.Trigger className={buttonClass(danger ? "danger" : "default")}>{label}</AlertDialog.Trigger>
       <AlertDialog.Portal>
-        <AlertDialog.Backdrop className="dialog-backdrop" />
-        <AlertDialog.Popup className="dialog" initialFocus={cancelRef}>
-          <AlertDialog.Title className="dialog-title">{title}</AlertDialog.Title>
-          <AlertDialog.Description className="dialog-text" render={<div />}>
-            {description}
-          </AlertDialog.Description>
-          <div className="dialog-actions">
-            <AlertDialog.Close ref={cancelRef} className="button" disabled={pending}>
+        <AlertDialog.Backdrop className="fixed inset-0 z-backdrop bg-scrim" />
+        <AlertDialog.Popup
+          className="fixed top-1/2 left-1/2 z-dialog w-[min(var(--container-dialog),calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-card bg-surface px-6 py-5 text-ink shadow-dialog"
+          initialFocus={cancelRef}
+        >
+          <AlertDialog.Title className="mb-2 text-title font-bold">{title}</AlertDialog.Title>
+          <AlertDialog.Description render={<div />}>{description}</AlertDialog.Description>
+          <div className="mt-4 flex justify-end gap-2">
+            <AlertDialog.Close ref={cancelRef} className={buttonClass()} disabled={pending}>
               Cancel
             </AlertDialog.Close>
             <button
               type="button"
-              className={`button ${danger ? "button-danger-solid" : "button-primary"}`}
+              className={buttonClass(danger ? "danger-solid" : "primary")}
               disabled={pending}
               onClick={confirm}
             >

@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useLogout, useSession, useWardLink, useWardResult, useWardSignOut } from "../vendor/ward/ward-auth-react.js";
+import { Fact, Facts } from "./components/Facts";
+import { buttonClass } from "./components/ui/buttonClass";
 import { accountMessage } from "./messages";
 import { navigate } from "./route";
 
@@ -26,9 +28,10 @@ export function AccountPage() {
   const failure = link.error ?? result.error ?? logout.error ?? wardSignOut.error;
 
   return (
-    <main className="account">
-      <p>
+    <main className="mx-auto max-w-account p-6">
+      <p className="my-3.5">
         <a
+          className="text-accent underline"
           href="."
           onClick={(event) => {
             event.preventDefault();
@@ -38,44 +41,39 @@ export function AccountPage() {
           ← Back to the queue
         </a>
       </p>
-      <h2>Account</h2>
-      <dl className="facts">
-        <dt>Signed in as</dt>
-        <dd>{user.username}</dd>
-        <dt>Signed in with</dt>
-        <dd>{viaWard ? "Ward" : "your Wicket password"}</dd>
+      <h2 className="my-4.5 text-page-title font-bold">Account</h2>
+      <Facts>
+        <Fact term="Signed in as">{user.username}</Fact>
+        <Fact term="Signed in with">{viaWard ? "Ward" : "your Wicket password"}</Fact>
         {ward.enabled && (
-          <>
-            <dt>Ward</dt>
-            <dd>{ward.linked || link.linked || result.result === "linked" ? "Linked" : "Not linked"}</dd>
-          </>
+          <Fact term="Ward">{ward.linked || link.linked || result.result === "linked" ? "Linked" : "Not linked"}</Fact>
         )}
-      </dl>
+      </Facts>
 
       {result.result === "linked" && (
-        <p className="gate-notice" role="status">
+        <p className="my-3.5 rounded-control bg-banner-bg px-3 py-2 text-banner-text" role="status">
           Ward is linked. You can sign in with it from now on.
         </p>
       )}
       {failure && (
-        <p className="auth-error" role="alert">
+        <p className="my-3.5 text-danger" role="alert">
           {accountMessage(failure)}
         </p>
       )}
 
-      <div className="account-actions">
+      <div className="mt-4 flex flex-wrap gap-2">
         {ward.enabled && !ward.linked && !link.linked && (
-          <button type="button" className="button" disabled={link.pending} onClick={() => void link.link()}>
+          <button type="button" className={buttonClass()} disabled={link.pending} onClick={() => void link.link()}>
             {link.pending ? "Opening Ward…" : "Link Ward"}
           </button>
         )}
-        <button type="button" className="button" disabled={logout.pending} onClick={() => void logout.logout()}>
+        <button type="button" className={buttonClass()} disabled={logout.pending} onClick={() => void logout.logout()}>
           Sign out
         </button>
         {viaWard && (
           <button
             type="button"
-            className="button"
+            className={buttonClass()}
             disabled={wardSignOut.pending}
             onClick={() => void wardSignOut.signOut()}
           >

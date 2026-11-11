@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useSession } from "../vendor/ward/ward-auth-react.js";
 import { clearQueue, fetchQueue, fetchRecords, forceClose } from "./api";
 import { ConfirmDialog } from "./components/ui/ConfirmDialog";
+import { buttonClass } from "./components/ui/buttonClass";
 import { RadioGroup } from "./components/ui/RadioGroup";
+import { EmptyRow } from "./components/Table";
+import { cn } from "./lib/cn";
 import { CountsTable, NowServing, RecordsTable, RunningCard, WaitingTable } from "./QueueView";
 import { navigate, pathOf } from "./route";
 import { clock } from "./time";
@@ -55,25 +58,30 @@ export function QueuePage() {
   const running = data?.running ?? null;
 
   return (
-    <div className="app">
-      <header className="top">
-        <h1 className="brand">Wicket</h1>
-        <span className="updated">{queue.fetchedAt ? `Updated ${clock(queue.fetchedAt)}` : "Loading…"}</span>
+    <div>
+      <header className="sticky top-0 z-bar flex min-h-top flex-wrap items-center gap-x-5 gap-y-2 border-b border-line bg-surface px-6 py-2.5 max-sm:px-4">
+        <h1 className="mr-2 text-title font-title">Wicket</h1>
+        <span className="ml-auto text-ink-muted tabular-nums">
+          {queue.fetchedAt ? `Updated ${clock(queue.fetchedAt)}` : "Loading…"}
+        </span>
         <AccountLink />
       </header>
 
       {queue.failing && (
-        <div className="banner" role="status">
+        <div className="mx-6 mt-3 rounded-control bg-banner-bg px-3 py-2 text-banner-text max-sm:mx-4" role="status">
           Wicket's API isn't answering.{queue.fetchedAt ? ` Showing what it said at ${clock(queue.fetchedAt)}.` : ""}{" "}
           Trying again every few seconds.
         </div>
       )}
 
-      <main>
+      <main className="mx-auto max-w-page px-6 pt-4 pb-12 max-sm:px-4 max-sm:pt-3 max-sm:pb-10">
         {notice && (
-          <p className={notice.error ? "notice notice-error" : "notice"} role={notice.error ? "alert" : "status"}>
+          <p
+            className={cn("mb-4 rounded-control px-3 py-2", notice.error ? "bg-danger-wash text-danger" : "bg-ok-wash")}
+            role={notice.error ? "alert" : "status"}
+          >
             {notice.text}{" "}
-            <button type="button" className="link-button" onClick={() => setNotice(null)}>
+            <button type="button" className={buttonClass("link")} onClick={() => setNotice(null)}>
               Dismiss
             </button>
           </p>
@@ -81,7 +89,7 @@ export function QueuePage() {
 
         {data ? (
           <>
-            <div className="summary">
+            <div className="grid grid-cols-[minmax(200px,1fr)_minmax(0,2fr)] gap-4 max-sm:grid-cols-1">
               <NowServing queue={data} />
               <RunningCard
                 running={running}
@@ -94,7 +102,7 @@ export function QueuePage() {
                       danger
                       title={`Force close ticket ${running.ticket}?`}
                       description={
-                        <p>
+                        <p className="mb-2">
                           Wicket aborts {running.app}'s call{running.model ? ` to ${running.model}` : ""}. {running.app}{" "}
                           sees the ticket as cancelled, and the next ticket starts.
                         </p>
@@ -112,23 +120,30 @@ export function QueuePage() {
               />
             </div>
 
-            <section className="section" aria-labelledby="waiting-title">
-              <div className="section-head">
-                <h2 id="waiting-title">Waiting {waiting > 0 && <span className="count">{waiting}</span>}</h2>
+            <section className="mt-7" aria-labelledby="waiting-title">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <h2 id="waiting-title" className="text-heading font-bold">
+                  Waiting{" "}
+                  {waiting > 0 && (
+                    <span className="ml-1.5 rounded-pill bg-surface-sunk px-1.75 align-[2px] text-small text-ink-muted tabular-nums">
+                      {waiting}
+                    </span>
+                  )}
+                </h2>
                 <ConfirmDialog
                   label="Clear queue"
                   danger
                   title="Clear the queue?"
                   description={
                     <>
-                      <p>
+                      <p className="mb-2">
                         {waiting === 0
                           ? "Nobody is waiting right now; clearing drops any ticket that joins before you confirm."
                           : waiting === 1
                             ? "The waiting ticket is dropped, and its app sees it as cancelled."
                             : `The ${waiting} waiting tickets are dropped, and their apps see them as cancelled.`}
                       </p>
-                      <p>The running call goes on. Use Force close for that.</p>
+                      <p className="mb-2">The running call goes on. Use Force close for that.</p>
                     </>
                   }
                   confirmLabel="Clear queue"
@@ -146,31 +161,29 @@ export function QueuePage() {
             </section>
           </>
         ) : (
-          !queue.failing && <p className="empty muted">Loading the queue…</p>
+          !queue.failing && <p className="my-3.5 py-12 text-center text-ink-muted">Loading the queue…</p>
         )}
 
-        <section className="section" aria-labelledby="calls-title">
-          <div className="section-head">
-            <h2 id="calls-title">Calls per app</h2>
+        <section className="mt-7" aria-labelledby="calls-title">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <h2 id="calls-title" className="text-heading font-bold">
+              Calls per app
+            </h2>
             <RadioGroup label="Period" look="segmented" options={PERIODS} value={period} onValueChange={setPeriod} />
           </div>
-          {records.data ? (
-            <CountsTable counts={records.data.counts[period]} />
-          ) : (
-            <p className="empty-row muted">Loading…</p>
-          )}
+          {records.data ? <CountsTable counts={records.data.counts[period]} /> : <EmptyRow>Loading…</EmptyRow>}
         </section>
 
-        <section className="section" aria-labelledby="recent-title">
-          <div className="section-head">
-            <h2 id="recent-title">Recent calls</h2>
-            <span className="muted small">Counts and timings only. Wicket keeps no prompt or answer.</span>
+        <section className="mt-7" aria-labelledby="recent-title">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <h2 id="recent-title" className="text-heading font-bold">
+              Recent calls
+            </h2>
+            <span className="text-small text-ink-muted">
+              Counts and timings only. Wicket keeps no prompt or answer.
+            </span>
           </div>
-          {records.data ? (
-            <RecordsTable records={records.data.records} now={now} />
-          ) : (
-            <p className="empty-row muted">Loading…</p>
-          )}
+          {records.data ? <RecordsTable records={records.data.records} now={now} /> : <EmptyRow>Loading…</EmptyRow>}
         </section>
       </main>
     </div>
@@ -183,7 +196,7 @@ function AccountLink() {
   const name = session.status === "signed_in" ? session.user.username : "Account";
   return (
     <a
-      className="account-link"
+      className="font-semibold text-accent no-underline hover:underline"
       href={pathOf("account")}
       onClick={(event) => {
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;

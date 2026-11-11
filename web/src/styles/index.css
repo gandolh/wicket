@@ -1,9 +1,8 @@
 /* The page's one stylesheet (base-ui rule 5). The layer order comes first: the first @layer statement fixes the order
-   for the whole page. `legacy` holds the rules not yet moved to utilities, below every utility, and goes when empty. */
-@layer theme, base, vendor, legacy, components, utilities;
+   for the whole page. */
+@layer theme, base, vendor, components, utilities;
 
 @import "tailwindcss";
-@import "./legacy.css" layer(legacy);
 
 /* The vendored copies (Ward's hooks) are not the page's, so Tailwind doesn't scan them. */
 @source not "../../vendor";
@@ -68,6 +67,7 @@
   --text-body: 14px;
   --text-heading: 16px;
   --text-title: 18px;
+  --text-page-title: 21px;
   --text-ticket-phone: 44px;
   --text-ticket: 56px;
   --leading-ticket: 1.1;

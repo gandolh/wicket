@@ -1,7 +1,9 @@
 import { useEffect, type ReactNode } from "react";
 import { useSession } from "../vendor/ward/ward-auth-react.js";
+import { buttonClass } from "./components/ui/buttonClass";
 import { LoginPage } from "./LoginPage";
 import { navigate, usePage } from "./route";
+import { GATE, GATE_CARD } from "./gate";
 
 /**
  * The session gate around the page. The vendored hooks hold the session
@@ -23,17 +25,17 @@ export function AuthGate({ children }: { children: ReactNode }) {
   switch (session.status) {
     case "loading":
       return (
-        <main className="gate" aria-busy="true">
-          <p className="muted">Loading…</p>
+        <main className={GATE} aria-busy="true">
+          <p className="text-ink-muted">Loading…</p>
         </main>
       );
     case "error":
       return (
-        <main className="gate">
-          <div className="gate-card">
-            <h1 className="brand">Wicket</h1>
+        <main className={GATE}>
+          <div className={GATE_CARD}>
+            <h1 className="mr-2 text-title font-title">Wicket</h1>
             <p role="alert">Wicket can't be reached. Check your connection and try again.</p>
-            <button type="button" className="button" onClick={() => void session.refresh()}>
+            <button type="button" className={buttonClass()} onClick={() => void session.refresh()}>
               Try again
             </button>
           </div>
