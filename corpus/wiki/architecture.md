@@ -1,6 +1,6 @@
 ---
 summary: How Wicket is put together, as built 2026-11-04 (briefs 01-08). Three npm workspaces (shared contract, Fastify + SQLite server, React page) and a separate Docusaurus docs-site package; how a job moves through the queue, Ollama Cloud and the records; the two guards (app tokens for jobs, sessions for the admin routes); the settings; how it runs locally and on the VPS as one container (cloud only since 2026-11-04, no model on the box), and what the local runs of the image measured.
-updated: 2026-11-04
+updated: 2026-11-11
 ---
 
 # Architecture
@@ -15,7 +15,9 @@ the cloud runner ([providers.ts](../../server/src/providers.ts),
 ([sign-in.md](sign-in.md)), `/metrics`
 ([metrics.ts](../../server/src/metrics.ts)), and the queue page
 ([QueuePage.tsx](../../web/src/QueuePage.tsx) over
-[QueueView.tsx](../../web/src/QueueView.tsx)). Each brief updates the part it builds; the code wins where this page and it
+[QueueView.tsx](../../web/src/QueueView.tsx), with the Base UI wrappers in
+[components/ui/](../../web/src/components/ui/): `ConfirmDialog` and
+`RadioGroup`). Each brief updates the part it builds; the code wins where this page and it
 disagree.
 
 ## Workspaces
