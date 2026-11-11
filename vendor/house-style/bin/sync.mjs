@@ -50,7 +50,7 @@ const HANDOVER_ENV = "HOUSE_STYLE_SYNC_HANDOVER";
 
 /** What each shipped file is, for the header's table. */
 const DESCRIPTIONS = {
-  "package.json": "house-style's version, its pinned dependencies, and `\"type\": \"module\"` for the configs",
+  "package.json": 'house-style\'s version, its pinned dependencies, and `"type": "module"` for the configs',
   "eslint.config.js": "`houseStyle(options)`, the ESLint flat config as a function of the repo's folders",
   "prettier.config.js": "The Prettier config: width 120, trailing commas, Prettier's defaults otherwise",
   "tsconfig.base.json": "The compiler flags every package's tsconfig extends",
@@ -83,13 +83,16 @@ function main() {
   if (ref === undefined) {
     ref = headerCommit(vendor);
     if (ref === null) {
-      console.log(`house-style:sync --check: ${VENDOR_DIR}/${HEADER} is missing or names no commit; sync a <ref> first.`);
+      console.log(
+        `house-style:sync --check: ${VENDOR_DIR}/${HEADER} is missing or names no commit; sync a <ref> first.`,
+      );
       return 1;
     }
   }
 
   const checkout = findCheckout();
-  if (resolve(checkout) === repo) throw new Error(`this is the ${CHECKOUT} checkout itself: run the sync from the repo that takes the copy`);
+  if (resolve(checkout) === repo)
+    throw new Error(`this is the ${CHECKOUT} checkout itself: run the sync from the repo that takes the copy`);
   const commit = resolveCommit(checkout, ref);
 
   // The version being installed writes its own copy and header, so a newer header
@@ -253,7 +256,9 @@ function readShipped(checkout, commit) {
       files.set(inside, { mode, oid, bytes });
     }
   }
-  const pkgOid = git(checkout, ["rev-parse", `${commit}:${SUBTREE}/package.json`]).toString("utf8").trim();
+  const pkgOid = git(checkout, ["rev-parse", `${commit}:${SUBTREE}/package.json`])
+    .toString("utf8")
+    .trim();
   files.set("package.json", { mode: "100644", oid: pkgOid, bytes: pkgBytes });
   return new Map([...files.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
 }
@@ -408,8 +413,14 @@ function expand(repo, segments, prefix = "") {
     return [];
   }
   const join2 = (name) => (prefix ? `${prefix}/${name}` : name);
-  if (head === "**") return [...expand(repo, rest, prefix), ...names.flatMap((name) => expand(repo, segments, join2(name)))];
-  const pattern = new RegExp(`^${head.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".")}$`);
+  if (head === "**")
+    return [...expand(repo, rest, prefix), ...names.flatMap((name) => expand(repo, segments, join2(name)))];
+  const pattern = new RegExp(
+    `^${head
+      .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+      .replace(/\*/g, ".*")
+      .replace(/\?/g, ".")}$`,
+  );
   return names.filter((name) => pattern.test(name)).flatMap((name) => expand(repo, rest, join2(name)));
 }
 
@@ -434,7 +445,8 @@ function reportPins(repo, pkg) {
     const pins = found.get(name);
     if (pins.length === 0) missing.push(name);
     for (const pin of pins) {
-      if (pin.spec !== version) lines.push(`pin ${name}: ${pin.where} has ${pin.spec}, house-style ${pkg.version} lists ${version}`);
+      if (pin.spec !== version)
+        lines.push(`pin ${name}: ${pin.where} has ${pin.spec}, house-style ${pkg.version} lists ${version}`);
     }
   }
   if (missing.length > 0) lines.push(`not pinned in this repo: ${missing.join(", ")}`);

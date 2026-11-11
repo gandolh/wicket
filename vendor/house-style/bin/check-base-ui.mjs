@@ -213,7 +213,8 @@ function checkSource(repo, file, { inUi, uiNames, test }, report) {
     }
     if (tag.selfClosing) continue;
     const child = firstChild(bare, tag.end);
-    if (child !== null && /^[A-Z]/.test(child)) {
+    // A part of the trigger's own component (<Select.Value> in <Select.Trigger>) is its anatomy, not a wrapped control.
+    if (child !== null && /^[A-Z]/.test(child) && !child.startsWith(`${match[1]}.`)) {
       report.add({
         file,
         line,

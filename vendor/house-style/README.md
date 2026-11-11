@@ -8,7 +8,7 @@ still matches its commit.
 
 - **Version:** 1.0.0
 - **Source:** the `my-personal-skills` repository, folder `house-style/`
-- **Commit:** `e3c07aebabffc85db18fd68c0cc2396a71edf7b8`
+- **Commit:** `ddd917f21101d2a9b8163ad4201f2a6cf87c9729`
 - **Upgrade notes:** `house-style/CHANGELOG.md` in the same repository (copied here as `CHANGELOG.md`)
 
 | File | What it is |

@@ -190,6 +190,13 @@ export function houseStyle(options = {}) {
       files: [JS],
       languageOptions: { globals: n.configs["flat/recommended-module"].languageOptions.globals },
     },
+    {
+      // A .cjs file is CommonJS: `module` and `require` are globals there, and the .dependency-cruiser.cjs
+      // the house prescribes would fail no-undef without them.
+      name: "house-style/commonjs-globals",
+      files: ["**/*.cjs"],
+      languageOptions: n.configs["flat/recommended-script"].languageOptions,
+    },
   ];
 
   if (webFiles.length > 0) {

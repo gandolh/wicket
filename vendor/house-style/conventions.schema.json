@@ -62,7 +62,7 @@
           "enum": ["base-ui", "structure", "house-style"]
         },
         "rule": {
-          "description": "The rule's number in that skill: base-ui 1-13, structure 1-11, house-style 1-25.",
+          "description": "The rule's number in that skill: base-ui 1-17, structure 1-11, house-style 1-25.",
           "type": "integer",
           "minimum": 1
         },
@@ -86,7 +86,7 @@
       "allOf": [
         {
           "if": { "properties": { "check": { "const": "base-ui" } } },
-          "then": { "properties": { "rule": { "maximum": 13 } } }
+          "then": { "properties": { "rule": { "maximum": 17 } } }
         },
         {
           "if": { "properties": { "check": { "const": "structure" } } },

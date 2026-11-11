@@ -23,7 +23,7 @@ export const DEFAULT_UI = ["**/components/ui", "**/features/*/ui"];
 export const DEFAULT_STYLESHEET = "styles/index.css";
 
 /** The checks an exception can name, with their highest rule number. house-style's are records for review only. */
-export const CHECKS = { "base-ui": 13, structure: 11, "house-style": 25 };
+export const CHECKS = { "base-ui": 17, structure: 11, "house-style": 25 };
 
 export const TOP_LEVEL_KEYS = ["$schema", "web", "server", "shared", "ui", "stylesheet", "exceptions"];
 export const EXCEPTION_KEYS = ["check", "rule", "path", "match", "reason"];
