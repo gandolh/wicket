@@ -185,3 +185,30 @@ Wicket's own (Q1), the three test decorators go (plugin options instead), and
 the 25 s long poll keeps its `connectionTimeout` of 35 s. Brief 14 is new: a
 redesign with Hallmark on the estate board. Work happens on `main`, with no
 PRs. Nothing was changed outside `corpus/`.
+
+## [2026-11-11] done | Brief 10: the house style and the quality harness
+
+Wicket is the first repo on the house-style harness, the proof run for the
+skills library's brief 27. The `house-style` configs are vendored at 1.0.0
+(`vendor/house-style/`, `npm run house-style:sync`) with their twelve tools
+pinned; Prettier at width 120 reformatted 68 lines in 20 files in one commit,
+listed in `.git-blame-ignore-revs`; `verbatimModuleSyntax` and
+`erasableSyntaxOnly` are on (three parameter properties became fields); the
+house ESLint config with its six typed rules found 13 errors, all fixed or
+lowered as decided. `npm run check` (about 19 s) and `npm run check:fast`
+(about 6 s) are the gate; `check:conventions` runs knip, dependency-cruiser
+(here rather than in brief 13, the controller's call) and the two
+house-style checkers, both `--warn-only` until briefs 12 and 13. A root
+`CLAUDE.md` holds the commands and the hard rules moved out of
+`corpus/CLAUDE.md`, and `.claude/rules/` the area rules. Re-measured at
+`e3b32f6`: the brief's counts held, except a fifth `process.env` read
+(`docs/images/stand-in-cloud.mjs:14`). Against the brief's scratch config, brief 27's final
+config needs no `allowDefaultProject` (tool configs and JavaScript lint
+untyped), turns `vitest/no-conditional-expect` off (so the brief's two test
+findings vanish), and adds `no-explicit-any`, `ban-ts-comment` and
+`no-warning-comments` with `location: "start"`, none of which finds anything
+here. The reformat's `git diff -w` is not
+empty (rewrapped lines); the esbuild bundle compare differs in one file,
+`web/src/QueuePage.tsx`, with the same rendered text. Ten findings went back
+to brief 27. Not pushed or deployed. See
+[briefs/done/10-the-house-style-harness.md](briefs/done/10-the-house-style-harness.md).

@@ -1,6 +1,6 @@
 ---
-summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); briefs 10-14 open (planned 2026-11-10: the house-style harness, Base UI by the conventions, the web app to Tailwind, the server in the code structure, a Hallmark redesign).
-updated: 2026-11-10
+summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); brief 10 built 2026-11-11 (the house-style harness: vendored house-style configs, Prettier at 120, typed ESLint, npm run check and check:fast; ready for deploy); briefs 11-14 open (Base UI by the conventions, the web app to Tailwind, the server in the code structure, a Hallmark redesign).
+updated: 2026-11-11
 ---
 
 # Status
@@ -46,11 +46,24 @@ turned out to be 6.55 GB. **Not deployed.** Everything the deploy needs is in
 
 86 tests; typecheck, lint and the docs build clean (2026-11-04).
 
+- **The house style and the gate** (brief 10, 2026-11-11). The
+  `house-style` configs are vendored in `vendor/house-style/` (1.0.0,
+  `npm run house-style:sync`); Prettier at width 120 (one reformat commit, in
+  `.git-blame-ignore-revs`); `verbatimModuleSyntax` and `erasableSyntaxOnly`;
+  the house ESLint config with its six typed rules. `npm run check` (about
+  19 s) runs the typecheck, lint, format check, `check:conventions` (knip,
+  dependency-cruiser, and the two house-style checkers, both `--warn-only`
+  until briefs 12 and 13) and the tests; `npm run check:fast` (about 6 s) is
+  what the Claude Code plugin's Stop hook runs. A root `CLAUDE.md` and
+  `.claude/rules/` carry the commands and the area rules. Left as warnings:
+  51 non-null assertions in tests, and `no-process-env` (from
+  `eslint-plugin-n`) on five reads until brief 13.
+
 ## Open briefs (planned 2026-11-10)
 
 Five briefs carry the owner's calls of 2026-11-09 (Base UI 1.9.0, Tailwind
 v4, enforced conventions), to run in number order: 10 the house style and the
-quality harness (Wicket is the proof run), 11 Base UI by the conventions, 12
+quality harness (Wicket is the proof run; built 2026-11-11), 11 Base UI by the conventions, 12
 the web app to Tailwind, 13 the server in the code structure, then 14 a
 redesign with Hallmark on the estate board. The owner's grilling of 2026-11-10
 settled them (vendored house-style, width 120, a Light / Dark / System switch,
@@ -75,6 +88,10 @@ In this order; the details are in `docs/owner-setup.md`.
 7. For local development only: run Ward's local seed in a terminal
    (`node seed.mjs` in `wzd_auth`'s `infrastructure/local/`; it lists Wicket
    since 2026-11-04), then walk "Sign in with Ward" with `npm run dev`.
+8. For brief 10 (2026-11-11): `git config blame.ignoreRevsFile
+   .git-blame-ignore-revs` in your checkout, and the deploy, `node cli.ts
+   wicket deploy` from vps-deploy. Nothing behaves differently; it ships the
+   lint fixes.
 
 The six calls the first build made on its own were all kept by the owner on
 2026-11-04. One call waits in [open-questions.md](open-questions.md): the
@@ -82,7 +99,7 @@ docs site as a separate package.
 
 ## Open briefs
 
-None.
+11 to 14, listed above.
 
 ## Todos
 

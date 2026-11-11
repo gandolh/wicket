@@ -191,3 +191,168 @@ One commit per step, straight on `main`, each with `npm run typecheck`, `npm tes
 - The reformat changes `web/src/styles.css` by one line (`font-family`). Brief 12 deletes that file.
 - `server/src/testing.ts` moves to `server/src/testing/` in brief 13. Brief 12 rewrites the `web.md` dark-mode line, and its decisions record the family token names (`surface`, `ink`, `accent`, `line`, `danger`).
 - The skills library's brief 27 owns the vendored copy and `house-style:sync`; a rule that looks wrong for Wicket is reported there, not patched here.
+
+## Outcome
+
+Built on 2026-11-11 on `main`, committed and not pushed. Commits, in order:
+`f42be2a` vendor house-style 1.0.0 and pin its tools, `aa42f94` Prettier at
+width 120, `501e322` `style: format with Prettier`, `3b10197` the blame
+ignore file, `35d2eee` the tsconfig flags, `104c0e6` the house ESLint
+config, `9659a74` the gate, `a0fdee7` the root `CLAUDE.md` and
+`.claude/rules/`, `22e4b4d` the decisions entry, then this closeout.
+
+**Re-measured** at `e3b32f6` (the commits since `456609e` touched only the
+corpus), with house-style 1.0.0 at library commit `e3c07ae`:
+
+- Prettier at 120: 20 code files, 68 old lines, 288 new, plus one line of
+  `infrastructure/docker-compose.yml`. Exactly the 120 row.
+- tsc: `verbatimModuleSyntax` 0, `erasableSyntaxOnly` 3 (the same three
+  parameter properties).
+- ESLint, the house config: `no-misused-promises` 1, `no-non-null-assertion`
+  7 in source and 51 in tests, `n/no-process-env` **5** (one more than the
+  brief: `docs/images/stand-in-cloud.mjs:14`), every other rule 0.
+  `switch-exhaustiveness-check` is 0 because the package sets
+  `considerDefaultExhaustiveForUnions`. The package turns
+  `vitest/no-conditional-expect` off, so the brief's two findings
+  (`config.test.ts:20`, `tokens.test.ts:36`) are not findings and nothing
+  changed there.
+- knip: 0 unused files and dependencies once `docs-site/` is ignored; 20
+  unused exports and 3 unused types, as warnings (the brief's list).
+- dependency-cruiser: 0 violations in 55 modules (108 dependencies).
+- `check-base-ui --warn-only`: 2 warnings (rule 3 `web/src/ConfirmAction.tsx:1`,
+  rule 5 `web/src/styles.css`). `check-structure --warn-only`: 21 (rule 1 ×1,
+  rule 3 ×4, rule 6 ×15, rule 11 ×1). Both exit 0.
+- What brief 27's final configs change against the brief's scratch config:
+  no `allowDefaultProject` (tool configs and JavaScript lint untyped),
+  `no-conditional-expect` off and `valid-expect` with `maxArgs: 2`,
+  `no-warning-comments` with `location: "start"`, `ban-ts-comment` allowing
+  `@ts-expect-error` with a description, `no-explicit-any`, and
+  `n/no-process-env` still on in the `console` globs.
+
+**Lint, before and after the fixes.** Before: 13 errors
+(`no-misused-promises` 1, `no-non-null-assertion` 7, `n/no-process-env` 5)
+and 51 warnings. After: 0 errors, 56 warnings: the 51 test-file `!` (kept,
+decision 6) and `n/no-process-env` on `server/src/index.ts:29`,
+`server/src/seed.ts:60, 61, 67` and `docs/images/stand-in-cloud.mjs:14`,
+a warning in `eslint.config.js` until brief 13. A deliberate `enum`, `!` in
+`server/src/app.ts`, `console.log` there, `// TODO` and an `export default` in
+a new source file each failed `npm run lint` (exit 1), and were removed.
+
+**The reformat.** `git diff -w 501e322^ 501e322` is not empty: it shows the
+same 21 files and 289/69 lines as without `-w`, because Prettier joins and
+splits lines, and a changed line break is a change under `-w`. The
+non-whitespace changes in it: 48 trailing commas added and 2 dropped (a last
+argument now followed by `)` on its line), 4 pairs of parentheses added
+around multi-line JSX in a ternary and 1 dropped around an arrow body, one
+`;` ending a type-literal member, two `{" "}` for JSX text that began with a
+space, and the healthcheck string in `docker-compose.yml` requoted (same
+value). The esbuild bundle compare (72 `.ts`, `.tsx`, `.js`, `.mjs`, `.css`
+and `.json` files, JSON compared parsed) found 71 identical. The one
+difference is `web/src/QueuePage.tsx`: two JSX texts that began with a space
+now compile to two children each, `" "` and `"Trying again every few seconds."`
+for `" Trying again every few seconds."`, and `" "` and `"sees the ticket as
+cancelled, and the next ticket starts."` likewise. The rendered text is the
+same.
+
+**Timings** (warm): `check:fast` 5.2-5.8 s with one server file changed,
+6.1-6.4 s with one web file, 2.6 s with nothing changed; `check` in full
+18.1-19.6 s; `eslint .` 8.4-8.9 s.
+
+**Checks run:** `npm run check` (exit 0; 86 tests), `npm run build` (0),
+`npx prettier --check .` (0), `npm run house-style:sync -- --check` (0),
+`bash corpus/lint.sh` (clean; one warning from brief 11's `components/ui/`),
+`npx tsc -b server` in a copy holding only what the Dockerfile copies (0),
+and `docker build -f infrastructure/Dockerfile .`: the first full build failed (exit 1) in the `proddeps` stage, where npm ran better-sqlite3's `node-gyp rebuild` and timed out fetching Node's headers (`gyp ERR! stack AggregateError [ETIMEDOUT]`); the second full build passed (exit 0, image 206 MB), but it reused a `proddeps` layer from a `--target proddeps` build of the same tree that had passed alone, skipping that script as npm 11 does ("install scripts not yet covered by allowScripts"). `proddeps` on the commit before this brief passed alone too. So that stage's `npm ci` ran three times: it failed once beside the `deps` stage and passed twice alone. The cause is not established and did not recur; the stage installs no package this brief added (`--omit=dev`). The plugin's hooks, run by hand with Claude Code's event JSON:
+the formatter hook formatted a messy `server/src/metrics.ts` and left
+`web/vendor/` and Markdown alone; the Stop hook, after a save noted by
+`note-saved-file.mjs`, exited 2 with `TS2322` from a type error in
+`web/src/time.ts` on stderr, and 0 once it was reverted; from `server/` with
+a `console.log` in `server/src/app.ts` it exited 2 with the ESLint error, then
+0.
+
+**Checks skipped:** the live-session hook check waits for the plugin update
+on this machine (the hooks were run by hand instead).
+
+**Deviations:**
+
+- `tsconfig.base.json` keeps the house flags itself instead of extending
+  `vendor/house-style/tsconfig.base.json`: the image's `deps` stage copies only
+  that file, and the Dockerfile is not to be touched (decision 1).
+- `n/no-process-env` warns on five reads, not four, and the warning is
+  scoped to the three files that read (`server/src/index.ts`,
+  `server/src/seed.ts`, `docs/images/*.mjs`), not all of `server/src`, so a
+  new reader elsewhere is still an error.
+- `.dependency-cruiser.cjs` and dependency-cruiser in `check:conventions`
+  landed here, not in brief 13 (the controller's call of 2026-11-11). Brief 13
+  and this brief's Interplay line say so.
+- knip is configured in `knip.config.js` (spreading the vendored preset), not
+  `knip.json`, with `docs-site/**` added to the preset's ignore and the entry
+  under `workspaces["."]`.
+- `allowDefaultProject` is not needed: the package lints tool configs and
+  JavaScript files without types.
+- `eslint.config.js` adds a `**/*.cjs` block with Node's CommonJS globals, for
+  `.dependency-cruiser.cjs`.
+- `pretest` (`tsc -b shared`) is added: without `shared/dist`, 4 of 8 test
+  files fail to resolve `@wicket/shared` in a fresh clone.
+- `check:fast` runs `npm run typecheck` (both runs), not `tsc -b` alone,
+  which would miss the web project.
+- `server/src/config.test.ts:20` and `server/src/tokens.test.ts:36`, listed as
+  fixes, are untouched: the package turns `vitest/no-conditional-expect` off.
+- The acceptance line "`git diff -w` shows nothing" is not met as written
+  (see The reformat); the bundle compare stands in for it.
+- The re-measure ran in the checkout, step by step and uncommitted until each
+  step's numbers were read, not in a scratch clone.
+- `.claude/rules/web.md` names today's confirm wrapper, `ConfirmAction.tsx`,
+  beside the `ConfirmDialog` brief 11 makes of it.
+- The brief-board section of the root `CLAUDE.md` drops "until the owner's
+  first sync puts Wicket on the board": Wicket is on the board.
+
+**For the skills library's brief 27** (library paths at commit `e3c07ae`):
+
+1. The `!` rule: 7 in source, fixed with guards; 51 in tests, kept as
+   warnings. The open-union `switch` case: `considerDefaultExhaustiveForUnions`
+   takes Wicket's four to 0. `no-misused-promises` flagged an async function
+   passed to `setTimeout` (`web/src/usePolling.ts:43`); `() => void tick()`
+   fixed it.
+2. `house-style/eslint.config.js:189-191` gives every JavaScript file an ES
+   module's globals, and typescript-eslint's recommended set parses `.cjs` as a
+   module, so the `.dependency-cruiser.cjs` the house prescribes fails
+   `no-undef` on `module`. Wicket adds a `**/*.cjs` block with
+   `n.configs["flat/recommended-script"].languageOptions`; the house config
+   could carry it.
+3. A script outside `scripts/` (`docs/images/stand-in-cloud.mjs`) has nowhere
+   obvious to go. In `console` it may print, but its `process.env` read is an
+   error (`house-style/README.md:232-235`); listed in `scripts` it would be
+   allowed both. Wicket kept it in `console` with the warning; the docs could
+   say a script folder anywhere goes in `scripts`.
+4. The knip sample, `export default { ...preset, entry: ["scripts/*.ts"] }`
+   (`house-style/README.md:200`, `skills/house-style/references/adoption.md:266`),
+   makes knip 6.44.2 print a configuration hint in an npm-workspaces repo
+   ("move unused top-level entry to one of workspaces"); it has to be
+   `workspaces: { ".": { entry: [...] } }`. A non-workspace package folder
+   (`docs-site/`) is reported as 14 unused files until it is in `ignore`.
+5. `house-style/README.md:210` shows the tsconfig base extending the copy with
+   no word on the Docker trap that `adoption.md:67` describes; Wicket's image
+   copies only `tsconfig.base.json`, so the README's line would break its
+   build.
+6. `adoption.md:251` shows `check:fast` as `tsc -b && …`. Where the web project
+   sits outside the `tsc -b` graph (Wicket's `tsc -p web --noEmit`), that
+   misses every web type error; it should run the repo's whole typecheck.
+7. The reformat acceptance "`git diff -w` shows nothing" (this brief) cannot
+   hold: rewrapped lines show under `-w`. The bundle compare is the real proof.
+   The sample in `adoption.md:113` covers only JavaScript and TypeScript; CSS
+   (esbuild's `css` loader) and JSON (compared parsed) were added here. JSX
+   text rewrapped with `{" "}` is a bundle difference to expect and explain.
+8. Wicket's `corpus/CLAUDE.md` says code comments don't cite brief numbers,
+   and the house asks for "a dated comment naming the brief" when a rule starts
+   as a warning (`adoption.md:198, 283`, `README.md:247`). Wicket followed the
+   house in `eslint.config.js`; one of the two should give way.
+9. The vendored `LICENSE` carries the owner's GitHub name, as Wicket's own
+   `LICENSE` and `server/vendor/ward/LICENSE` already do. Nothing else in the
+   copy names a machine path, a user or the domain.
+10. `.claude/rules/server.md` points at the `code-structure` skill, which isn't
+    in the library yet (its brief 03 is open), and `web.md` at the `base-ui`
+    skill, untracked in the library while this ran.
+
+**Owner steps:** `git config blame.ignoreRevsFile .git-blame-ignore-revs`;
+then `node cli.ts wicket deploy` from the vps-deploy checkout.
