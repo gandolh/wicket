@@ -1,9 +1,10 @@
 import { AlertDialog } from "@base-ui/react/alert-dialog";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 /**
  * A button that asks first: a Base UI `AlertDialog` saying what happens to
- * the callers, with Cancel focused and the action on the right. The action
+ * the callers, with Cancel focused (`initialFocus`, so it holds if the markup
+ * changes) and the action on the right. The action
  * runs once, the dialog closes when it settles, and the page reports the
  * outcome (`onDone`).
  */
@@ -24,6 +25,7 @@ export function ConfirmDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   const confirm = () => {
     if (pending) return;
@@ -39,13 +41,13 @@ export function ConfirmDialog({
       <AlertDialog.Trigger className={`button${danger ? " button-danger" : ""}`}>{label}</AlertDialog.Trigger>
       <AlertDialog.Portal>
         <AlertDialog.Backdrop className="dialog-backdrop" />
-        <AlertDialog.Popup className="dialog">
+        <AlertDialog.Popup className="dialog" initialFocus={cancelRef}>
           <AlertDialog.Title className="dialog-title">{title}</AlertDialog.Title>
           <AlertDialog.Description className="dialog-text" render={<div />}>
             {description}
           </AlertDialog.Description>
           <div className="dialog-actions">
-            <AlertDialog.Close className="button" disabled={pending}>
+            <AlertDialog.Close ref={cancelRef} className="button" disabled={pending}>
               Cancel
             </AlertDialog.Close>
             <button
