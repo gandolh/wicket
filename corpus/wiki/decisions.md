@@ -1,6 +1,6 @@
 ---
-summary: Locked calls for Wicket, settled in a grill with the owner on 2026-11-04, each with rejected alternatives and the reason. One service holds the Ollama key and queues every app's LLM calls; Fastify + React like brief-board; Ollama Cloud only with Wicket choosing the model (revisited 2026-11-04: the earlier local backup model, gemma3:1b in a capped container, is superseded and kept as history); one first-come-first-served queue running one call at a time; tickets and now serving; an in-memory queue that a restart cancels; records with counts and timings, never text; a queue page with force close and clear queue; sign-in like brief-board with per-app bearer tokens for callers; /wicket and /wicket-api on loopback port 8808; a loopback-only /metrics; and three calls the build made that the owner kept the same day: the app tokens in one secret (WICKET_APP_TOKENS), at most 200 waiting calls with 503 queue_full, and a strict request body. Read before proposing to change any of these.
-updated: 2026-11-04
+summary: Locked calls for Wicket, settled in a grill with the owner on 2026-11-04, each with rejected alternatives and the reason. One service holds the Ollama key and queues every app's LLM calls; Fastify + React like brief-board; Ollama Cloud only with Wicket choosing the model (revisited 2026-11-04: the earlier local backup model, gemma3:1b in a capped container, is superseded and kept as history); one first-come-first-served queue running one call at a time; tickets and now serving; an in-memory queue that a restart cancels; records with counts and timings, never text; a queue page with force close and clear queue; sign-in like brief-board with per-app bearer tokens for callers; /wicket and /wicket-api on loopback port 8808; a loopback-only /metrics; and three calls the build made that the owner kept the same day: the app tokens in one secret (WICKET_APP_TOKENS), at most 200 waiting calls with 503 queue_full, and a strict request body; and, from 2026-11-10, the house style: vendored house-style configs, Prettier at width 120, npm run check as the gate. Read before proposing to change any of these.
+updated: 2026-11-11
 ---
 
 # Decisions
@@ -158,3 +158,19 @@ in `POST /v1/jobs` (a `model`, `stream`, `options`) is a 400, so a caller that
 thinks it chose a model finds out at once instead of being silently ignored.
 Callers quote this in their briefs. Rejected: dropping unknown fields, which
 lets a caller believe it picked a model or turned on streaming when it didn't.
+
+## The house style, formatted and checked
+_2026-11-10_, the owner's grilling (technical calls); built 2026-11-11.
+Wicket takes the estate's house style from the `house-style` configs,
+**vendored** into `vendor/house-style/` with a version header and refreshed by
+`npm run house-style:sync`. Prettier runs at width **120**, the one estate
+width: the reformat changed 68 lines in 20 files, in one commit listed in
+`.git-blame-ignore-revs`. `npm run check` is the gate for a human, an agent
+and the deploy, and `check:fast` (the typecheck, then ESLint on the changed
+files) is what the Claude Code plugin's Stop hook runs. `tsconfig.base.json`
+holds the house flags itself rather than extending the copy, because the image
+copies only that file before `tsc -b server`. Rejected: house-style as a git
+or `github:` dependency, which needs git in both `npm ci` stages of the image;
+widths 100 and 110 (180 and 115 lines changed) and 130 or 140, which split the
+estate across widths; formatting Markdown (107 lines in 10 files, one of them
+an immutable done brief).
