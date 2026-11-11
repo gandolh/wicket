@@ -1,0 +1,113 @@
+/* The page's one stylesheet (base-ui rule 5). The layer order comes first: the first @layer statement fixes the order
+   for the whole page. `legacy` holds the rules not yet moved to utilities, below every utility, and goes when empty. */
+@layer theme, base, vendor, legacy, components, utilities;
+
+@import "tailwindcss";
+@import "./legacy.css" layer(legacy);
+
+/* The vendored copies (Ward's hooks) are not the page's, so Tailwind doesn't scan them. */
+@source not "../../vendor";
+
+/* dark: follows the theme switch (base-ui rule 14), never the system alone. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where([data-theme="system"], [data-theme="system"] *) {
+      @slot;
+    }
+  }
+}
+
+@theme {
+  /* The small tools' shared token names (wicket, the-board, lantern): a name says the role, never the value, so
+     the page is `bg-page` and text is `text-ink`, with no `bg-bg`. The names are:
+       colours   page surface surface-sunk ink ink-muted line accent danger ok banner-bg banner-text
+       shadow    card          (was --shadow)
+       height    top           (was --top-h)
+     This file is the source of the list; the other two apps copy the names and keep their own values. */
+
+  /* Tailwind's own scales are cleared, so a stray bg-red-500 or text-sm produces nothing. */
+  --color-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --container-*: initial;
+  --font-*: initial;
+
+  /* light-dark() holds both themes, and color-scheme on <html> picks one, so no component needs dark:. */
+  --color-page: light-dark(#f4f5f7, #1d2125);
+  --color-surface: light-dark(#ffffff, #22272b);
+  --color-surface-sunk: light-dark(#ebecf0, #161a1d);
+  --color-ink: light-dark(#172b4d, #dee4ea);
+  --color-ink-muted: light-dark(#5e6c84, #9fadbc);
+  --color-line: light-dark(#dfe1e6, #38414a);
+  --color-accent: light-dark(#0c66e4, #579dff);
+  --color-danger: light-dark(#c9372c, #f87168);
+  --color-ok: light-dark(#1f845a, #4bce97);
+  --color-banner-bg: light-dark(#fff7d6, #332e1b);
+  --color-banner-text: light-dark(#533f04, #f5cd47);
+  /* Mixes of the above, named once: a success notice, an error notice and a danger button's border. */
+  --color-ok-wash: color-mix(in srgb, var(--color-ok) 12%, var(--color-surface));
+  --color-danger-wash: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
+  --color-danger-line: color-mix(in srgb, var(--color-danger) 45%, var(--color-line));
+  --color-scrim: rgb(9 30 66 / 0.45);
+
+  --shadow-card:
+    0 1px 1px light-dark(rgb(9 30 66 / 0.25), rgb(0 0 0 / 0.5)),
+    0 0 1px light-dark(rgb(9 30 66 / 0.31), rgb(0 0 0 / 0.5));
+  --shadow-dialog: 0 8px 32px rgb(9 30 66 / 0.3);
+
+  --height-top: 56px;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* The named type scale, in the pixels the page has always used. */
+  --text-small: 12px;
+  --text-body: 14px;
+  --text-heading: 16px;
+  --text-title: 18px;
+  --text-ticket-phone: 44px;
+  --text-ticket: 56px;
+  --leading-ticket: 1.1;
+  --tracking-label: 0.02em;
+
+  --radius-control: 4px;
+  --radius-group: 6px;
+  --radius-card: 8px;
+  --radius-pill: 10px;
+
+  --font-weight-title: 650;
+
+  /* The layers: the sticky header, then a dialog's backdrop, then the dialog. */
+  --z-index-bar: 3;
+  --z-index-backdrop: 20;
+  --z-index-dialog: 21;
+
+  --container-page: 1100px;
+  --container-account: 560px;
+  --container-dialog: 440px;
+  --container-gate: 360px;
+}
+
+@layer base {
+  /* Light on a first visit (base-ui rule 14). */
+  :root {
+    color-scheme: light dark;
+  }
+
+  /* The page's 14 px lives on body, so html keeps the reader's own size and rem utilities measure from it (Q44). */
+  body {
+    overflow-x: hidden;
+    background-color: var(--color-page);
+    color: var(--color-ink);
+    font-size: var(--text-body);
+    line-height: 1.45;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
