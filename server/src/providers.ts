@@ -1,4 +1,5 @@
 import type { JobRequest, JobResult } from "@wicket/shared";
+import type { CloudSettings } from "./config.js";
 import type { Runner } from "./queue.js";
 
 /**
@@ -19,15 +20,6 @@ import type { Runner } from "./queue.js";
  * Text stays out of the logs: a failure is logged with the cloud's status or
  * the kind of failure, never a message or Ollama's error text.
  */
-
-export interface CloudSettings {
-  /** `https://ollama.com` in production. */
-  url: string;
-  model: string;
-  /** `OLLAMA_API_KEY`. A secret: never log it. */
-  apiKey: string;
-  timeoutMs: number;
-}
 
 export interface ProviderLog {
   error(message: string): void;

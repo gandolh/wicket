@@ -2,7 +2,8 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import type { AddressInfo } from "node:net";
 import { FINAL_STATUSES, type JobRequest, type JobResult, type JobView } from "@wicket/shared";
 import { afterEach, describe, expect, it } from "vitest";
-import { createRunner, NO_KEY_ERROR, type CloudSettings } from "./providers.js";
+import type { CloudSettings } from "./config.js";
+import { createRunner, NO_KEY_ERROR } from "./providers.js";
 import { Queue, type RunContext } from "./queue.js";
 import type { JobRecord } from "./records.js";
 

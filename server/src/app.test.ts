@@ -7,6 +7,7 @@ import Database from "better-sqlite3";
 import type { FastifyInstance, InjectOptions } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp, stripApiPrefix } from "./app.js";
+import { loadConfig } from "./config.js";
 import { settle, stubRunner, type StubCall } from "./testing.js";
 import { AppTokens } from "./tokens.js";
 
@@ -22,7 +23,10 @@ let calls: StubCall[];
 async function start(options: { maxWaiting?: number; dbPath?: string; logger?: object } = {}) {
   const stub = stubRunner();
   calls = stub.calls;
-  app = await buildApp({ dbPath: options.dbPath ?? ":memory:", run: stub.run, appTokens: TOKENS, ...options });
+  app = await buildApp(
+    { ...loadConfig({}), dbPath: options.dbPath ?? ":memory:", appTokens: TOKENS },
+    { run: stub.run, maxWaiting: options.maxWaiting, server: { logger: options.logger } },
+  );
 }
 
 beforeEach(async () => {

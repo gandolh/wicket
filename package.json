@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "tsc -b shared && concurrently --names server,web --kill-others-on-fail \"npm run dev -w @wicket/server\" \"npm run dev -w @wicket/web\"",
     "build": "tsc -b && npm run build -w @wicket/web",
-    "start": "node server/dist/index.js",
+    "start": "node server/dist/server.js",
     "pretest": "tsc -b shared",
     "test": "vitest run",
     "typecheck": "tsc -b && tsc -p web --noEmit",

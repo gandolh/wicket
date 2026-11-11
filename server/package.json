@@ -4,17 +4,18 @@
   "description": "The Wicket API (Fastify + SQLite): the queue, the providers and the records; it also serves the built page.",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/server.js",
   "scripts": {
     "build": "tsc -b",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
     "@fastify/static": "10.1.10",
     "@wicket/shared": "0.1.0",
     "better-sqlite3": "13.0.3",
+    "close-with-grace": "2.5.0",
     "fastify": "5.12.7",
     "zod": "4.6.7"
   },

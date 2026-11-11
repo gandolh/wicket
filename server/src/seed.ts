@@ -1,8 +1,7 @@
-import { resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { Writable } from "node:stream";
-import { fileURLToPath } from "node:url";
 import { openAccounts, seedUser } from "./accounts.js";
+import { loadEnvFile, loadSeedConfig } from "./config.js";
 import { openDatabase } from "./db.js";
 
 /**
@@ -21,14 +20,7 @@ import { openDatabase } from "./db.js";
  * again. The database is `WICKET_DB`'s, as for the server.
  */
 
-/** `src/` (tsx) and `dist/` (built) sit at the same depth, so this resolves the same from both. */
-const REPO_ROOT = fileURLToPath(new URL("../../", import.meta.url));
-
-try {
-  process.loadEnvFile(`${REPO_ROOT}.env`);
-} catch (err) {
-  if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
-}
+loadEnvFile();
 
 /**
  * The answer to `question`, with what is typed hidden when `secret`: readline
@@ -57,15 +49,15 @@ async function ask(question: string, secret = false): Promise<string> {
 }
 
 async function main(): Promise<void> {
-  const username = process.env.SEED_USERNAME?.trim() || (await ask("Username: "));
-  const password = process.env.SEED_PASSWORD || (await ask("Password: ", true));
+  const settings = loadSeedConfig();
+  const username = settings.username ?? (await ask("Username: "));
+  const password = settings.password ?? (await ask("Password: ", true));
   if (username === "" || password === "") {
     throw new Error("Set SEED_USERNAME and SEED_PASSWORD in the environment, or run this in a terminal to be asked.");
   }
 
-  // The same rule as `index.ts`: WICKET_DB, else the repo's data/wicket.sqlite.
-  const configured = process.env.WICKET_DB?.trim();
-  const db = openDatabase(configured ? resolve(configured) : resolve(REPO_ROOT, "data/wicket.sqlite"));
+  // The server's rule: WICKET_DB, else the repo's data/wicket.sqlite.
+  const db = openDatabase(settings.dbPath);
   try {
     const created = await seedUser(openAccounts(db), { username, password });
     console.log(created ? `Created ${username}.` : `${username} already exists; left as it was.`);

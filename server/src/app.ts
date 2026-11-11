@@ -21,14 +21,14 @@ import Fastify, {
   type FastifyServerOptions,
 } from "fastify";
 import type { z } from "zod";
-import { createWardClient, wardAuth, type Accounts, type WardClientOptions } from "../vendor/ward/ward-auth.js";
+import { createWardClient, wardAuth, type Accounts } from "../vendor/ward/ward-auth.js";
 import { openAccounts, USER_ROLE } from "./accounts.js";
-import { AUTH_ROUTE_PREFIX, DEV_ORIGIN } from "./config.js";
+import { API_PREFIX, AUTH_ROUTE_PREFIX, BODY_LIMIT, resolveDbPath, SESSION_COOKIE, type Config } from "./config.js";
 import { openDatabase } from "./db.js";
 import { Metrics } from "./metrics.js";
+import { createRunner } from "./providers.js";
 import { Queue, QueueClosedError, QueueFullError, type Runner } from "./queue.js";
 import { Records } from "./records.js";
-import { AppTokens } from "./tokens.js";
 
 /**
  * The Wicket API. Two families of routes, each with its own guard:
@@ -59,16 +59,6 @@ import { AppTokens } from "./tokens.js";
  * is written anywhere.
  */
 
-/** The API prefix as the browser and the apps see it, unless `WICKET_API_PREFIX` moves it. */
-export const API_PREFIX = "/wicket-api";
-/** Where the built page is served, unless `WICKET_BASE` moves it. */
-export const PAGE_PATH = "/wicket/";
-/** The session cookie's name. Unique in the estate: every app shares one origin. */
-export const SESSION_COOKIE = "wicket_session";
-
-/** The largest job body accepted: a listing page fits with room to spare. */
-export const BODY_LIMIT = 1024 * 1024;
-
 /** How many records the page gets when it doesn't say. */
 const DEFAULT_RECORDS = 50;
 
@@ -84,32 +74,24 @@ export function stripApiPrefix(url: string, prefix: string = API_PREFIX): string
   return url;
 }
 
-export interface AppOptions {
-  /** A file path, or `:memory:` for tests. */
-  dbPath: string;
-  /** Runs one job: the cloud model. */
-  run: Runner;
-  /** The built page, served at `webBase`; skipped when the directory does not exist. */
+/** Fastify's options that belong to the process: server.ts sets them, and a test leaves them out. */
+type ServerOptions = Pick<
+  FastifyServerOptions,
+  "logger" | "trustProxy" | "connectionTimeout" | "requestTimeout" | "keepAliveTimeout"
+>;
+
+export interface BuildAppOptions {
+  server?: ServerOptions;
+  /** Runs one job. Default: the cloud model from the settings. Tests pass a stub. */
+  run?: Runner;
+  /** The built page, served at the page path; skipped when the directory does not exist. */
   webDist?: string;
-  /** The apps and their tokens. Default: none, so every job call is refused. */
-  appTokens?: AppTokens;
-  /** The page's origin as the browser sees it. Default `http://localhost:5179`, the Vite dev server. */
-  publicOrigin?: string;
-  /** The API prefix as the browser sees it, and the session cookie's path. Default `/wicket-api`. */
-  apiPrefix?: string;
-  /** The page's base path, with a trailing slash. Default `/wicket/`. */
-  webBase?: string;
-  /** "Sign in with Ward". Unset, local accounts only. */
-  ward?: WardClientOptions;
-  /** Peers besides loopback whose `X-Forwarded-For` the login lockout believes. Default none. */
-  trustedProxies?: readonly string[];
   /** How many jobs may wait at once. Default 200. */
   maxWaiting?: number;
   /** How long a finished job is kept for its caller, in milliseconds. Default 10 minutes. */
   keepFinishedMs?: number;
   /** The clock, in epoch milliseconds, for tests. */
   now?: () => number;
-  logger?: FastifyServerOptions["logger"];
 }
 
 declare module "fastify" {
@@ -190,23 +172,30 @@ function forwarded(request: FastifyRequest): boolean {
 const UNAUTHORIZED_TOKEN = "send your app's token as Authorization: Bearer <token>";
 const UNAUTHORIZED_SESSION = "sign in to Wicket's page; app tokens don't open the admin routes";
 
-export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
-  const db = openDatabase(options.dbPath);
+/**
+ * The app, ready and not listening: server.ts listens, and tests drive it with
+ * `inject()`. Closing it cancels the queue and closes the database.
+ */
+export async function buildApp(config: Config, options: BuildAppOptions = {}): Promise<FastifyInstance> {
+  const db = openDatabase(resolveDbPath(config.dbPath));
   const records = new Records(db);
   const metrics = new Metrics();
-  const appTokens = options.appTokens ?? AppTokens.parse(undefined);
-  const apiPrefix = options.apiPrefix ?? API_PREFIX;
-  const webBase = options.webBase ?? PAGE_PATH;
-  const publicOrigin = options.publicOrigin ?? DEV_ORIGIN;
+  const { appTokens, apiPrefix, webBase, publicOrigin } = config;
   const now = options.now ?? Date.now;
   const app = Fastify({
-    logger: options.logger ?? false,
+    ...options.server,
     bodyLimit: BODY_LIMIT,
     rewriteUrl: (request) => stripApiPrefix(request.url ?? "/", apiPrefix),
   });
 
   const queue = new Queue({
-    run: options.run,
+    run:
+      options.run ??
+      createRunner({
+        cloud: config.cloud,
+        // Called only once jobs run, after `app` exists.
+        log: { error: (message) => app.log.error(message) },
+      }),
     record: (record) => {
       metrics.observe(record);
       records.add(record);
@@ -248,7 +237,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   const accounts = openAccounts(db);
   app.decorate("accounts", accounts);
   // Checks the settings and imports the key now; talks to Ward only on first use, so Wicket starts while Ward is down.
-  const ward = options.ward && (await createWardClient(options.ward));
+  const ward = config.ward && (await createWardClient(config.ward));
   await app.register(wardAuth, {
     accounts,
     cookieName: SESSION_COOKIE,
@@ -268,7 +257,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
       // The page's files, the redirect to them, /metrics and a 404: the login page has to load.
       return true;
     },
-    trustedProxies: options.trustedProxies ?? [],
+    trustedProxies: config.trustedProxies,
     ...(ward && {
       ward: {
         client: ward,

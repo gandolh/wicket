@@ -9,7 +9,8 @@ import type {
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { seedUser } from "./accounts.js";
-import { buildApp, SESSION_COOKIE } from "./app.js";
+import { buildApp } from "./app.js";
+import { loadConfig, SESSION_COOKIE } from "./config.js";
 import { settle, stubRunner, type StubCall } from "./testing.js";
 import { AppTokens } from "./tokens.js";
 
@@ -26,13 +27,15 @@ beforeEach(async () => {
   const stub = stubRunner();
   calls = stub.calls;
   clock = Date.UTC(2026, 10, 4, 12);
-  app = await buildApp({
-    dbPath: ":memory:",
-    run: stub.run,
-    appTokens: AppTokens.parse(`just-a-bot=${BOT_TOKEN}`),
-    publicOrigin: ORIGIN,
-    now: () => clock,
-  });
+  app = await buildApp(
+    {
+      ...loadConfig({}),
+      dbPath: ":memory:",
+      appTokens: AppTokens.parse(`just-a-bot=${BOT_TOKEN}`),
+      publicOrigin: ORIGIN,
+    },
+    { run: stub.run, now: () => clock },
+  );
 });
 afterEach(async () => {
   await app.close();
@@ -247,7 +250,7 @@ describe("the built page", () => {
     const { tmpdir } = await import("node:os");
     const dist = mkdtempSync(join(tmpdir(), "wicket-web-"));
     writeFileSync(join(dist, "index.html"), "<!doctype html><title>Wicket</title>");
-    const served = await buildApp({ dbPath: ":memory:", run: stubRunner().run, webDist: dist });
+    const served = await buildApp({ ...loadConfig({}), dbPath: ":memory:" }, { run: stubRunner().run, webDist: dist });
     try {
       expect((await served.inject({ url: "/wicket/" })).body).toContain("<title>Wicket</title>");
       expect((await served.inject({ url: "/wicket/login" })).body).toContain("<title>Wicket</title>");

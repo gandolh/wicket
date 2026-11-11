@@ -1,5 +1,14 @@
+import { isAbsolute } from "node:path";
+import { MAX_WAIT_SECONDS } from "@wicket/shared";
 import { describe, expect, it } from "vitest";
-import { ConfigError, loadConfig } from "./config.js";
+import {
+  CONNECTION_TIMEOUT_MS,
+  ConfigError,
+  loadConfig,
+  loadSeedConfig,
+  REQUEST_TIMEOUT_MS,
+  resolveDbPath,
+} from "./config.js";
 
 describe("config", () => {
   it("has defaults for local development", () => {
@@ -94,5 +103,35 @@ describe("sign-in settings", () => {
     expect(
       loadConfig({ ...ward, WARD_OIDC_REDIRECT_URI: "https://example.com/wicket-api/auth/ward/callback" }).ward,
     ).toBeDefined();
+  });
+});
+
+describe("the database path", () => {
+  it("is the repo's data/wicket.sqlite unless WICKET_DB says otherwise, for the server and the seed alike", () => {
+    expect(resolveDbPath(undefined)).toMatch(/\/data\/wicket\.sqlite$/);
+    expect(isAbsolute(resolveDbPath(undefined))).toBe(true);
+    expect(resolveDbPath("  ")).toBe(resolveDbPath(undefined));
+    expect(resolveDbPath(" /srv/wicket/w.sqlite ")).toBe("/srv/wicket/w.sqlite");
+    expect(resolveDbPath(":memory:")).toBe(":memory:");
+    expect(loadSeedConfig({ WICKET_DB: "/srv/wicket/w.sqlite" }).dbPath).toBe("/srv/wicket/w.sqlite");
+    expect(loadSeedConfig({}).dbPath).toBe(resolveDbPath(loadConfig({}).dbPath));
+  });
+
+  it("gives the seed a trimmed name, the password as typed, and nothing for an empty value", () => {
+    expect(loadSeedConfig({ SEED_USERNAME: " demo ", SEED_PASSWORD: " a pass " })).toMatchObject({
+      username: "demo",
+      password: " a pass ",
+    });
+    expect(loadSeedConfig({ SEED_USERNAME: " ", SEED_PASSWORD: "" })).toMatchObject({
+      username: undefined,
+      password: undefined,
+    });
+  });
+});
+
+describe("the timeouts", () => {
+  it("never cut a long poll: a socket may stay silent longer than the longest wait", () => {
+    expect(CONNECTION_TIMEOUT_MS).toBeGreaterThan(MAX_WAIT_SECONDS * 1000);
+    expect(REQUEST_TIMEOUT_MS).toBeGreaterThan(0);
   });
 });

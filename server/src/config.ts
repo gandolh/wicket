@@ -1,7 +1,52 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { wardClientOptionsFromEnv, type WardClientOptions } from "../vendor/ward/ward-auth.js";
-import type { CloudSettings } from "./providers.js";
 import { AppTokens, TokenConfigError } from "./tokens.js";
+
+/**
+ * The server's settings: the one reader of the environment. The entry and the
+ * seed load the repo's `.env` through `loadEnvFile()`, then parse with
+ * `loadConfig()` or `loadSeedConfig()`; nothing else reads `process.env`.
+ */
+
+/** The repo root. `src/` (tsx in dev) and `dist/` (built) sit at the same depth, so this holds for both. */
+const REPO_ROOT = fileURLToPath(new URL("../../", import.meta.url));
+
+/** The repo's `.env`, found from this file, never from the working directory. */
+const ENV_FILE = resolve(REPO_ROOT, ".env");
+
+/** The database when `WICKET_DB` is unset. */
+const DEFAULT_DB_PATH = resolve(REPO_ROOT, "data/wicket.sqlite");
+
+/** The built page, which the server serves at the page path when it exists. */
+export const WEB_DIST = resolve(REPO_ROOT, "web/dist");
+
+/** The API prefix as the browser and the apps see it, unless `WICKET_API_PREFIX` moves it. */
+export const API_PREFIX = "/wicket-api";
+/** Where the built page is served, unless `WICKET_BASE` moves it. */
+const PAGE_PATH = "/wicket/";
+/** The session cookie's name. Unique in the estate: every app shares one origin. */
+export const SESSION_COOKIE = "wicket_session";
+
+/** The largest job body accepted: a listing page fits with room to spare. */
+export const BODY_LIMIT = 1024 * 1024;
+
+/*
+ * The process's timeouts (server.ts). A long poll (`GET /v1/jobs/:id?wait=N`)
+ * holds a silent response for up to `MAX_WAIT_SECONDS` (25 s), and `connectionTimeout`
+ * cuts a socket silent that long, so it sits above the longest wait with 10 s
+ * of margin. `requestTimeout` bounds receiving a request, never a response.
+ * `keepAliveTimeout` outlives Caddy's two-minute idle keep-alive to its
+ * upstream, so Caddy never reuses a socket Wicket has just closed. The
+ * shutdown delay is under compose's default 10 s stop period, so the process
+ * exits before Docker kills it.
+ */
+export const CONNECTION_TIMEOUT_MS = 35_000;
+export const REQUEST_TIMEOUT_MS = 30_000;
+export const KEEP_ALIVE_TIMEOUT_MS = 125_000;
+export const SHUTDOWN_DELAY_MS = 5_000;
 
 /** Where the auth plugin's routes sit as Fastify sees them; the browser reaches them under the API prefix. */
 export const AUTH_ROUTE_PREFIX = "/auth";
@@ -10,13 +55,23 @@ export const AUTH_ROUTE_PREFIX = "/auth";
 export const WARD_CALLBACK_PATH = `${AUTH_ROUTE_PREFIX}/ward/callback`;
 
 /** The Vite dev server, where the page runs in development. */
-export const DEV_ORIGIN = "http://localhost:5179";
+const DEV_ORIGIN = "http://localhost:5179";
+
+/** Ollama Cloud, as the runner asks it. */
+export interface CloudSettings {
+  /** `https://ollama.com` in production. */
+  url: string;
+  model: string;
+  /** `OLLAMA_API_KEY`. A secret: never log it. */
+  apiKey: string;
+  timeoutMs: number;
+}
 
 /** The server's settings, read once at startup from the environment (and the repo's `.env`). */
 export interface Config {
   host: string;
   port: number;
-  /** `WICKET_DB` as given, or undefined for the repo's `data/wicket.sqlite`. */
+  /** `WICKET_DB`, trimmed, or undefined for the repo's `data/wicket.sqlite`; `resolveDbPath()` makes it a file path. */
   dbPath: string | undefined;
   /** The apps and their tokens, from `WICKET_APP_TOKENS`. Secrets: never log them. */
   appTokens: AppTokens;
@@ -74,7 +129,7 @@ const envSchema = z.object({
   PORT: optional(
     z.coerce.number<string>().int().min(1).max(65535, { message: "PORT must be a port number (1-65535)." }),
   ).transform((value) => value ?? 8808),
-  WICKET_DB: optional(z.string()),
+  WICKET_DB: optional(z.string().trim()),
   OLLAMA_API_KEY: optional(z.string().transform((value) => value.trim())),
   WICKET_CLOUD_URL: optional(baseUrl("WICKET_CLOUD_URL")).transform((value) => value ?? DEFAULTS.cloudUrl),
   WICKET_CLOUD_MODEL: optional(z.string().trim()).transform((value) => value ?? DEFAULTS.cloudModel),
@@ -90,12 +145,12 @@ const envSchema = z.object({
     z.string().regex(/^\/[^\s?#]*[^/\s?#]$/, {
       message: "WICKET_API_PREFIX must be a path such as /wicket-api: a leading slash and no trailing slash.",
     }),
-  ).transform((value) => value ?? "/wicket-api"),
+  ).transform((value) => value ?? API_PREFIX),
   WICKET_BASE: optional(
     z.string().regex(/^\/([^\s?#]*\/)?$/, {
       message: "WICKET_BASE must be a path such as /wicket/: a leading and a trailing slash.",
     }),
-  ).transform((value) => value ?? "/wicket/"),
+  ).transform((value) => value ?? PAGE_PATH),
 });
 
 export function describeIssue(issue: z.core.$ZodIssue): string {
@@ -143,7 +198,7 @@ function trustedProxies(value: string | undefined): string[] {
 }
 
 /** The settings from `env`, or a `ConfigError` naming every variable that is wrong. Messages never repeat a secret. */
-export function loadConfig(env: NodeJS.ProcessEnv): Config {
+export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const problems: string[] = [];
   const parsed = envSchema.safeParse(env);
   if (!parsed.success) problems.push(...parsed.error.issues.map(describeIssue));
@@ -175,5 +230,48 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     webBase: values.WICKET_BASE,
     ward,
     trustedProxies: trustedProxies(env.AUTH_TRUSTED_PROXIES),
+  };
+}
+
+/**
+ * Reads the repo's `.env` into the environment when there is one, and returns
+ * its path. A container has none: the deploy sets its environment. A variable
+ * the environment already has keeps its value.
+ */
+export function loadEnvFile(path: string = ENV_FILE): string | undefined {
+  if (!existsSync(path)) return undefined;
+  process.loadEnvFile(path);
+  return path;
+}
+
+/**
+ * The database file: `WICKET_DB` resolved from the working directory, or the
+ * repo's `data/wicket.sqlite` when it is unset. `:memory:` stays as it is, an
+ * in-memory database for tests and throwaway runs. The server and the seed
+ * share this rule.
+ */
+export function resolveDbPath(value: string | undefined): string {
+  const path = value?.trim();
+  if (path === undefined || path === "") return DEFAULT_DB_PATH;
+  return path === ":memory:" ? path : resolve(path);
+}
+
+/** The seed's settings. A missing name or password is asked for on a terminal. */
+export interface SeedConfig {
+  /** `SEED_USERNAME`, trimmed, or undefined. */
+  username: string | undefined;
+  /** `SEED_PASSWORD` as given (spaces count), or undefined. A secret: never print it. */
+  password: string | undefined;
+  /** The database, by the server's rule. */
+  dbPath: string;
+}
+
+export function loadSeedConfig(env: NodeJS.ProcessEnv = process.env): SeedConfig {
+  const username = env.SEED_USERNAME?.trim();
+  const password = env.SEED_PASSWORD;
+  return {
+    username: username === undefined || username === "" ? undefined : username,
+    password: password === undefined || password === "" ? undefined : password,
+    dbPath: resolveDbPath(env.WICKET_DB),
   };
 }
