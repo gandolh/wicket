@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "../vendor/ward/ward-auth-react.js";
 import { clearQueue, fetchQueue, fetchRecords, forceClose } from "./api";
 import { ConfirmDialog } from "./components/ui/ConfirmDialog";
+import { RadioGroup } from "./components/ui/RadioGroup";
 import { CountsTable, NowServing, RecordsTable, RunningCard, WaitingTable } from "./QueueView";
 import { navigate, pathOf } from "./route";
 import { clock } from "./time";
@@ -12,6 +13,11 @@ const QUEUE_MS = 2_000;
 const RECORDS_MS = 10_000;
 
 type Period = "day" | "week";
+
+const PERIODS = [
+  { value: "day", label: "Last 24 hours" },
+  { value: "week", label: "Last 7 days" },
+] as const;
 
 /**
  * The queue page: now serving, the running call with Force close, the waiting
@@ -146,13 +152,7 @@ export function QueuePage() {
         <section className="section" aria-labelledby="calls-title">
           <div className="section-head">
             <h2 id="calls-title">Calls per app</h2>
-            <label className="filter">
-              <span>Period</span>
-              <select value={period} onChange={(event) => setPeriod(event.target.value as Period)}>
-                <option value="day">Last 24 hours</option>
-                <option value="week">Last 7 days</option>
-              </select>
-            </label>
+            <RadioGroup label="Period" look="segmented" options={PERIODS} value={period} onValueChange={setPeriod} />
           </div>
           {records.data ? (
             <CountsTable counts={records.data.counts[period]} />
