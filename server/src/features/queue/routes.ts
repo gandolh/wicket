@@ -1,5 +1,6 @@
-import type { ClearResponse, ForceCloseResponse, QueueResponse } from "@wicket/shared";
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyPluginAsyncZod } from "@fastify/type-provider-zod";
+import { clearResponseSchema, errorBodySchema, forceCloseResponseSchema, queueResponseSchema } from "@wicket/shared";
+import type { FastifyReply, FastifyRequest } from "fastify";
 import { fail } from "../../plugins/errors.js";
 import type { Queue } from "./queue.js";
 
@@ -36,7 +37,7 @@ function sameOrigin(request: FastifyRequest, publicOrigin: string): boolean {
  * The queue page's routes, behind a signed-in session (the auth plugin): the
  * queue now, force close and clear. Neither write takes a body.
  */
-export const queueRoutes: FastifyPluginAsync<QueueRoutesOptions> = async (app, { queue, now, publicOrigin }) => {
+export const queueRoutes: FastifyPluginAsyncZod<QueueRoutesOptions> = async (app, { queue, now, publicOrigin }) => {
   /** The two writes refuse a browser that says it came from another site. */
   const crossSite = (request: FastifyRequest, reply: FastifyReply): boolean => {
     if (sameOrigin(request, publicOrigin)) return false;
@@ -44,21 +45,24 @@ export const queueRoutes: FastifyPluginAsync<QueueRoutesOptions> = async (app, {
     return true;
   };
 
-  app.get("/v1/queue", async (): Promise<QueueResponse> => ({ serverTime: now(), ...queue.snapshot() }));
+  app.get("/v1/queue", { schema: { response: { 200: queueResponseSchema } } }, async () => ({
+    serverTime: now(),
+    ...queue.snapshot(),
+  }));
 
-  app.post("/v1/queue/running/cancel", async (request, reply) => {
+  const cancelSchema = { response: { 200: forceCloseResponseSchema, 403: errorBodySchema } };
+  app.post("/v1/queue/running/cancel", { schema: cancelSchema }, async (request, reply) => {
     if (crossSite(request, reply)) return reply;
     const closed = queue.forceClose();
     if (closed) request.log.info("force closed the running job from the queue page");
-    const body: ForceCloseResponse = { closed };
-    return body;
+    return { closed };
   });
 
-  app.post("/v1/queue/clear", async (request, reply) => {
+  const clearSchema = { response: { 200: clearResponseSchema, 403: errorBodySchema } };
+  app.post("/v1/queue/clear", { schema: clearSchema }, async (request, reply) => {
     if (crossSite(request, reply)) return reply;
     const cleared = queue.clear();
     if (cleared > 0) request.log.info(`cleared ${cleared} waiting job(s) from the queue page`);
-    const body: ClearResponse = { cleared };
-    return body;
+    return { cleared };
   });
 };
