@@ -1,3 +1,4 @@
+import { serializerCompiler, validatorCompiler } from "@fastify/type-provider-zod";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { Accounts } from "../vendor/ward/ward-auth.js";
 import { BODY_LIMIT, resolveDbPath, type Config } from "./config.js";
@@ -84,9 +85,10 @@ export interface BuildAppOptions {
 
 /**
  * The app, ready and not listening: server.ts listens, and tests drive it with
- * `inject()`. It registers in a fixed order: the error handler, the session
- * guard and sign-in, the token guard, the features, then the page and the 404
- * handler. Closing it cancels the queue and closes the database.
+ * `inject()`. It registers in a fixed order: the zod compilers, the error
+ * handler, the session guard and sign-in, the token guard, the features, then
+ * the page and the 404 handler. Closing it cancels the queue and closes the
+ * database.
  */
 export async function buildApp(config: Config, options: BuildAppOptions = {}): Promise<FastifyInstance> {
   const db = openDatabase(resolveDbPath(config.dbPath));
@@ -100,6 +102,10 @@ export async function buildApp(config: Config, options: BuildAppOptions = {}): P
     bodyLimit: BODY_LIMIT,
     rewriteUrl: (request) => stripApiPrefix(request.url ?? "/", apiPrefix),
   });
+  // Zod checks each request and encodes each reply, in every plugin registered below, for the
+  // routes that declare a schema.
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
 
   const queue = new Queue({
     run:
