@@ -11,17 +11,20 @@ export default [
     root: import.meta.dirname,
     web: "web/src",
     server: "server/src",
-    // Allowed to print: the server entry logs before its logger exists, the seed CLI talks to the
-    // person running it, and the docs capture helper is a script run by hand.
-    console: ["server/src/index.ts", "server/src/seed.ts", "docs/images/*.mjs"],
+    // Scripts run by hand, which print and read the environment directly: the repo's own, and the
+    // docs capture helpers.
+    scripts: ["scripts", "docs/images"],
+    // Allowed to print: the server entry logs before its logger exists, and the seed CLI talks to the
+    // person running it.
+    console: ["server/src/index.ts", "server/src/seed.ts"],
     // docs-site is its own package with its own typecheck; data/ is the local database.
     ignores: ["data/**", "docs-site/**"],
   }),
   {
-    // A warning for now (2026-11-11): these files still read the environment themselves. Brief 13
-    // moves the server's reads into config.ts and turns the rule back into an error here.
+    // A warning for now (2026-11-11): these two files still read the environment themselves. When
+    // the server takes its settings from config.ts, this block goes and the rule is an error again.
     name: "wicket/process-env-warns",
-    files: ["server/src/index.ts", "server/src/seed.ts", "docs/images/*.mjs"],
+    files: ["server/src/index.ts", "server/src/seed.ts"],
     rules: { "n/no-process-env": "warn" },
   },
   {
