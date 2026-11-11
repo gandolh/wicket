@@ -2,25 +2,12 @@ import { hasZodFastifySchemaValidationErrors, ResponseSerializationError } from 
 import type { ErrorBody } from "@wicket/shared";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
-import type { z } from "zod";
 import { BODY_LIMIT } from "../config.js";
 import { pathOf } from "../lib/paths.js";
 
 /** Answer with the contract's error body, `{ code, message }`. The one way the server writes an error. */
 export function fail(reply: FastifyReply, status: number, body: ErrorBody): FastifyReply {
   return reply.status(status).send(body);
-}
-
-/** Parse with a contract schema, or answer 400 and return undefined. Messages name the field, never its value. */
-export function parse<S extends z.ZodType>(schema: S, value: unknown, reply: FastifyReply): z.output<S> | undefined {
-  const result = schema.safeParse(value);
-  if (result.success) return result.data;
-  const issue = result.error.issues[0];
-  void fail(reply, 400, {
-    code: "invalid_request",
-    message: issue ? `${issue.path.join(".") || "request"}: ${issue.message}` : "invalid request",
-  });
-  return undefined;
 }
 
 /** A route that doesn't exist, in the contract's shape. */

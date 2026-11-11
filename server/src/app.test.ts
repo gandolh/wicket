@@ -186,6 +186,28 @@ describe("jobs", () => {
   });
 });
 
+describe("the guards and the response schemas", () => {
+  it("refuse every signed-out /v1 call in the contract's shape: no route declares a 401", async () => {
+    const routes = [
+      ["POST", "/v1/jobs"],
+      ["GET", "/v1/jobs/some-job"],
+      ["DELETE", "/v1/jobs/some-job"],
+      ["PATCH", "/v1/jobs/some-job"],
+      ["GET", "/v1/queue"],
+      ["POST", "/v1/queue/running/cancel"],
+      ["POST", "/v1/queue/clear"],
+      ["GET", "/v1/records"],
+    ] as const;
+    for (const [method, url] of routes) {
+      for (const prefix of ["", "/wicket-api"]) {
+        const res = await call({ method, url: `${prefix}${url}` });
+        expect(res.statusCode, `${method} ${prefix}${url}`).toBe(401);
+        expect(res.json<ErrorBody>()).toEqual({ code: "unauthorized", message: expect.any(String) });
+      }
+    }
+  });
+});
+
 describe("records", () => {
   it("keep no prompt or answer text, in the database or the log", async () => {
     await app.close();
