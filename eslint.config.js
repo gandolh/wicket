@@ -10,6 +10,9 @@ export default [
     root: import.meta.dirname,
     web: "web/src",
     server: "server/src",
+    playwright: ["web/e2e/**"],
+    // The class rules read the page's @theme, so a class that doesn't exist is an error and the order is fixed.
+    tailwind: { css: "web/src/styles/index.css", order: true },
     // Scripts run by hand, which print and read the environment directly: the repo's own, and the
     // docs capture helpers.
     scripts: ["scripts", "docs/images"],
