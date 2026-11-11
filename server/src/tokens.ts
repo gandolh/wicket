@@ -30,7 +30,11 @@ function digest(value: string): Buffer {
 }
 
 export class AppTokens {
-  private constructor(private readonly digests: ReadonlyMap<string, Buffer>) {}
+  private readonly digests: ReadonlyMap<string, Buffer>;
+
+  private constructor(digests: ReadonlyMap<string, Buffer>) {
+    this.digests = digests;
+  }
 
   /** The configured app names, in the order given. */
   get apps(): string[] {

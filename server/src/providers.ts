@@ -43,12 +43,12 @@ export interface ProviderOptions {
 
 /** Why one Ollama call failed. `detail` is for the caller only, never the log. */
 export class ProviderFailure extends Error {
-  constructor(
-    /** For the log: a status code or a kind of failure, never text from the call. */
-    readonly kind: string,
-    message: string,
-  ) {
+  /** For the log: a status code or a kind of failure, never text from the call. */
+  readonly kind: string;
+
+  constructor(kind: string, message: string) {
     super(message);
+    this.kind = kind;
     this.name = "ProviderFailure";
   }
 }

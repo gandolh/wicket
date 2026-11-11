@@ -31,8 +31,11 @@ export type Runner = (request: JobRequest, context: RunContext) => Promise<JobRe
 
 /** The waiting line is full. */
 export class QueueFullError extends Error {
-  constructor(readonly limit: number) {
+  readonly limit: number;
+
+  constructor(limit: number) {
     super(`${limit} jobs are already waiting`);
+    this.limit = limit;
     this.name = "QueueFullError";
   }
 }
