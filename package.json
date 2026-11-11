@@ -19,6 +19,8 @@
     "test": "vitest run",
     "typecheck": "tsc -b && tsc -p web --noEmit",
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "docs": "npm run docs --prefix docs-site",
     "house-style:sync": "node vendor/house-style/bin/sync.mjs"
   },
