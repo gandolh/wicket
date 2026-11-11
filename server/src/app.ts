@@ -125,9 +125,13 @@ export async function buildApp(config: Config, options: BuildAppOptions = {}): P
     now,
     onError: (message, error) => app.log.error({ err: error }, message),
   });
-  // Cancel and record whatever waits or runs, then close the file.
-  app.addHook("onClose", async () => {
+  // Closing: first cancel and record whatever waits or runs, before Fastify waits for the requests in flight,
+  // so a held long poll answers `cancelled` at once instead of holding the close for up to 25 s. Then, once
+  // every request has finished, close the file.
+  app.addHook("preClose", async () => {
     queue.close();
+  });
+  app.addHook("onClose", async () => {
     db.close();
   });
 

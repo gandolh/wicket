@@ -49,7 +49,11 @@ socket answered `?wait=25` with 200 after 25.0 s on 2026-11-11. Beside it:
 `keepAliveTimeout` 125 s (above Caddy's two-minute idle keep-alive to its
 upstream), `close-with-grace` with a 5 s delay (under compose's default 10 s
 stop period), and `trustProxy` as loopback plus `AUTH_TRUSTED_PROXIES` (only
-the request log's address changes: Wicket reads no `request.ip`). Rejected:
+the request log's address changes: Wicket reads no `request.ip`). The queue
+is cancelled in a `preClose` hook, before Fastify waits for the requests in
+flight: in `onClose`, a held long poll kept the close waiting, and SIGTERM
+ended at the 5 s delay with exit 1 and no records (measured 2026-11-11). A
+test holds it. Rejected:
 the 10 s other servers use, which would cut every long poll past 10 s; and
 Fastify's default of no limit.
 

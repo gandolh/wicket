@@ -114,8 +114,10 @@ the five `WARD_OIDC_*`, `AUTH_TRUSTED_PROXIES`, `SEED_USERNAME`,
 Locally: `npm run dev` (API on 8808, page on Vite at port 5179); `npm start`
 (`node server/dist/server.js`, the container's `CMD` too) serves the built
 page from the API's own port. A socket may stay silent 35 s
-(`connectionTimeout`), above the 25 s long poll; SIGTERM closes the queue,
-recording what waited or ran, within 5 s. On the VPS: one container,
+(`connectionTimeout`), above the 25 s long poll. On SIGTERM the queue is
+cancelled first, recording what waited or ran, so a held long poll answers
+`cancelled` at once; then the database closes. After 5 s the process exits
+anyway. On the VPS: one container,
 `wicket-api`, from
 [`infrastructure/docker-compose.yml`](../../infrastructure/docker-compose.yml)
 (built from [`infrastructure/Dockerfile`](../../infrastructure/Dockerfile)), on
