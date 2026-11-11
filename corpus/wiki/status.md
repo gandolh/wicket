@@ -1,5 +1,5 @@
 ---
-summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); brief 10 built 2026-11-11 (the house-style harness: vendored house-style configs, Prettier at 120, typed ESLint, npm run check and check:fast; ready for deploy); brief 11 built 2026-11-11 (Base UI by the conventions: ConfirmDialog and RadioGroup under components/ui, jsdom test; ready for deploy); briefs 12-14 open (the web app to Tailwind, the server in the code structure, a Hallmark redesign).
+summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); brief 10 built 2026-11-11 (the house-style harness: vendored house-style configs, Prettier at 120, typed ESLint, npm run check and check:fast; ready for deploy); brief 11 built 2026-11-11 (Base UI by the conventions: ConfirmDialog and RadioGroup under components/ui, jsdom test; ready for deploy); brief 13 built 2026-11-11 (the server in the code structure: server.ts, config.ts, plugins, features, zod route schemas, check-structure strict; ready for deploy); briefs 12 and 14 open (the web app to Tailwind, a Hallmark redesign).
 updated: 2026-11-11
 ---
 
@@ -52,25 +52,34 @@ turned out to be 6.55 GB. **Not deployed.** Everything the deploy needs is in
   `.git-blame-ignore-revs`); `verbatimModuleSyntax` and `erasableSyntaxOnly`;
   the house ESLint config with its six typed rules. `npm run check` (about
   19 s) runs the typecheck, lint, format check, `check:conventions` (knip,
-  dependency-cruiser, and the two house-style checkers, both `--warn-only`
-  until briefs 12 and 13) and the tests; `npm run check:fast` (about 6 s) is
+  dependency-cruiser, and the two house-style checkers, `check-base-ui`
+  `--warn-only` until brief 12) and the tests; `npm run check:fast` (about 6 s) is
   what the Claude Code plugin's Stop hook runs. A root `CLAUDE.md` and
   `.claude/rules/` carry the commands and the area rules. Left as warnings:
-  51 non-null assertions in tests, and `no-process-env` (from
-  `eslint-plugin-n`) on five reads until brief 13.
+  non-null assertions in tests. `no-process-env` (from `eslint-plugin-n`)
+  is an error since brief 13.
 - **Base UI by the conventions** (brief 11, 2026-11-11). Base UI is imported
   only by `web/src/components/ui/`: `ConfirmDialog` (the confirm, Cancel as
   initial focus, tested under jsdom) and `RadioGroup` (the period filter, a
   segmented pair). `check-base-ui` strict is at 0 for rules 1, 2, 3, 9, 10 and
   11; rule 5 waits for brief 12. 89 tests.
+- **The server in the code structure** (brief 13, 2026-11-11). `server.ts`
+  listens (close-with-grace, `trustProxy`, `connectionTimeout` 35 s over the
+  25 s long poll), `app.ts` builds from the parsed config, `config.ts` is the
+  one reader of the environment, the error handler, both guards and the page
+  are plugins, and the routes live in `features/` with zod schemas and a
+  response schema per status ([architecture.md](architecture.md),
+  [decisions-server.md](decisions-server.md)). 107 of 108 captured replies
+  are byte-identical; a body-less POST's 400 reads "received null".
+  `check-structure` strict at 0. 98 tests.
 
 ## Open briefs (planned 2026-11-10)
 
 Five briefs carry the owner's calls of 2026-11-09 (Base UI 1.9.0, Tailwind
 v4, enforced conventions), to run in number order: 10 the house style and the
 quality harness (Wicket is the proof run; built 2026-11-11), 11 Base UI by the conventions (built 2026-11-11), 12
-the web app to Tailwind, 13 the server in the code structure, then 14 a
-redesign with Hallmark on the estate board. The owner's grilling of 2026-11-10
+the web app to Tailwind, 13 the server in the code structure (built
+2026-11-11), then 14 a redesign with Hallmark on the estate board. The owner's grilling of 2026-11-10
 settled them (vendored house-style, width 120, a Light / Dark / System switch,
 the family token names). No bump brief is needed: `@base-ui/react` is
 already exactly 1.9.0 and the lockfile resolves it.
@@ -97,6 +106,10 @@ In this order; the details are in `docs/owner-setup.md`.
    .git-blame-ignore-revs` in your checkout, and the deploy, `node cli.ts
    wicket deploy` from vps-deploy. Nothing behaves differently; it ships the
    lint fixes.
+9. For brief 13 (2026-11-11): the same `node cli.ts wicket deploy`. It
+   builds the image, whose `CMD` is now `node server/dist/server.js`; check
+   that the `wicket-api` container turns healthy, and note the image size
+   (about 210 MB before). The image wasn't built locally.
 
 The six calls the first build made on its own were all kept by the owner on
 2026-11-04. One call waits in [open-questions.md](open-questions.md): the
@@ -104,7 +117,7 @@ docs site as a separate package.
 
 ## Open briefs
 
-11 to 14, listed above.
+12 and 14, listed above.
 
 ## Todos
 
