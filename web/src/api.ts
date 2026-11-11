@@ -36,7 +36,12 @@ export function onUnauthorized(listener: () => void): () => void {
   };
 }
 
-async function request<T>(method: "GET" | "POST", path: string, parse: (value: unknown) => T, signal?: AbortSignal): Promise<T> {
+async function request<T>(
+  method: "GET" | "POST",
+  path: string,
+  parse: (value: unknown) => T,
+  signal?: AbortSignal,
+): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { method, headers: { accept: "application/json" }, signal });
   if (res.status === 401) {
     for (const listener of unauthorizedListeners) listener();

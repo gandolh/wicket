@@ -33,11 +33,20 @@ describe("cloud settings", () => {
 
   it("asks the cloud with a key, gpt-oss:120b by default", () => {
     const config = loadConfig({ OLLAMA_API_KEY: "a-key", WICKET_CLOUD_URL: "https://ollama.example.com/" });
-    expect(config.cloud).toEqual({ url: "https://ollama.example.com", model: "gpt-oss:120b", apiKey: "a-key", timeoutMs: 120_000 });
+    expect(config.cloud).toEqual({
+      url: "https://ollama.example.com",
+      model: "gpt-oss:120b",
+      apiKey: "a-key",
+      timeoutMs: 120_000,
+    });
   });
 
   it("takes another cloud model and timeout", () => {
-    const config = loadConfig({ OLLAMA_API_KEY: "a-key", WICKET_CLOUD_MODEL: "qwen3:32b", WICKET_CLOUD_TIMEOUT_SECONDS: "60" });
+    const config = loadConfig({
+      OLLAMA_API_KEY: "a-key",
+      WICKET_CLOUD_MODEL: "qwen3:32b",
+      WICKET_CLOUD_TIMEOUT_SECONDS: "60",
+    });
     expect(config.cloud).toMatchObject({ url: "https://ollama.com", model: "qwen3:32b", timeoutMs: 60_000 });
   });
 
@@ -57,7 +66,13 @@ describe("cloud settings", () => {
 describe("sign-in settings", () => {
   it("defaults to the Vite dev server, the sub-paths and local accounts only", () => {
     const config = loadConfig({});
-    expect(config).toMatchObject({ publicOrigin: "http://localhost:5179", apiPrefix: "/wicket-api", webBase: "/wicket/", ward: undefined, trustedProxies: [] });
+    expect(config).toMatchObject({
+      publicOrigin: "http://localhost:5179",
+      apiPrefix: "/wicket-api",
+      webBase: "/wicket/",
+      ward: undefined,
+      trustedProxies: [],
+    });
   });
 
   it("refuses an origin with a path, and a half-set Ward", () => {
@@ -76,6 +91,8 @@ describe("sign-in settings", () => {
     expect(() => loadConfig({ ...ward, WARD_OIDC_REDIRECT_URI: "https://example.com/auth/ward/callback" })).toThrow(
       /\/wicket-api\/auth\/ward\/callback/,
     );
-    expect(loadConfig({ ...ward, WARD_OIDC_REDIRECT_URI: "https://example.com/wicket-api/auth/ward/callback" }).ward).toBeDefined();
+    expect(
+      loadConfig({ ...ward, WARD_OIDC_REDIRECT_URI: "https://example.com/wicket-api/auth/ward/callback" }).ward,
+    ).toBeDefined();
   });
 });

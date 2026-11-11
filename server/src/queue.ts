@@ -267,7 +267,9 @@ export class Queue {
       position,
       status: job.status,
       ...(job.status === "done" && job.result ? { result: { ...job.result } } : {}),
-      ...(job.error !== undefined && (job.status === "failed" || job.status === "cancelled") ? { error: job.error } : {}),
+      ...(job.error !== undefined && (job.status === "failed" || job.status === "cancelled")
+        ? { error: job.error }
+        : {}),
     };
   }
 

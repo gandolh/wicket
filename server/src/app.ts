@@ -14,7 +14,12 @@ import {
 } from "@wicket/shared";
 import { existsSync } from "node:fs";
 import fastifyStatic from "@fastify/static";
-import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest, type FastifyServerOptions } from "fastify";
+import Fastify, {
+  type FastifyInstance,
+  type FastifyReply,
+  type FastifyRequest,
+  type FastifyServerOptions,
+} from "fastify";
 import type { z } from "zod";
 import { createWardClient, wardAuth, type Accounts, type WardClientOptions } from "../vendor/ward/ward-auth.js";
 import { openAccounts, USER_ROLE } from "./accounts.js";
@@ -293,7 +298,8 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
 
   app.get("/metrics", async (request, reply) => {
     // Loopback only: through Caddy it would publish app names and counts.
-    if (forwarded(request)) return fail(reply, 404, { code: "not_found", message: `no route GET ${pathOf(request.url)}` });
+    if (forwarded(request))
+      return fail(reply, 404, { code: "not_found", message: `no route GET ${pathOf(request.url)}` });
     return reply.type("text/plain; version=0.0.4; charset=utf-8").send(metrics.render(queue.snapshot()));
   });
 
@@ -307,7 +313,10 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
       return reply.status(202).send(view);
     } catch (error) {
       if (error instanceof QueueFullError) {
-        return fail(reply, 503, { code: "queue_full", message: `${error.limit} jobs are already waiting; try again later` });
+        return fail(reply, 503, {
+          code: "queue_full",
+          message: `${error.limit} jobs are already waiting; try again later`,
+        });
       }
       if (error instanceof QueueClosedError) {
         return fail(reply, 503, { code: "internal", message: "Wicket is restarting; try again in a moment" });
@@ -393,7 +402,8 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   if (webBase !== "/") app.get("/", async (_request, reply) => reply.redirect(webBase));
   app.setNotFoundHandler((request, reply) => {
     const path = pathOf(request.url);
-    if (serving && request.method === "GET" && webBase !== "/" && path === webBase.slice(0, -1)) return reply.redirect(webBase);
+    if (serving && request.method === "GET" && webBase !== "/" && path === webBase.slice(0, -1))
+      return reply.redirect(webBase);
     if (serving && (request.method === "GET" || request.method === "HEAD") && path.startsWith(webBase)) {
       return reply.sendFile("index.html");
     }

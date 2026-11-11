@@ -31,7 +31,9 @@ describe("the schema", () => {
     const columns = (db.prepare("PRAGMA table_info(records)").all() as { name: string }[]).map((c) => c.name);
     expect(columns).not.toContain("provider");
     expect(db.pragma("user_version", { simple: true })).toBe(MIGRATIONS.length);
-    expect(db.prepare("SELECT app, ticket, outcome FROM records").all()).toEqual([{ app: "just-a-bot", ticket: 7, outcome: "ok" }]);
+    expect(db.prepare("SELECT app, ticket, outcome FROM records").all()).toEqual([
+      { app: "just-a-bot", ticket: 7, outcome: "ok" },
+    ]);
     db.close();
   });
 });

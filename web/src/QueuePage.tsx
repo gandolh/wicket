@@ -39,7 +39,8 @@ export function QueuePage() {
       setNotice({ text: await action(), error: false });
     } catch (error) {
       // A 401 is the gate's to handle; anything else is said here.
-      if ((error as Error).name !== "Unauthorized") setNotice({ text: "That didn't work. Wicket may be down; try again.", error: true });
+      if ((error as Error).name !== "Unauthorized")
+        setNotice({ text: "That didn't work. Wicket may be down; try again.", error: true });
     }
     queue.refresh();
     records.refresh();
@@ -57,8 +58,8 @@ export function QueuePage() {
 
       {queue.failing && (
         <div className="banner" role="status">
-          Wicket's API isn't answering.{queue.fetchedAt ? ` Showing what it said at ${clock(queue.fetchedAt)}.` : ""} Trying again every few
-          seconds.
+          Wicket's API isn't answering.{queue.fetchedAt ? ` Showing what it said at ${clock(queue.fetchedAt)}.` : ""}{" "}
+          Trying again every few seconds.
         </div>
       )}
 
@@ -88,8 +89,8 @@ export function QueuePage() {
                       title={`Force close ticket ${running.ticket}?`}
                       description={
                         <p>
-                          Wicket aborts {running.app}'s call{running.model ? ` to ${running.model}` : ""}. {running.app} sees the
-                          ticket as cancelled, and the next ticket starts.
+                          Wicket aborts {running.app}'s call{running.model ? ` to ${running.model}` : ""}. {running.app}{" "}
+                          sees the ticket as cancelled, and the next ticket starts.
                         </p>
                       }
                       confirmLabel="Force close"
@@ -128,7 +129,9 @@ export function QueuePage() {
                   run={() =>
                     act(async () => {
                       const { cleared } = await clearQueue();
-                      return cleared === 0 ? "Nobody was waiting." : `Cleared ${cleared} waiting ${cleared === 1 ? "ticket" : "tickets"}.`;
+                      return cleared === 0
+                        ? "Nobody was waiting."
+                        : `Cleared ${cleared} waiting ${cleared === 1 ? "ticket" : "tickets"}.`;
                     })
                   }
                 />
@@ -151,7 +154,11 @@ export function QueuePage() {
               </select>
             </label>
           </div>
-          {records.data ? <CountsTable counts={records.data.counts[period]} /> : <p className="empty-row muted">Loading…</p>}
+          {records.data ? (
+            <CountsTable counts={records.data.counts[period]} />
+          ) : (
+            <p className="empty-row muted">Loading…</p>
+          )}
         </section>
 
         <section className="section" aria-labelledby="recent-title">
@@ -159,7 +166,11 @@ export function QueuePage() {
             <h2 id="recent-title">Recent calls</h2>
             <span className="muted small">Counts and timings only. Wicket keeps no prompt or answer.</span>
           </div>
-          {records.data ? <RecordsTable records={records.data.records} now={now} /> : <p className="empty-row muted">Loading…</p>}
+          {records.data ? (
+            <RecordsTable records={records.data.records} now={now} />
+          ) : (
+            <p className="empty-row muted">Loading…</p>
+          )}
         </section>
       </main>
     </div>

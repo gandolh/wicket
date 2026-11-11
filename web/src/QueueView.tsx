@@ -26,7 +26,15 @@ export function NowServing({ queue }: { queue: QueueResponse }) {
 }
 
 /** The running call, with its force-close button passed in as `action`. */
-export function RunningCard({ running, serverNow, action }: { running: RunningJob | null; serverNow: number; action?: ReactNode }) {
+export function RunningCard({
+  running,
+  serverNow,
+  action,
+}: {
+  running: RunningJob | null;
+  serverNow: number;
+  action?: ReactNode;
+}) {
   return (
     <section className="card running" aria-labelledby="running-title">
       <div className="card-head">
@@ -155,7 +163,9 @@ export function RecordsTable({ records, now }: { records: RecordView[]; now: num
               <td className="num">{record.ticket}</td>
               <td>{record.model ?? <span className="muted">None</span>}</td>
               <td className="num">{duration(record.waitMs)}</td>
-              <td className="num">{record.runMs === null ? <span className="muted">None</span> : duration(record.runMs)}</td>
+              <td className="num">
+                {record.runMs === null ? <span className="muted">None</span> : duration(record.runMs)}
+              </td>
               <td>
                 <span className={`outcome outcome-${record.outcome}`}>{OUTCOME_LABEL[record.outcome]}</span>
               </td>

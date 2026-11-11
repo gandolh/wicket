@@ -38,7 +38,11 @@ const submit = (content = "hello", headers: Record<string, string> = BOT) =>
 
 describe("tokens", () => {
   it("refuses a job call with no token, a bad header or an unknown token", async () => {
-    const refused: Record<string, string>[] = [{}, { authorization: "Basic abc" }, { authorization: `Bearer ${"x".repeat(64)}` }];
+    const refused: Record<string, string>[] = [
+      {},
+      { authorization: "Basic abc" },
+      { authorization: `Bearer ${"x".repeat(64)}` },
+    ];
     for (const headers of refused) {
       const res = await submit("hi", headers);
       expect(res.statusCode).toBe(401);
@@ -135,14 +139,24 @@ describe("jobs", () => {
 
   it("takes json or a schema as the format", async () => {
     for (const format of ["json", { type: "object", properties: { rooms: { type: "integer" } } }]) {
-      const res = await call({ method: "POST", url: "/v1/jobs", headers: BOT, payload: { messages: [{ role: "user", content: "hi" }], format } });
+      const res = await call({
+        method: "POST",
+        url: "/v1/jobs",
+        headers: BOT,
+        payload: { messages: [{ role: "user", content: "hi" }], format },
+      });
       expect(res.statusCode).toBe(202);
     }
     expect(calls[0]!.request.format).toBe("json");
   });
 
   it("answers a body that isn't JSON without quoting it", async () => {
-    const res = await call({ method: "POST", url: "/v1/jobs", headers: { ...BOT, "content-type": "application/json" }, payload: "{secret listing" });
+    const res = await call({
+      method: "POST",
+      url: "/v1/jobs",
+      headers: { ...BOT, "content-type": "application/json" },
+      payload: "{secret listing",
+    });
     expect(res.statusCode).toBe(400);
     expect(res.body).not.toContain("secret listing");
   });
@@ -192,7 +206,12 @@ describe("records", () => {
       calls[2]!.fail("the cloud model answered 500");
       await settle();
 
-      expect(app.records.recent(10).map((r) => r.outcome).sort()).toEqual(["cancelled", "failed", "ok"]);
+      expect(
+        app.records
+          .recent(10)
+          .map((r) => r.outcome)
+          .sort(),
+      ).toEqual(["cancelled", "failed", "ok"]);
       await app.close();
 
       const db = new Database(dbPath, { readonly: true });

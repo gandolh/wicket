@@ -17,7 +17,12 @@
   --banner-bg: #fff7d6;
   --banner-text: #533f04;
   --top-h: 56px;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   font-size: 14px;
   line-height: 1.45;
   color: var(--text);

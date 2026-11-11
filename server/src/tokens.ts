@@ -60,7 +60,9 @@ export class AppTokens {
         return;
       }
       if (!APP_NAME.test(name)) {
-        problems.push(`WICKET_APP_TOKENS: ${label} is not an app name (lowercase letters, digits and dashes, like just-a-bot).`);
+        problems.push(
+          `WICKET_APP_TOKENS: ${label} is not an app name (lowercase letters, digits and dashes, like just-a-bot).`,
+        );
         return;
       }
       if (digests.has(name)) {

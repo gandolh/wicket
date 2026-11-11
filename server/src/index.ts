@@ -59,7 +59,9 @@ app.log.info(
     ? `cloud: ${config.cloud.model} at ${config.cloud.url}`
     : "no OLLAMA_API_KEY: every job fails until it is set",
 );
-app.log.info(config.ward ? "Sign in with Ward is on" : "WARD_OIDC_ISSUER is not set: local accounts only, no Sign in with Ward");
+app.log.info(
+  config.ward ? "Sign in with Ward is on" : "WARD_OIDC_ISSUER is not set: local accounts only, no Sign in with Ward",
+);
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => {

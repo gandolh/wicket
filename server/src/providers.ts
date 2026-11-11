@@ -65,7 +65,12 @@ function cut(text: string, length: number): string {
  * One chat call. Resolves with the answer's text, throws `ProviderFailure`,
  * or rethrows the abort when `signal` (the job's) fired.
  */
-async function chat(endpoint: CloudSettings, request: JobRequest, signal: AbortSignal, doFetch: typeof fetch): Promise<string> {
+async function chat(
+  endpoint: CloudSettings,
+  request: JobRequest,
+  signal: AbortSignal,
+  doFetch: typeof fetch,
+): Promise<string> {
   const timeout = AbortSignal.timeout(endpoint.timeoutMs);
   const combined = AbortSignal.any([signal, timeout]);
   const body = {
@@ -83,7 +88,12 @@ async function chat(endpoint: CloudSettings, request: JobRequest, signal: AbortS
   let status: number;
   let raw: string;
   try {
-    const res = await doFetch(`${endpoint.url}/api/chat`, { method: "POST", headers, body: JSON.stringify(body), signal: combined });
+    const res = await doFetch(`${endpoint.url}/api/chat`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: combined,
+    });
     status = res.status;
     raw = await res.text();
   } catch (error) {
@@ -105,7 +115,10 @@ async function chat(endpoint: CloudSettings, request: JobRequest, signal: AbortS
       ? (parsed as { error: string }).error
       : undefined;
   if (status < 200 || status > 299) {
-    throw new ProviderFailure(String(status), errorText ? `answered ${status}: ${cut(errorText, DETAIL_LENGTH)}` : `answered ${status}`);
+    throw new ProviderFailure(
+      String(status),
+      errorText ? `answered ${status}: ${cut(errorText, DETAIL_LENGTH)}` : `answered ${status}`,
+    );
   }
   if (parsed === undefined) throw new ProviderFailure("bad-body", "sent a body that is not JSON");
   if (errorText) throw new ProviderFailure("error-body", `sent an error: ${cut(errorText, DETAIL_LENGTH)}`);

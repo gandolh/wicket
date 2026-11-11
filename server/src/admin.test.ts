@@ -1,4 +1,11 @@
-import type { ClearResponse, ErrorBody, ForceCloseResponse, JobView, QueueResponse, RecordsResponse } from "@wicket/shared";
+import type {
+  ClearResponse,
+  ErrorBody,
+  ForceCloseResponse,
+  JobView,
+  QueueResponse,
+  RecordsResponse,
+} from "@wicket/shared";
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { seedUser } from "./accounts.js";
@@ -33,7 +40,11 @@ afterEach(async () => {
 
 async function signIn(): Promise<string> {
   await seedUser(app.accounts, { username: "owner", password: PASSWORD });
-  const res = await app.inject({ method: "POST", url: "/wicket-api/auth/login", payload: { username: "owner", password: PASSWORD } });
+  const res = await app.inject({
+    method: "POST",
+    url: "/wicket-api/auth/login",
+    payload: { username: "owner", password: PASSWORD },
+  });
   expect(res.statusCode).toBe(200);
   const header = res.headers["set-cookie"];
   const lines = header === undefined ? [] : Array.isArray(header) ? header : [header];
@@ -44,7 +55,14 @@ async function signIn(): Promise<string> {
 }
 
 const submit = async (content = "hello") =>
-  (await app.inject({ method: "POST", url: "/wicket-api/v1/jobs", headers: BOT, payload: { messages: [{ role: "user", content }] } })).json<JobView>();
+  (
+    await app.inject({
+      method: "POST",
+      url: "/wicket-api/v1/jobs",
+      headers: BOT,
+      payload: { messages: [{ role: "user", content }] },
+    })
+  ).json<JobView>();
 
 describe("the admin routes", () => {
   it("refuse a signed-out request, in the API's error shape", async () => {
@@ -63,7 +81,9 @@ describe("the admin routes", () => {
   it("refuse an app token", async () => {
     const res = await app.inject({ url: "/wicket-api/v1/queue", headers: BOT });
     expect(res.statusCode).toBe(401);
-    expect((await app.inject({ method: "POST", url: "/wicket-api/v1/queue/clear", headers: BOT })).statusCode).toBe(401);
+    expect((await app.inject({ method: "POST", url: "/wicket-api/v1/queue/clear", headers: BOT })).statusCode).toBe(
+      401,
+    );
   });
 
   it("show the queue to a signed-in session, with no text", async () => {
@@ -86,12 +106,18 @@ describe("the admin routes", () => {
     const cookie = await signIn();
     const first = await submit();
     const second = await submit();
-    const res = await app.inject({ method: "POST", url: "/wicket-api/v1/queue/running/cancel", headers: { cookie, origin: ORIGIN } });
+    const res = await app.inject({
+      method: "POST",
+      url: "/wicket-api/v1/queue/running/cancel",
+      headers: { cookie, origin: ORIGIN },
+    });
     expect(res.json<ForceCloseResponse>()).toEqual({ closed: true });
     expect(calls[0]!.signal.aborted).toBe(true);
     const seen = await app.inject({ url: `/wicket-api/v1/jobs/${first.id}`, headers: BOT });
     expect(seen.json<JobView>()).toMatchObject({ status: "cancelled", error: "force closed from the queue page" });
-    expect((await app.inject({ url: `/wicket-api/v1/jobs/${second.id}`, headers: BOT })).json<JobView>().status).toBe("running");
+    expect((await app.inject({ url: `/wicket-api/v1/jobs/${second.id}`, headers: BOT })).json<JobView>().status).toBe(
+      "running",
+    );
   });
 
   it("answer closed: false with nothing running", async () => {
@@ -153,7 +179,12 @@ describe("the admin routes", () => {
 describe("the job routes", () => {
   it("refuse a session with no token", async () => {
     const cookie = await signIn();
-    const res = await app.inject({ method: "POST", url: "/wicket-api/v1/jobs", headers: { cookie }, payload: { messages: [{ role: "user", content: "hi" }] } });
+    const res = await app.inject({
+      method: "POST",
+      url: "/wicket-api/v1/jobs",
+      headers: { cookie },
+      payload: { messages: [{ role: "user", content: "hi" }] },
+    });
     expect(res.statusCode).toBe(401);
     expect(res.json<ErrorBody>().code).toBe("unauthorized");
   });
@@ -162,12 +193,19 @@ describe("the job routes", () => {
 describe("sign-in", () => {
   it("has no rename and no sign-up", async () => {
     const cookie = await signIn();
-    const rename = await app.inject({ method: "POST", url: "/wicket-api/auth/username", headers: { cookie }, payload: { username: "someone" } });
+    const rename = await app.inject({
+      method: "POST",
+      url: "/wicket-api/auth/username",
+      headers: { cookie },
+      payload: { username: "someone" },
+    });
     expect(rename.statusCode).toBe(404);
     // Signed out, the guard refuses it before the router can say it doesn't exist.
     const payload = { username: "x", password: PASSWORD };
     expect((await app.inject({ method: "POST", url: "/wicket-api/auth/register", payload })).statusCode).toBe(401);
-    expect((await app.inject({ method: "POST", url: "/wicket-api/auth/register", headers: { cookie }, payload })).statusCode).toBe(404);
+    expect(
+      (await app.inject({ method: "POST", url: "/wicket-api/auth/register", headers: { cookie }, payload })).statusCode,
+    ).toBe(404);
   });
 
   it("leaves health open", async () => {

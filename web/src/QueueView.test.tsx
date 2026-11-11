@@ -15,22 +15,32 @@ const queue: QueueResponse = {
   ],
 };
 
-const text = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+const text = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 describe("the queue page", () => {
   it("shows now serving and how many wait", () => {
     const html = text(renderToStaticMarkup(<NowServing queue={queue} />));
     expect(html).toContain("Now serving 41 2 waiting");
-    expect(text(renderToStaticMarkup(<NowServing queue={{ ...queue, nowServing: 0, waiting: [] }} />))).toContain("None yet Nobody waiting");
+    expect(text(renderToStaticMarkup(<NowServing queue={{ ...queue, nowServing: 0, waiting: [] }} />))).toContain(
+      "None yet Nobody waiting",
+    );
   });
 
   it("shows the running call with its app, ticket, elapsed time and model", () => {
-    const html = text(renderToStaticMarkup(<RunningCard running={queue.running} serverNow={now} action={<button>Force close</button>} />));
+    const html = text(
+      renderToStaticMarkup(
+        <RunningCard running={queue.running} serverNow={now} action={<button>Force close</button>} />,
+      ),
+    );
     expect(html).toContain("Force close");
     expect(html).toContain("Ticket 41 App ro-housing Elapsed 1 min 05 s Model gpt-oss:120b");
-    expect(text(renderToStaticMarkup(<RunningCard running={null} serverNow={now} action={<button>Force close</button>} />))).toBe(
-      "Running Nothing running.",
-    );
+    expect(
+      text(renderToStaticMarkup(<RunningCard running={null} serverNow={now} action={<button>Force close</button>} />)),
+    ).toBe("Running Nothing running.");
   });
 
   it("lists the waiting tickets oldest first, with time waited", () => {
@@ -40,7 +50,9 @@ describe("the queue page", () => {
   });
 
   it("shows calls per app and recent records, with no text but names and numbers", () => {
-    const counts = text(renderToStaticMarkup(<CountsTable counts={[{ app: "just-a-bot", total: 5, ok: 3, failed: 1, cancelled: 1 }]} />));
+    const counts = text(
+      renderToStaticMarkup(<CountsTable counts={[{ app: "just-a-bot", total: 5, ok: 3, failed: 1, cancelled: 1 }]} />),
+    );
     expect(counts).toContain("just-a-bot 5 3 1 1");
     const record: RecordView = {
       id: 1,

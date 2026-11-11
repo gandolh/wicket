@@ -75,7 +75,14 @@ export const jobQuerySchema = z.object({
 });
 
 /** The error codes the API answers with. */
-export const ERROR_CODES = ["invalid_request", "unauthorized", "not_found", "queue_full", "cross_site", "internal"] as const;
+export const ERROR_CODES = [
+  "invalid_request",
+  "unauthorized",
+  "not_found",
+  "queue_full",
+  "cross_site",
+  "internal",
+] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
 export const errorBodySchema = z.object({

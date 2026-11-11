@@ -72,5 +72,10 @@ function add(totals: Totals, seconds: number): void {
 }
 
 function summary(lines: string[], name: string, help: string, totals: Totals): void {
-  lines.push(`# HELP ${name} ${help}`, `# TYPE ${name} summary`, `${name}_sum ${totals.sum}`, `${name}_count ${totals.count}`);
+  lines.push(
+    `# HELP ${name} ${help}`,
+    `# TYPE ${name} summary`,
+    `${name}_sum ${totals.sum}`,
+    `${name}_count ${totals.count}`,
+  );
 }

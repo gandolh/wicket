@@ -53,7 +53,13 @@ async function stub(): Promise<Stub> {
   servers.push(server);
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address() as AddressInfo;
-  return { url: `http://127.0.0.1:${port}`, seen, hungUp: hungUpPromise, reached: reachedPromise, handle: (h) => (handler = h) };
+  return {
+    url: `http://127.0.0.1:${port}`,
+    seen,
+    hungUp: hungUpPromise,
+    reached: reachedPromise,
+    handle: (h) => (handler = h),
+  };
 }
 
 function answer(res: ServerResponse, content: string, status = 200): void {
@@ -102,10 +108,18 @@ describe("the cloud", () => {
     cloud.handle((_req, res) => answer(res, "  from the cloud  "));
     const run = createRunner({ cloud: cloudAt(cloud.url) });
     const ctx = context();
-    await expect(run({ ...ask, format: "json" }, ctx)).resolves.toEqual({ text: "from the cloud", model: "gpt-oss:120b" });
+    await expect(run({ ...ask, format: "json" }, ctx)).resolves.toEqual({
+      text: "from the cloud",
+      model: "gpt-oss:120b",
+    });
     expect(ctx.attempts).toEqual(["gpt-oss:120b"]);
     expect(cloud.seen[0]!.headers.authorization).toBe(`Bearer ${KEY}`);
-    expect(cloud.seen[0]!.body).toMatchObject({ model: "gpt-oss:120b", stream: false, format: "json", messages: ask.messages });
+    expect(cloud.seen[0]!.body).toMatchObject({
+      model: "gpt-oss:120b",
+      stream: false,
+      format: "json",
+      messages: ask.messages,
+    });
     expect(cloud.seen[0]!.body).not.toHaveProperty("keep_alive");
   });
 
@@ -121,11 +135,27 @@ describe("the cloud", () => {
 describe("failing", () => {
   const failures: [string, Handler, RegExp][] = [
     ["a 500", (_req, res) => refuse(res, 500, "internal error"), /^the cloud model answered 500: internal error$/],
-    ["a 429 (quota)", (_req, res) => refuse(res, 429, "you have reached your usage limit"), /^the cloud model answered 429: you have reached/],
-    ["a 401 (bad key)", (_req, res) => refuse(res, 401, "unauthorized"), /^the cloud model answered 401: unauthorized$/],
-    ["a body that isn't JSON", (_req, res) => res.end("<html>bad gateway</html>"), /^the cloud model sent a body that is not JSON$/],
+    [
+      "a 429 (quota)",
+      (_req, res) => refuse(res, 429, "you have reached your usage limit"),
+      /^the cloud model answered 429: you have reached/,
+    ],
+    [
+      "a 401 (bad key)",
+      (_req, res) => refuse(res, 401, "unauthorized"),
+      /^the cloud model answered 401: unauthorized$/,
+    ],
+    [
+      "a body that isn't JSON",
+      (_req, res) => res.end("<html>bad gateway</html>"),
+      /^the cloud model sent a body that is not JSON$/,
+    ],
     ["an empty answer", (_req, res) => answer(res, "   "), /^the cloud model sent an empty answer$/],
-    ["an error in a 200", (_req, res) => refuse(res, 200, "model not loaded"), /^the cloud model sent an error: model not loaded$/],
+    [
+      "an error in a 200",
+      (_req, res) => refuse(res, 200, "model not loaded"),
+      /^the cloud model sent an error: model not loaded$/,
+    ],
   ];
 
   for (const [name, handler, reason] of failures) {
@@ -195,12 +225,20 @@ describe("in the queue", () => {
   it("a cloud failure ends the job failed with the reason, and the next ticket runs", async () => {
     const cloud = await stub();
     let calls = 0;
-    cloud.handle((_req, res) => (calls++ === 0 ? refuse(res, 429, "you have reached your usage limit") : answer(res, "second")));
+    cloud.handle((_req, res) =>
+      calls++ === 0 ? refuse(res, 429, "you have reached your usage limit") : answer(res, "second"),
+    );
     const { queue, records } = queueWith(cloudAt(cloud.url));
     const first = queue.submit("app", ask);
     const second = queue.submit("app", ask);
-    await expect(finished(queue, second.id)).resolves.toMatchObject({ status: "done", result: { text: "second", model: "gpt-oss:120b" } });
-    expect(queue.get(first.id, "app")).toMatchObject({ status: "failed", error: "the cloud model answered 429: you have reached your usage limit" });
+    await expect(finished(queue, second.id)).resolves.toMatchObject({
+      status: "done",
+      result: { text: "second", model: "gpt-oss:120b" },
+    });
+    expect(queue.get(first.id, "app")).toMatchObject({
+      status: "failed",
+      error: "the cloud model answered 429: you have reached your usage limit",
+    });
     expect(records.map((r) => r.outcome)).toEqual(["failed", "ok"]);
   });
 

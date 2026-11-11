@@ -56,7 +56,11 @@ const baseUrl = (name: string) =>
     .transform((value) => value.replace(/\/+$/, ""));
 
 const seconds = (name: string) =>
-  z.coerce.number<string>().int().min(1).max(3600, { message: `${name} must be a whole number of seconds, 1 to 3600.` });
+  z.coerce
+    .number<string>()
+    .int()
+    .min(1)
+    .max(3600, { message: `${name} must be a whole number of seconds, 1 to 3600.` });
 
 /** The defaults the owner settled: just-a-bot's cloud model. */
 export const DEFAULTS = {
@@ -67,9 +71,9 @@ export const DEFAULTS = {
 
 const envSchema = z.object({
   HOST: optional(z.string()).transform((value) => value ?? "127.0.0.1"),
-  PORT: optional(z.coerce.number<string>().int().min(1).max(65535, { message: "PORT must be a port number (1-65535)." })).transform(
-    (value) => value ?? 8808,
-  ),
+  PORT: optional(
+    z.coerce.number<string>().int().min(1).max(65535, { message: "PORT must be a port number (1-65535)." }),
+  ).transform((value) => value ?? 8808),
   WICKET_DB: optional(z.string()),
   OLLAMA_API_KEY: optional(z.string().transform((value) => value.trim())),
   WICKET_CLOUD_URL: optional(baseUrl("WICKET_CLOUD_URL")).transform((value) => value ?? DEFAULTS.cloudUrl),
@@ -106,18 +110,26 @@ export function describeIssue(issue: z.core.$ZodIssue): string {
  * under the API prefix, where the session cookie and the dev proxy are.
  * Messages never repeat the key.
  */
-function wardSettings(env: NodeJS.ProcessEnv, apiPrefix: string | undefined, problems: string[]): WardClientOptions | undefined {
+function wardSettings(
+  env: NodeJS.ProcessEnv,
+  apiPrefix: string | undefined,
+  problems: string[],
+): WardClientOptions | undefined {
   let ward: WardClientOptions | undefined;
   try {
     ward = wardClientOptionsFromEnv(env);
   } catch (error) {
-    problems.push(`${error instanceof Error ? error.message : String(error)}. Set all of them, or leave WARD_OIDC_ISSUER empty for local accounts only.`);
+    problems.push(
+      `${error instanceof Error ? error.message : String(error)}. Set all of them, or leave WARD_OIDC_ISSUER empty for local accounts only.`,
+    );
     return undefined;
   }
   if (ward === undefined || apiPrefix === undefined) return ward;
   const expected = `${apiPrefix}${WARD_CALLBACK_PATH}`;
   if (!URL.canParse(ward.redirectUri) || new URL(ward.redirectUri).pathname !== expected) {
-    problems.push(`WARD_OIDC_REDIRECT_URI must be the callback as the browser reaches it: the page's origin, then ${expected}.`);
+    problems.push(
+      `WARD_OIDC_REDIRECT_URI must be the callback as the browser reaches it: the page's origin, then ${expected}.`,
+    );
   }
   return ward;
 }

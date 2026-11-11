@@ -48,7 +48,12 @@ export function ConfirmAction({
             <AlertDialog.Close className="button" disabled={pending}>
               Cancel
             </AlertDialog.Close>
-            <button type="button" className={`button ${danger ? "button-danger-solid" : "button-primary"}`} disabled={pending} onClick={confirm}>
+            <button
+              type="button"
+              className={`button ${danger ? "button-danger-solid" : "button-primary"}`}
+              disabled={pending}
+              onClick={confirm}
+            >
               {pending ? "Working…" : confirmLabel}
             </button>
           </div>
