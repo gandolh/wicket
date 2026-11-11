@@ -1,6 +1,6 @@
 ---
 summary: Who gets into which route, as built 2026-11-04. The vendored ward-auth 0.7.0 as the session guard (cookie wicket_session on /wicket-api, rename off, no sign-up); the two families of routes (app tokens for /v1/jobs, sessions for /v1/queue and /v1/records) and why neither opens the other; why sessions may write here unlike brief-board, and the Origin check on the two admin writes; the 401 rewritten into the API's error shape; /metrics refused through a proxy; accounts and the seed; the settings.
-updated: 2026-11-04
+updated: 2026-11-11
 ---
 
 # Sign-in
@@ -8,7 +8,8 @@ updated: 2026-11-04
 Why the page is behind sign-in and the apps use tokens is in
 [decisions.md](decisions.md) ("Sign-in like brief-board, and per-app tokens
 for callers"). The code wins where this page and it disagree:
-[`server/src/app.ts`](../../server/src/app.ts).
+[the auth plugin](../../server/src/plugins/auth/index.ts) and
+[the app-tokens plugin](../../server/src/plugins/app-tokens/index.ts).
 
 ## The two guards
 
@@ -22,7 +23,7 @@ for callers"). The code wins where this page and it disagree:
   accounts by name. There is no sign-up route.
 - **The token guard** is an `onRequest` hook on `/v1/jobs*`: the
   `Authorization: Bearer` token must be one app's
-  ([tokens.ts](../../server/src/tokens.ts)), and the request then carries the
+  ([tokens.ts](../../server/src/plugins/app-tokens/tokens.ts)), and the request then carries the
   app's name.
 
 `isPublic` sends `/v1/jobs*` to the token guard alone, so a session without a
@@ -47,7 +48,11 @@ cancel calls, which their callers retry. Two defences stay:
 
 The plugin answers a refusal with `{ error: "unauthorized" }`. An `onSend`
 hook rewrites a 401 under `/v1` into the API's `{ code, message }`. The
-`/auth/*` bodies stay the plugin's, for the React hooks. Signed out, an unknown
+`/auth/*` bodies stay the plugin's, for the React hooks. Because the rewrite
+runs after serialisation, no route declares a 401 response schema: measured
+on 2026-11-10, a declared `401` turned the guard's reply into a 500, since
+the guard's own body doesn't match the contract's. A test calls every
+signed-out `/v1` route to hold this. Signed out, an unknown
 route under `/auth` (a `register`, say) is a 401, not a 404.
 
 ## /metrics
@@ -60,7 +65,7 @@ The vps-deploy route should also leave `/metrics` out.
 
 ## Accounts and Ward
 
-[`accounts.ts`](../../server/src/accounts.ts) opens the accounts on Wicket's
+[`accounts.ts`](../../server/src/plugins/auth/accounts.ts) opens the accounts on Wicket's
 own SQLite file; the library keeps its `auth_*` tables and never touches the
 records' `user_version`. One role, `user`, which nothing checks: every
 signed-in user sees the queue and may force close or clear it.

@@ -5,7 +5,7 @@ updated: 2026-11-04
 
 # Providers
 
-[`server/src/providers.ts`](../../server/src/providers.ts) builds the queue's
+[`server/src/features/queue/runner.ts`](../../server/src/features/queue/runner.ts) builds the queue's
 runner. Why Wicket asks Ollama Cloud only is in [decisions.md](decisions.md)
 ("Ollama Cloud only"); this page is how it works. The page keeps its name from
 when there were two providers, a cloud and a backup; the backup was dropped on

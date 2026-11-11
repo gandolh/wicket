@@ -27,10 +27,11 @@ no model on the box.
 | Part | Where | Notes |
 |---|---|---|
 | API contract | [`shared/src/api.ts`](../shared/src/api.ts) | zod schemas used by the server and the page |
-| Queue | [`server/src/queue.ts`](../server/src/queue.ts) | FIFO, one at a time, tickets, long-polling |
-| Cloud call | [`server/src/providers.ts`](../server/src/providers.ts) | Ollama Cloud only; a failure fails the job, a cancel aborts the request |
-| Routes and guards | [`server/src/app.ts`](../server/src/app.ts) | app tokens for jobs, sessions for the page's routes |
-| Records | [`server/src/records.ts`](../server/src/records.ts) | SQLite, no text |
+| Queue | [`server/src/features/queue/`](../server/src/features/queue/queue.ts) | FIFO, one at a time, tickets, long-polling |
+| Cloud call | [`server/src/features/queue/runner.ts`](../server/src/features/queue/runner.ts) | Ollama Cloud only; a failure fails the job, a cancel aborts the request |
+| Routes | [`server/src/features/`](../server/src/app.ts) | one folder per feature, registered by `app.ts` |
+| Guards | [`server/src/plugins/`](../server/src/plugins/auth/index.ts) | app tokens for jobs, sessions for the page's routes |
+| Records | [`server/src/features/records/`](../server/src/features/records/store.ts) | SQLite, no text |
 | Page | [`web/src/QueuePage.tsx`](../web/src/QueuePage.tsx) | now serving, running, waiting, records |
 | Container | [`infrastructure/`](../infrastructure/docker-compose.yml) | `wicket-api`, one container |
 
