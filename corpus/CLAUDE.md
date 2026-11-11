@@ -7,6 +7,9 @@ tracks the work. Anything worth keeping from a chat goes back in here.
 The repo is public. Everything here is written for a stranger reading it on
 GitHub: no secrets, no machine paths, no domain, no personal details.
 
+The repo-wide hard rules and the brief-board steps are in the root
+[CLAUDE.md](../CLAUDE.md), with the commands.
+
 ## Layout
 
 ```
@@ -90,23 +93,3 @@ updated: <YYYY-MM-DD>
   usernames, no domain (write `<your domain>` or `example.com`).
 - Code comments don't cite brief numbers ("brief 05", "(brief 03)"). Say what
   the code does and why; the history belongs in `log.md`.
-
-## Hard rules
-
-- **No secrets.** Never write a password, token or key into the corpus or the
-  repo. Name a secret by its variable, never by its value.
-- **No prompt or answer text at rest.** Records hold counts and timings only
-  ([wiki/decisions.md](wiki/decisions.md)). A test proves it; keep it passing.
-- **No CI.** Don't add GitHub Actions, runners or other GitHub-specific
-  automation.
-- **No pushes.** Commit locally. The owner pushes.
-- **Deploys, Ward registration and git hooks are owner steps.** Write the exact
-  commands down in `docs/owner-setup.md` and hand them over.
-- **Don't pull models or run benchmarks** on a shared machine without the
-  owner saying so. Tests use a stub server; the one live test is opt-in.
-
-## brief-board
-
-Brief progress goes on brief-board. Run `brief-board guide` before you
-start or resume a brief, and follow it. Until the owner's first sync puts
-Wicket on the board, skip the board and say so in the hand-back.
