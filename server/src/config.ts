@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { wardClientOptionsFromEnv, type WardClientOptions } from "../vendor/ward/ward-auth.js";
-import { AppTokens, TokenConfigError } from "./tokens.js";
+import { AppTokens, TokenConfigError } from "./plugins/app-tokens/tokens.js";
 
 /**
  * The server's settings: the one reader of the environment. The entry and the

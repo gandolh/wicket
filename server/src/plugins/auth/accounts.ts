@@ -1,11 +1,11 @@
-import { createAccounts, createSqliteStore, seedUsers, type Accounts } from "../vendor/ward/ward-auth.js";
-import type { Db } from "./db.js";
+import { createAccounts, createSqliteStore, seedUsers, type Accounts } from "../../../vendor/ward/ward-auth.js";
+import type { Db } from "../../db.js";
 
 /**
  * Wicket's local accounts, on the vendored ward-auth library. Every signed-in
  * user sees the whole queue and may force close or clear it, so there is one
  * role and nothing checks it; a user made by a first "Sign in with Ward" gets
- * it too (`app.ts`).
+ * it too (the auth plugin, `index.ts`).
  */
 export const USER_ROLE = "user";
 

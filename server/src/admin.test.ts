@@ -8,11 +8,13 @@ import type {
 } from "@wicket/shared";
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { seedUser } from "./accounts.js";
+import type { Accounts } from "../vendor/ward/ward-auth.js";
 import { buildApp } from "./app.js";
 import { loadConfig, SESSION_COOKIE } from "./config.js";
-import { settle, stubRunner, type StubCall } from "./testing.js";
-import { AppTokens } from "./tokens.js";
+import { openDatabase, type Db } from "./db.js";
+import { AppTokens } from "./plugins/app-tokens/tokens.js";
+import { openAccounts, seedUser } from "./plugins/auth/accounts.js";
+import { settle, stubRunner, type StubCall } from "./testing/stub-runner.js";
 
 const ORIGIN = "http://localhost:5179";
 const BOT_TOKEN = "b".repeat(64);
@@ -22,11 +24,16 @@ const PASSWORD = "p".repeat(12);
 let app: FastifyInstance;
 let calls: StubCall[];
 let clock: number;
+let accountsDb: Db;
+let accounts: Accounts;
 
 beforeEach(async () => {
   const stub = stubRunner();
   calls = stub.calls;
   clock = Date.UTC(2026, 10, 4, 12);
+  // The accounts on a database the test holds, passed in, so it can seed a user.
+  accountsDb = openDatabase(":memory:");
+  accounts = openAccounts(accountsDb);
   app = await buildApp(
     {
       ...loadConfig({}),
@@ -34,15 +41,16 @@ beforeEach(async () => {
       appTokens: AppTokens.parse(`just-a-bot=${BOT_TOKEN}`),
       publicOrigin: ORIGIN,
     },
-    { run: stub.run, now: () => clock },
+    { run: stub.run, now: () => clock, accounts },
   );
 });
 afterEach(async () => {
   await app.close();
+  accountsDb.close();
 });
 
 async function signIn(): Promise<string> {
-  await seedUser(app.accounts, { username: "owner", password: PASSWORD });
+  await seedUser(accounts, { username: "owner", password: PASSWORD });
   const res = await app.inject({
     method: "POST",
     url: "/wicket-api/auth/login",

@@ -5,15 +5,12 @@ import {
   MAX_RECORDS,
   recordsQuerySchema,
   type ClearResponse,
-  type ErrorBody,
   type ForceCloseResponse,
   type HealthResponse,
   type JobView,
   type QueueResponse,
   type RecordsResponse,
 } from "@wicket/shared";
-import { existsSync } from "node:fs";
-import fastifyStatic from "@fastify/static";
 import Fastify, {
   type FastifyInstance,
   type FastifyReply,
@@ -21,11 +18,16 @@ import Fastify, {
   type FastifyServerOptions,
 } from "fastify";
 import type { z } from "zod";
-import { createWardClient, wardAuth, type Accounts } from "../vendor/ward/ward-auth.js";
-import { openAccounts, USER_ROLE } from "./accounts.js";
-import { API_PREFIX, AUTH_ROUTE_PREFIX, BODY_LIMIT, resolveDbPath, SESSION_COOKIE, type Config } from "./config.js";
+import type { Accounts } from "../vendor/ward/ward-auth.js";
+import { BODY_LIMIT, resolveDbPath, type Config } from "./config.js";
 import { openDatabase } from "./db.js";
+import { pathOf, stripApiPrefix } from "./lib/paths.js";
 import { Metrics } from "./metrics.js";
+import { appTokensPlugin, callerOf } from "./plugins/app-tokens/index.js";
+import { openAccounts } from "./plugins/auth/accounts.js";
+import { authPlugin } from "./plugins/auth/index.js";
+import { errors, fail } from "./plugins/errors.js";
+import { pagePlugin } from "./plugins/page.js";
 import { createRunner } from "./providers.js";
 import { Queue, QueueClosedError, QueueFullError, type Runner } from "./queue.js";
 import { Records } from "./records.js";
@@ -64,16 +66,6 @@ const DEFAULT_RECORDS = 50;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** A URL without a leading API prefix, when `/`, `?` or the end follows it; any other URL as it is. */
-export function stripApiPrefix(url: string, prefix: string = API_PREFIX): string {
-  if (!url.startsWith(prefix)) return url;
-  const rest = url.slice(prefix.length);
-  if (rest === "") return "/";
-  if (rest.startsWith("/")) return rest;
-  if (rest.startsWith("?")) return `/${rest}`;
-  return url;
-}
-
 /** Fastify's options that belong to the process: server.ts sets them, and a test leaves them out. */
 type ServerOptions = Pick<
   FastifyServerOptions,
@@ -92,39 +84,14 @@ export interface BuildAppOptions {
   keepFinishedMs?: number;
   /** The clock, in epoch milliseconds, for tests. */
   now?: () => number;
-}
-
-declare module "fastify" {
-  interface FastifyInstance {
-    /** The one queue, for the tests. */
-    queue: Queue;
-    /** The records, for the tests. */
-    records: Records;
-    /** The local accounts, for the seed's tests. */
-    accounts: Accounts;
-  }
-  interface FastifyRequest {
-    /** The app whose token the request carried, on the job routes. */
-    wicketApp?: string;
-  }
-}
-
-/** A path is `prefix` or under it. */
-export function isUnder(path: string, prefix: string): boolean {
-  return path === prefix || path.startsWith(`${prefix}/`);
-}
-
-export function pathOf(url: string): string {
-  const query = url.indexOf("?");
-  return query === -1 ? url : url.slice(0, query);
-}
-
-export function fail(reply: FastifyReply, status: number, body: ErrorBody): FastifyReply {
-  return reply.status(status).send(body);
+  /** The records. Default: on the app's database. A test that reads them back passes its own. */
+  records?: Records;
+  /** The local accounts. Default: on the app's database. A test that seeds a user passes its own. */
+  accounts?: Accounts;
 }
 
 /** Parse with a contract schema, or answer 400 and return undefined. Messages name the field, never its value. */
-export function parse<S extends z.ZodType>(schema: S, value: unknown, reply: FastifyReply): z.output<S> | undefined {
+function parse<S extends z.ZodType>(schema: S, value: unknown, reply: FastifyReply): z.output<S> | undefined {
   const result = schema.safeParse(value);
   if (result.success) return result.data;
   const issue = result.error.issues[0];
@@ -141,7 +108,7 @@ export function parse<S extends z.ZodType>(schema: S, value: unknown, reply: Fas
  * another site does not. On top of the cookie's `SameSite=Lax`, for the two
  * admin writes.
  */
-export function sameOrigin(request: FastifyRequest, publicOrigin: string): boolean {
+function sameOrigin(request: FastifyRequest, publicOrigin: string): boolean {
   const fetchSite = request.headers["sec-fetch-site"];
   if (typeof fetchSite === "string" && fetchSite !== "" && fetchSite !== "same-origin") return false;
   const origin = request.headers.origin;
@@ -156,31 +123,22 @@ export function sameOrigin(request: FastifyRequest, publicOrigin: string): boole
 }
 
 /** A request that came through a proxy: Caddy always adds `X-Forwarded-For`. */
-/**
- * The app whose token a job route's request carried. The token hook answers 401 before a job route
- * runs without one, so a request without an app here is a bug.
- */
-function callerOf(request: FastifyRequest): string {
-  if (request.wicketApp === undefined) throw new Error("a job route ran without an app token");
-  return request.wicketApp;
-}
-
 function forwarded(request: FastifyRequest): boolean {
   return request.headers["x-forwarded-for"] !== undefined || request.headers.forwarded !== undefined;
 }
 
-const UNAUTHORIZED_TOKEN = "send your app's token as Authorization: Bearer <token>";
-const UNAUTHORIZED_SESSION = "sign in to Wicket's page; app tokens don't open the admin routes";
-
 /**
  * The app, ready and not listening: server.ts listens, and tests drive it with
- * `inject()`. Closing it cancels the queue and closes the database.
+ * `inject()`. It registers in a fixed order: the error handler, the session
+ * guard and sign-in, the token guard, the routes, then the page and the 404
+ * handler. Closing it cancels the queue and closes the database.
  */
 export async function buildApp(config: Config, options: BuildAppOptions = {}): Promise<FastifyInstance> {
   const db = openDatabase(resolveDbPath(config.dbPath));
-  const records = new Records(db);
+  const records = options.records ?? new Records(db);
+  const accounts = options.accounts ?? openAccounts(db);
   const metrics = new Metrics();
-  const { appTokens, apiPrefix, webBase, publicOrigin } = config;
+  const { apiPrefix, webBase, publicOrigin } = config;
   const now = options.now ?? Date.now;
   const app = Fastify({
     ...options.server,
@@ -206,92 +164,22 @@ export async function buildApp(config: Config, options: BuildAppOptions = {}): P
     now,
     onError: (message, error) => app.log.error({ err: error }, message),
   });
-  app.decorate("queue", queue);
-  app.decorate("records", records);
   // Cancel and record whatever waits or runs, then close the file.
   app.addHook("onClose", async () => {
     queue.close();
     db.close();
   });
 
-  // Fastify's own 4xx (bad JSON, a body too large) in the contract's shape.
-  // A JSON parse error's message can quote the body, so it is never passed on.
-  app.setErrorHandler((error: Error & { statusCode?: number; code?: string }, request, reply) => {
-    const status = error.statusCode ?? 500;
-    if (status >= 500) {
-      request.log.error({ err: { name: error.name, code: error.code } }, "unhandled error");
-      return fail(reply, 500, { code: "internal", message: "Wicket hit an error; see its log" });
-    }
-    const message =
-      error.code === "FST_ERR_CTP_INVALID_JSON_BODY" || error.name === "SyntaxError"
-        ? "the body is not valid JSON"
-        : error.code === "FST_ERR_CTP_BODY_TOO_LARGE"
-          ? `the body is larger than ${BODY_LIMIT} bytes`
-          : error.code === "FST_ERR_CTP_INVALID_MEDIA_TYPE"
-            ? "send the body as application/json"
-            : "the request is not valid";
-    return fail(reply, status, { code: "invalid_request", message });
-  });
-
-  // The session guard, first, so every route after it is behind it.
-  const accounts = openAccounts(db);
-  app.decorate("accounts", accounts);
-  // Checks the settings and imports the key now; talks to Ward only on first use, so Wicket starts while Ward is down.
-  const ward = config.ward && (await createWardClient(config.ward));
-  await app.register(wardAuth, {
+  await app.register(errors);
+  await app.register(authPlugin, {
     accounts,
-    cookieName: SESSION_COOKIE,
-    // The API prefix as the browser sees it: every request that needs the session is under it.
-    cookiePath: apiPrefix,
+    ward: config.ward,
     publicOrigin,
-    routePrefix: AUTH_ROUTE_PREFIX,
-    publicRoutes: ["GET /v1/health", "GET /metrics"],
-    // The page offers no rename, and the seed matches accounts by name.
-    allowRename: false,
-    isPublic: (request) => {
-      const path = pathOf(request.url);
-      // The apps' routes: their token decides (the hook below), never a session.
-      if (isUnder(path, "/v1/jobs")) return true;
-      // Every other API route needs a session; the plugin's own list decides under /auth.
-      if (isUnder(path, "/v1") || isUnder(path, AUTH_ROUTE_PREFIX)) return false;
-      // The page's files, the redirect to them, /metrics and a 404: the login page has to load.
-      return true;
-    },
+    apiPrefix,
+    webBase,
     trustedProxies: config.trustedProxies,
-    ...(ward && {
-      ward: {
-        client: ward,
-        loginPath: `${webBase}login`,
-        settingsPath: `${webBase}account`,
-        afterSignInPath: webBase,
-        roleFor: () => USER_ROLE,
-      },
-    }),
   });
-
-  // The guard answers `{ error: "unauthorized" }`; under `/v1` the contract's
-  // error shape is `{ code, message }`. The sign-in routes keep the plugin's
-  // shape for its hooks.
-  app.addHook("onSend", async (request, reply, payload) => {
-    if (reply.statusCode !== 401 || typeof payload !== "string" || !isUnder(pathOf(request.url), "/v1")) return payload;
-    let body: unknown;
-    try {
-      body = JSON.parse(payload);
-    } catch {
-      return payload;
-    }
-    if (typeof body !== "object" || body === null || !("error" in body) || "code" in body) return payload;
-    const refused: ErrorBody = { code: "unauthorized", message: UNAUTHORIZED_SESSION };
-    return JSON.stringify(refused);
-  });
-
-  // The apps' routes: a token, or 401. The token names the app.
-  app.addHook("onRequest", async (request, reply) => {
-    if (!isUnder(pathOf(request.url), "/v1/jobs")) return;
-    const name = appTokens.appFor(request.headers.authorization);
-    if (name === undefined) return fail(reply, 401, { code: "unauthorized", message: UNAUTHORIZED_TOKEN });
-    request.wicketApp = name;
-  });
+  await app.register(appTokensPlugin, { appTokens: config.appTokens });
 
   app.get("/v1/health", async (): Promise<HealthResponse> => ({ ok: true }));
 
@@ -394,20 +282,7 @@ export async function buildApp(config: Config, options: BuildAppOptions = {}): P
     return body;
   });
 
-  // The built page at `webBase`; any other path under it is the page too (index.html).
-  const webDist = options.webDist;
-  const serving = webDist !== undefined && existsSync(webDist);
-  if (serving) await app.register(fastifyStatic, { root: webDist, prefix: webBase });
-  if (webBase !== "/") app.get("/", async (_request, reply) => reply.redirect(webBase));
-  app.setNotFoundHandler((request, reply) => {
-    const path = pathOf(request.url);
-    if (serving && request.method === "GET" && webBase !== "/" && path === webBase.slice(0, -1))
-      return reply.redirect(webBase);
-    if (serving && (request.method === "GET" || request.method === "HEAD") && path.startsWith(webBase)) {
-      return reply.sendFile("index.html");
-    }
-    return fail(reply, 404, { code: "not_found", message: `no route ${request.method} ${path}` });
-  });
+  await app.register(pagePlugin, { webDist: options.webDist, webBase });
 
   return app;
 }

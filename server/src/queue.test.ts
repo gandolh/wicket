@@ -2,7 +2,7 @@ import type { JobRequest } from "@wicket/shared";
 import { describe, expect, it } from "vitest";
 import { CANCEL_REASONS, Queue, QueueFullError } from "./queue.js";
 import type { JobRecord } from "./records.js";
-import { settle, stubRunner } from "./testing.js";
+import { settle, stubRunner } from "./testing/stub-runner.js";
 
 const ask = (content = "hello"): JobRequest => ({ messages: [{ role: "user", content }] });
 

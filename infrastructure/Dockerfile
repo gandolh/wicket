@@ -96,10 +96,10 @@ COPY --from=builder /app/server/dist ./server/dist
 # The vendored ward-auth library: the server imports it by relative path
 # (../vendor/ward/ward-auth.js from dist), so it sits beside dist.
 COPY server/vendor ./server/vendor
-# tsc compiles src/**/* including the tests and their stub runner. They import
-# a runner that --omit=dev never installed, so shipping them is dead weight.
-RUN find ./server/dist ./shared/dist \( -name '*.test.js' -o -name '*.test.js.map' -o -name '*.test.d.ts' \
-      -o -name 'testing.js' -o -name 'testing.js.map' -o -name 'testing.d.ts' \) -delete
+# tsc compiles src/**/* including the tests and their helpers in testing/. They
+# import a runner that --omit=dev never installed, so shipping them is dead weight.
+RUN find ./server/dist ./shared/dist \( -name '*.test.js' -o -name '*.test.js.map' -o -name '*.test.d.ts' \) -delete \
+ && rm -rf ./server/dist/testing
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=8808 \

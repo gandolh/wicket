@@ -6,10 +6,13 @@ import type { ErrorBody, JobView } from "@wicket/shared";
 import Database from "better-sqlite3";
 import type { FastifyInstance, InjectOptions } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildApp, stripApiPrefix } from "./app.js";
+import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
-import { settle, stubRunner, type StubCall } from "./testing.js";
-import { AppTokens } from "./tokens.js";
+import { openDatabase } from "./db.js";
+import { stripApiPrefix } from "./lib/paths.js";
+import { AppTokens } from "./plugins/app-tokens/tokens.js";
+import { Records } from "./records.js";
+import { settle, stubRunner, type StubCall } from "./testing/stub-runner.js";
 
 const BOT_TOKEN = "b".repeat(64);
 const HOUSING_TOKEN = "h".repeat(64);
@@ -20,12 +23,12 @@ const HOUSING = { authorization: `Bearer ${HOUSING_TOKEN}` };
 let app: FastifyInstance;
 let calls: StubCall[];
 
-async function start(options: { maxWaiting?: number; dbPath?: string; logger?: object } = {}) {
+async function start(options: { maxWaiting?: number; dbPath?: string; logger?: object; records?: Records } = {}) {
   const stub = stubRunner();
   calls = stub.calls;
   app = await buildApp(
     { ...loadConfig({}), dbPath: options.dbPath ?? ":memory:", appTokens: TOKENS },
-    { run: stub.run, maxWaiting: options.maxWaiting, server: { logger: options.logger } },
+    { run: stub.run, maxWaiting: options.maxWaiting, server: { logger: options.logger }, records: options.records },
   );
 }
 
@@ -195,8 +198,11 @@ describe("records", () => {
         done();
       },
     });
+    // The test's own handle on the same file, passed in, so it can read the records back.
+    const recordsDb = openDatabase(dbPath);
+    const records = new Records(recordsDb);
     try {
-      await start({ dbPath, logger: { level: "trace", stream } });
+      await start({ dbPath, logger: { level: "trace", stream }, records });
       const prompt = "PROMPT-the-flat-on-strada-lalelelor-7f3a";
       const answer = "ANSWER-three-rooms-second-floor-9c1d";
       const { id } = (await submit(prompt)).json<JobView>();
@@ -211,12 +217,13 @@ describe("records", () => {
       await settle();
 
       expect(
-        app.records
+        records
           .recent(10)
           .map((r) => r.outcome)
           .sort(),
       ).toEqual(["cancelled", "failed", "ok"]);
       await app.close();
+      recordsDb.close();
 
       const db = new Database(dbPath, { readonly: true });
       const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[];
@@ -237,6 +244,7 @@ describe("records", () => {
       expect(logged).not.toContain("ANSWER-");
       expect(logged).not.toContain(BOT_TOKEN);
     } finally {
+      if (recordsDb.open) recordsDb.close();
       rmSync(dir, { recursive: true, force: true });
       // afterEach closes again; a closed app closes quietly.
     }
