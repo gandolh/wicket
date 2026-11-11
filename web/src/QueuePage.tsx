@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "../vendor/ward/ward-auth-react.js";
 import { clearQueue, fetchQueue, fetchRecords, forceClose } from "./api";
-import { ConfirmAction } from "./ConfirmAction";
+import { ConfirmDialog } from "./components/ui/ConfirmDialog";
 import { CountsTable, NowServing, RecordsTable, RunningCard, WaitingTable } from "./QueueView";
 import { navigate, pathOf } from "./route";
 import { clock } from "./time";
@@ -82,7 +82,7 @@ export function QueuePage() {
                 serverNow={serverNow}
                 action={
                   running && (
-                    <ConfirmAction
+                    <ConfirmDialog
                       key={running.id}
                       label="Force close"
                       danger
@@ -109,7 +109,7 @@ export function QueuePage() {
             <section className="section" aria-labelledby="waiting-title">
               <div className="section-head">
                 <h2 id="waiting-title">Waiting {waiting > 0 && <span className="count">{waiting}</span>}</h2>
-                <ConfirmAction
+                <ConfirmDialog
                   label="Clear queue"
                   danger
                   title="Clear the queue?"

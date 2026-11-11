@@ -7,7 +7,7 @@ import { useState, type ReactNode } from "react";
  * runs once, the dialog closes when it settles, and the page reports the
  * outcome (`onDone`).
  */
-export function ConfirmAction({
+export function ConfirmDialog({
   label,
   title,
   description,
