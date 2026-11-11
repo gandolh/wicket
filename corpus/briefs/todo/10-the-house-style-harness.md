@@ -187,7 +187,7 @@ One commit per step, straight on `main`, each with `npm run typecheck`, `npm tes
 
 ## Interplay
 
-- Brief 11 adds nothing to the gate but its wrapper. Brief 12 adds `better-tailwindcss` and drops `check-base-ui`'s `--warn-only`. Brief 13 adds dependency-cruiser, drops `check-structure`'s `--warn-only`, and turns `no-process-env` (from `eslint-plugin-n`) into an error.
+- Brief 11 adds nothing to the gate but its wrapper. Brief 12 adds `better-tailwindcss` and drops `check-base-ui`'s `--warn-only`. Brief 13 ~~adds dependency-cruiser,~~ drops `check-structure`'s `--warn-only`, and turns `no-process-env` (from `eslint-plugin-n`) into an error. (2026-11-11, brief 10: dependency-cruiser landed in this brief instead, as `.dependency-cruiser.cjs` and in `check:conventions`, by the controller's call; brief 13 keeps its deliberate cross-feature import check.)
 - The reformat changes `web/src/styles.css` by one line (`font-family`). Brief 12 deletes that file.
 - `server/src/testing.ts` moves to `server/src/testing/` in brief 13. Brief 12 rewrites the `web.md` dark-mode line, and its decisions record the family token names (`surface`, `ink`, `accent`, `line`, `danger`).
 - The skills library's brief 27 owns the vendored copy and `house-style:sync`; a rule that looks wrong for Wicket is reported there, not patched here.

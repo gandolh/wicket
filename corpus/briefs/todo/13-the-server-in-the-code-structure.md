@@ -11,6 +11,8 @@
 
 **Order:** after 10. It touches no file that 11 or 12 touch except `package-lock.json`, so it may run before them, but never at the same time as either.
 
+**Landed early (2026-11-11, brief 10):** `.dependency-cruiser.cjs`, extending the vendored house-style preset, and dependency-cruiser in `check:conventions` (`depcruise server/src web/src shared/src`, 0 violations in 55 modules) already landed with brief 10, and knip is configured in `knip.config.js` (it spreads the vendored preset), not `knip.json`. This brief still checks that a deliberate cross-feature import fails dependency-cruiser (step 4) and still drops `check-structure`'s `--warn-only` (step 7). `n/no-process-env` warns on a fifth read besides the four in `server/src`: `docs/images/stand-in-cloud.mjs:14`, the capture helper, which is not app code. Making the rule an error has to account for it.
+
 **Before you start:** run `brief-board guide` ([corpus/CLAUDE.md](../../CLAUDE.md)).
 
 ## Context

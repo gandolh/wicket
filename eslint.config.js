@@ -1,3 +1,4 @@
+import n from "eslint-plugin-n";
 import { houseStyle } from "./vendor/house-style/eslint.config.js";
 
 /**
@@ -22,5 +23,12 @@ export default [
     name: "wicket/process-env-warns",
     files: ["server/src/index.ts", "server/src/seed.ts", "docs/images/*.mjs"],
     rules: { "n/no-process-env": "warn" },
+  },
+  {
+    // The dependency-cruiser config is CommonJS. The house gives JavaScript files the globals of an
+    // ES module, where `module` is undefined, so .cjs files get Node's CommonJS ones.
+    name: "wicket/commonjs",
+    files: ["**/*.cjs"],
+    languageOptions: n.configs["flat/recommended-script"].languageOptions,
   },
 ];
