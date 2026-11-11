@@ -133,7 +133,8 @@ export function isUnder(path: string, prefix: string): boolean {
 }
 
 export function pathOf(url: string): string {
-  return url.split("?")[0]!;
+  const query = url.indexOf("?");
+  return query === -1 ? url : url.slice(0, query);
 }
 
 export function fail(reply: FastifyReply, status: number, body: ErrorBody): FastifyReply {
@@ -173,6 +174,15 @@ export function sameOrigin(request: FastifyRequest, publicOrigin: string): boole
 }
 
 /** A request that came through a proxy: Caddy always adds `X-Forwarded-For`. */
+/**
+ * The app whose token a job route's request carried. The token hook answers 401 before a job route
+ * runs without one, so a request without an app here is a bug.
+ */
+function callerOf(request: FastifyRequest): string {
+  if (request.wicketApp === undefined) throw new Error("a job route ran without an app token");
+  return request.wicketApp;
+}
+
 function forwarded(request: FastifyRequest): boolean {
   return request.headers["x-forwarded-for"] !== undefined || request.headers.forwarded !== undefined;
 }
@@ -309,7 +319,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     const body = parse(jobRequestSchema, request.body, reply);
     if (!body) return reply;
     try {
-      const view: JobView = queue.submit(request.wicketApp!, body);
+      const view: JobView = queue.submit(callerOf(request), body);
       return reply.status(202).send(view);
     } catch (error) {
       if (error instanceof QueueFullError) {
@@ -333,7 +343,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     if (!params) return reply;
     const query = parse(jobQuerySchema, request.query, reply);
     if (!query) return reply;
-    const caller = request.wicketApp!;
+    const caller = callerOf(request);
     let view: JobView | undefined;
     if (query.wait && query.wait > 0) {
       // A caller that hangs up ends its wait.
@@ -354,7 +364,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   app.delete("/v1/jobs/:id", async (request, reply) => {
     const params = parse(jobParamsSchema, request.params, reply);
     if (!params) return reply;
-    return queue.cancel(params.id, request.wicketApp!) ?? noSuchJob(reply);
+    return queue.cancel(params.id, callerOf(request)) ?? noSuchJob(reply);
   });
 
   // ---- the queue page's routes (a session) --------------------------------

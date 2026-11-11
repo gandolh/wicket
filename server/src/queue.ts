@@ -281,7 +281,9 @@ export class Queue {
     if (this.running || this.closed) return;
     const job = this.waiting.shift();
     if (!job) return;
-    const request = job.request!;
+    // A waiting job keeps its messages until it ends, so a missing request is a bug.
+    const { request } = job;
+    if (request === undefined) throw new Error(`job ${job.id} reached the front without its request`);
     const controller = new AbortController();
     job.status = "running";
     job.startedAt = this.now();

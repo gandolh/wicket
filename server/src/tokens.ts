@@ -92,9 +92,9 @@ export class AppTokens {
 
   /** The app an `Authorization: Bearer <token>` header names, or undefined. */
   appFor(header: string | undefined): string | undefined {
-    const match = /^Bearer\s+(\S+)\s*$/i.exec(header ?? "");
-    if (!match) return undefined;
-    const presented = digest(match[1]!);
+    const token = /^Bearer\s+(\S+)\s*$/i.exec(header ?? "")?.[1];
+    if (token === undefined) return undefined;
+    const presented = digest(token);
     let found: string | undefined;
     for (const [name, expected] of this.digests) {
       // No early exit: every app's digest is compared on every call.

@@ -43,9 +43,10 @@ function migrate(db: Db): void {
   if (current > MIGRATIONS.length) {
     throw new Error(`the database is at schema ${current}, newer than this server knows (${MIGRATIONS.length})`);
   }
-  for (let version = current; version < MIGRATIONS.length; version++) {
+  for (const [version, migration] of MIGRATIONS.entries()) {
+    if (version < current) continue;
     db.transaction(() => {
-      db.exec(MIGRATIONS[version]!);
+      db.exec(migration);
       db.pragma(`user_version = ${version + 1}`);
     })();
   }
