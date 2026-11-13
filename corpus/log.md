@@ -247,3 +247,15 @@ are most. See [briefs/done/12-the-web-app-to-tailwind.md](briefs/done/12-the-web
 ## [2026-11-13] approved | Brief 14: the redesign direction "Live beside the log"
 
 The owner approved the redesign direction "Live beside the log" on the estate redesign board, with every question on the board standing as proposed: the queue page becomes two columns at 1280 (Now serving and Running merged into one card beside the log), and the accent moves from blue to plum. The build follows, tokens first, then one screen per commit.
+
+## [2026-11-13] done | Brief 14: the redesign "Live beside the log"
+
+The queue page is two columns at 1280: Now serving and Running are one card (the numeral, Running's four facts in a 2 x 2
+grid, Force close as a danger tint at its foot), with Waiting under it and the log (Calls per app, Recent calls) beside
+it. The accent moved from blue to plum `#7d2668`; Reddit Sans and Reddit Mono (`@fontsource`, 5.3.0) replaced the system
+stack; radii are 8 and 10. Every screen was restyled, the undrawn ones (sign-in, account, the gate, the Clear queue
+dialog) with the same tokens. A failed call's Model and Ran cells read `not started` where they printed `None`. Contrast
+minimums 5.27:1 (text) and 3.05:1 (parts); Playwright checks focus rings, reduced motion and 390 px overflow on 11
+screens. At 1280 the build differs from its comps by 0.2% of pixels or less. Not pushed or deployed; `docs/images/` not
+retaken. See [briefs/done/14-a-redesign-with-hallmark-on-the-estate-board.md](briefs/done/14-a-redesign-with-hallmark-on-the-estate-board.md)
+and [docs/design.md](../docs/design.md).

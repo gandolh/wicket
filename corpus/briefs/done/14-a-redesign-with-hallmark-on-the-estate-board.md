@@ -81,3 +81,36 @@ No PRs, no branches (Q4): one commit per step, straight on `main`.
 - Brief 12 owns the tokens' names, the wrappers' styling and the theme switch; this brief changes values and layout on top. The-board and lantern share the token names, so a rename here is raised on the board for all three.
 - Brief 11's `RadioGroup` (the period filter and the theme control) and `ConfirmDialog` stay Base UI wrappers; the redesign restyles them.
 - Brief 10's formatter and lint run on every redesign commit.
+
+## Outcome (2026-11-13)
+
+Built after the owner approved the direction "Live beside the log" on the estate redesign board (steps 1 to 4 were done
+there; the approval is in `log.md`). Not pushed or deployed: the deploy is `node cli.ts wicket deploy` from vps-deploy
+(the web client only). The shipped look is in [docs/design.md](../../../docs/design.md); the changed decision is in
+[wiki/decisions.md](../../wiki/decisions.md) and [wiki/decisions-web.md](../../wiki/decisions-web.md).
+
+- **Commits:** the approval, the tokens, one each for the queue page, the dialogs, sign-in with the gate, and the
+  account page, then the Floor tests, a phone-type match, and the docs.
+- **Contrast** (`web/src/styles/contrast.test.ts`, 52 cases over the tokens, both themes): text minimum 5.27:1 light
+  and 5.36:1 dark (danger on the Force close tint); icons, edges and rings 3.32:1 light (`line-control` on
+  `surface-sunk`) and 3.05:1 dark (`danger-line` on the Force close tint).
+- **Floor tests** (`web/e2e/floor.spec.ts`): on 11 screens, a visible focus ring on every Tab stop, no running
+  animation or transition under reduced motion, and no sideways scroll at 390 px in light and dark. Brief 12's theme
+  tests pass with the new page colours.
+- **Figures:** every number shown comes from the data or the copy; none invented. The test fixtures
+  (`web/e2e/fixtures.ts`) use the board's own rows, with weekly counts as three times the daily ones (never shown in a
+  screenshot). No prompt or answer text appears anywhere.
+- **Copy:** the one approved change, `not started` in a record's Model and Ran cells where it printed `None`. It
+  keys on each cell being empty, so a record with no model but a run time would also read `not started` in Model; the
+  server's types allow it, and no approved string covers it.
+- **Not retaken:** `docs/images/`, left for a later docs pass.
+
+### Deviations
+
+- Two tokens the design no longer uses, `text-page-title` and `tracking-label`, were dropped from the stylesheet.
+- A `scroll-edge` utility in `index.css` draws the foot shadow on Waiting's scroll box.
+- The comps' `--gutter: 16px` and `--bar: 52px` phone rules never applied in the comps themselves (they style the
+  container they are set on), so the build follows what the owner saw: 24 px gutter, 56 px header, 14 px body text, 16
+  px where the comps set it.
+- The board's `Queue empty` title and typographic apostrophes were stickies, not rulings, and are not built.
+- An empty queue's "None yet" is 20 px, since the 96 px numeral does not fit a 400 px column in 8 characters.

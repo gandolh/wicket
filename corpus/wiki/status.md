@@ -1,6 +1,6 @@
 ---
-summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); brief 10 built 2026-11-11 (the house-style harness: vendored house-style configs, Prettier at 120, typed ESLint, npm run check and check:fast; ready for deploy); brief 11 built 2026-11-11 (Base UI by the conventions: ConfirmDialog and RadioGroup under components/ui, jsdom test; ready for deploy); brief 13 built 2026-11-11 (the server in the code structure: server.ts, config.ts, plugins, features, zod route schemas, check-structure strict; ready for deploy); brief 12 built 2026-11-11 (the web app to Tailwind, the Light / Dark / System switch, the shared token names; ready for deploy); brief 14 open (a Hallmark redesign).
-updated: 2026-11-11
+summary: Snapshot as of 2026-11-04, per area. Designed in a grill with the owner and built the same day, briefs 01-08 (queue and jobs API, the cloud call, sign-in with admin routes and /metrics, the queue page, the container and owner setup, the image smoke-tested locally, README and docs with a Docusaurus docs site, and Ollama Cloud only with the backup dropped); 86 tests; not deployed. The owner's steps in order (Ward registration, secrets, push and deploy with vps-deploy's wicket stack, the account, pointing just-a-bot and ro-housing at it, the docs stack, running Ward's local seed); one open question (the docs site as a separate package); brief 10 built 2026-11-11 (the house-style harness: vendored house-style configs, Prettier at 120, typed ESLint, npm run check and check:fast; ready for deploy); brief 11 built 2026-11-11 (Base UI by the conventions: ConfirmDialog and RadioGroup under components/ui, jsdom test; ready for deploy); brief 13 built 2026-11-11 (the server in the code structure: server.ts, config.ts, plugins, features, zod route schemas, check-structure strict; ready for deploy); brief 12 built 2026-11-11 (the web app to Tailwind, the Light / Dark / System switch, the shared token names; ready for deploy); brief 14 built 2026-11-13 (the redesign "Live beside the log": plum accent, Reddit Sans and Mono, two columns at 1280, every screen restyled; ready for deploy, `docs/images/` not retaken).
+updated: 2026-11-13
 ---
 
 # Status
@@ -79,7 +79,7 @@ Five briefs carry the owner's calls of 2026-11-09 (Base UI 1.9.0, Tailwind
 v4, enforced conventions), to run in number order: 10 the house style and the
 quality harness (Wicket is the proof run; built 2026-11-11), 11 Base UI by the conventions (built 2026-11-11), 12
 the web app to Tailwind, 13 the server in the code structure (built
-2026-11-11), then 14 a redesign with Hallmark on the estate board. The owner's grilling of 2026-11-10
+2026-11-11), then 14 a redesign with Hallmark on the estate board (built 2026-11-13). The owner's grilling of 2026-11-10
 settled them (vendored house-style, width 120, a Light / Dark / System switch,
 the family token names). No bump brief is needed: `@base-ui/react` is
 already exactly 1.9.0 and the lockfile resolves it.
