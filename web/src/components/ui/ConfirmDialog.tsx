@@ -2,6 +2,9 @@ import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { useRef, useState, type ReactNode } from "react";
 import { buttonClass, type ButtonVariant } from "./buttonClass";
 
+/** The dialog's two buttons: 44 px tall, and 48 px sharing the row on a phone. */
+const ACTION = "min-h-11 px-5 max-[560px]:min-h-12 max-[560px]:flex-1 max-[560px]:text-heading";
+
 /**
  * A button that asks first: a Base UI `AlertDialog` saying what happens to
  * the callers, with Cancel focused (`initialFocus`, so it holds if the markup
@@ -50,18 +53,18 @@ export function ConfirmDialog({
       <AlertDialog.Portal>
         <AlertDialog.Backdrop className="fixed inset-0 z-backdrop bg-scrim" />
         <AlertDialog.Popup
-          className="fixed top-1/2 left-1/2 z-dialog w-[min(var(--container-dialog),calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-card bg-surface px-6 py-5 text-ink shadow-dialog"
+          className="fixed top-1/2 left-1/2 z-dialog w-[min(var(--container-dialog),calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-card border border-line-strong bg-surface px-6 pt-5 pb-6 text-ink shadow-dialog max-[560px]:p-5"
           initialFocus={cancelRef}
         >
           <AlertDialog.Title className="mb-2 text-title font-bold">{title}</AlertDialog.Title>
           <AlertDialog.Description render={<div />}>{description}</AlertDialog.Description>
-          <div className="mt-4 flex justify-end gap-2">
-            <AlertDialog.Close ref={cancelRef} className={buttonClass()} disabled={pending}>
+          <div className="mt-5 flex justify-end gap-2">
+            <AlertDialog.Close ref={cancelRef} className={buttonClass("default", ACTION)} disabled={pending}>
               Cancel
             </AlertDialog.Close>
             <button
               type="button"
-              className={buttonClass(danger ? "danger-solid" : "primary")}
+              className={buttonClass(danger ? "danger-solid" : "primary", ACTION)}
               disabled={pending}
               onClick={confirm}
             >

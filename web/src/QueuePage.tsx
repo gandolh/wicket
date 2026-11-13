@@ -141,8 +141,14 @@ export function QueuePage() {
                         title={`Force close ticket ${running.ticket}?`}
                         description={
                           <p className="mb-2">
-                            Wicket aborts {running.app}'s call{running.model ? ` to ${running.model}` : ""}.{" "}
-                            {running.app} sees the ticket as cancelled, and the next ticket starts.
+                            Wicket aborts {running.app}'s call
+                            {running.model && (
+                              <>
+                                {" "}
+                                to <span className="font-mono font-medium">{running.model}</span>
+                              </>
+                            )}
+                            . {running.app} sees the ticket as cancelled, and the next ticket starts.
                           </p>
                         }
                         confirmLabel="Force close"
