@@ -1,6 +1,6 @@
 ---
 summary: Locked calls for Wicket, settled in a grill with the owner on 2026-11-04, each with rejected alternatives and the reason. One service holds the Ollama key and queues every app's LLM calls; Fastify + React like brief-board; Ollama Cloud only with Wicket choosing the model (revisited 2026-11-04: the earlier local backup model, gemma3:1b in a capped container, is superseded and kept as history); one first-come-first-served queue running one call at a time; tickets and now serving; an in-memory queue that a restart cancels; records with counts and timings, never text; a queue page with force close and clear queue; sign-in like brief-board with per-app bearer tokens for callers; /wicket and /wicket-api on loopback port 8808; a loopback-only /metrics; and three calls the build made that the owner kept the same day: the app tokens in one secret (WICKET_APP_TOKENS), at most 200 waiting calls with 503 queue_full, and a strict request body; and, from 2026-11-10, the house style: vendored house-style configs, Prettier at width 120, npm run check as the gate; and, from 2026-11-10, the period filter as a RadioGroup. The server's structure (2026-11-11) is in decisions-server.md. Read before proposing to change any of these.; the page's Tailwind styling and its theme switch (2026-11-11) are in decisions-web.md
-updated: 2026-11-11
+updated: 2026-11-13
 ---
 
 # Decisions
@@ -104,9 +104,16 @@ and recent records and counts. Two actions: **Force close** aborts the running
 call's request (Ollama stops generating when the request is aborted), and
 **Clear queue** drops every waiting ticket. Clear queue is always available,
 the fallback if force close doesn't free the queue. Callers whose ticket was
-closed or cleared see `cancelled`. Conventional layout: a header, a page, plain
-tables. The owner rejects metaphor-heavy navigation. Rejected: a read-only
+closed or cleared see `cancelled`. Rejected: a read-only
 page, which leaves a stuck call blocking every app until a restart.
+
+_Changed 2026-11-13_, the owner, on the estate redesign board. The layout is
+still a header, a page and plain tables, with no new navigation, and the owner
+still rejects metaphor-heavy navigation. But at 1280 px the page is two columns:
+Now serving and Running are one card in a live column beside the log (Calls per
+app, Recent calls). History, the 2026-11-04 line: "Conventional layout: a
+header, a page, plain tables." See [design.md](../../docs/design.md) and
+[decisions-web.md](decisions-web.md).
 
 ## Sign-in like brief-board, and per-app tokens for callers
 _2026-11-04_. The page signs in with "Sign in with Ward" or a seeded local

@@ -6,6 +6,7 @@ Start with the [main README](../README.md). This folder holds what it links to.
 |---|---|
 | [getting-started.md](getting-started.md) | Running it locally: install, settings, your account, a first call, tests, Ward, the container |
 | [architecture.md](architecture.md) | How a call moves through the parts, on one screen |
+| [design.md](design.md) | The queue page's look as shipped: layout, tokens, controls, the screens, the checks |
 | [owner-setup.md](owner-setup.md) | Putting Wicket on a VPS: Ward, the secrets, what the deploy stack needs, the first account, the callers, the docs stack |
 | [images/](images/shots.md) | The screenshots and the diagram used here, how each was made, and the stand-in cloud used for them |
 
