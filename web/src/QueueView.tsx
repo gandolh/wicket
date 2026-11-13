@@ -232,7 +232,7 @@ export function RecordsTable({ records, now }: { records: RecordView[]; now: num
         {records.map((record) => (
           <li
             key={record.id}
-            className="grid gap-0.5 border-b border-line px-4 py-3 last:border-b-0 max-[560px]:px-3 @min-[480px]:flex @min-[480px]:flex-wrap @min-[480px]:gap-x-6"
+            className="grid gap-0.5 border-b border-line px-4 py-3 last:border-b-0 @min-[480px]:flex @min-[480px]:flex-wrap @min-[480px]:gap-x-6"
           >
             <div className="flex justify-between gap-3 text-heading font-medium @min-[480px]:basis-full">
               <span>{record.app}</span>

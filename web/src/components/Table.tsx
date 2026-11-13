@@ -52,7 +52,7 @@ export function Td({
   return (
     <td
       className={cn(
-        "h-10 border-b border-line px-4 whitespace-nowrap max-[560px]:px-3",
+        "h-10 border-b border-line px-4 whitespace-nowrap max-[560px]:px-3 max-[560px]:text-[16px]",
         right ? "text-right" : "text-left",
         mono && "font-mono font-medium",
         className,

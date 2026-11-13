@@ -57,7 +57,9 @@ export function ConfirmDialog({
           initialFocus={cancelRef}
         >
           <AlertDialog.Title className="mb-2 text-title font-bold">{title}</AlertDialog.Title>
-          <AlertDialog.Description render={<div />}>{description}</AlertDialog.Description>
+          <AlertDialog.Description render={<div className="max-[560px]:text-[16px] max-[560px]:leading-6" />}>
+            {description}
+          </AlertDialog.Description>
           <div className="mt-5 flex justify-end gap-2">
             <AlertDialog.Close ref={cancelRef} className={buttonClass("default", ACTION)} disabled={pending}>
               Cancel

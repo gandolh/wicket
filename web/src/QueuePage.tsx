@@ -61,7 +61,7 @@ export function QueuePage() {
   return (
     <div>
       <header className="sticky top-0 z-bar border-b border-line bg-surface shadow-card">
-        <div className="mx-auto flex h-top max-w-page items-center justify-between gap-4 px-6 max-[560px]:h-13 max-[560px]:px-4">
+        <div className="mx-auto flex h-top max-w-page items-center justify-between gap-4 px-6 ">
           <h1 className="text-title tracking-tight">Wicket</h1>
           <div className="flex items-center gap-5 whitespace-nowrap text-ink-muted max-[560px]:gap-3 max-[560px]:text-[13px] max-[560px]:leading-[18px]">
             <span>
@@ -78,7 +78,7 @@ export function QueuePage() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-page items-start gap-2 px-4 pt-2 pb-12 min-[561px]:px-6 min-[840px]:grid-cols-[360px_minmax(0,1fr)] min-[840px]:gap-6 min-[840px]:pt-6 min-[1200px]:grid-cols-[var(--container-live)_minmax(0,1fr)]">
+      <main className="mx-auto grid max-w-page items-start gap-2 px-6 pt-2 pb-12 min-[840px]:grid-cols-[360px_minmax(0,1fr)] min-[840px]:gap-6 min-[840px]:pt-6 min-[1200px]:grid-cols-[var(--container-live)_minmax(0,1fr)]">
         {notice && (
           <p
             className={cn(
@@ -97,7 +97,7 @@ export function QueuePage() {
         <div className="flex min-w-0 flex-col gap-2 min-[840px]:sticky min-[840px]:top-[calc(var(--height-top)+1.5rem)] min-[840px]:max-h-[calc(100dvh-var(--height-top)-3rem)] min-[840px]:gap-4 [@media(max-height:640px)]:static [@media(max-height:640px)]:max-h-none">
           {queue.failing && (
             <div
-              className="flex items-start gap-3 rounded-card border border-line-strong bg-banner-bg px-4 py-3.5 font-medium text-banner-text shadow-card"
+              className="flex items-start gap-3 rounded-card border border-line-strong bg-banner-bg px-4 py-3.5 font-medium text-banner-text shadow-card max-[560px]:text-[16px] max-[560px]:leading-6"
               role="status"
             >
               <svg
