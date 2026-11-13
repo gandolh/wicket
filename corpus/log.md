@@ -243,3 +243,7 @@ account page, which gained the theme switch and drifts 1 to 2 px under the headi
 before, 19,327 (4,808) after; JS 387,804 (118,089) before, 420,999 (129,297) after, of which `tailwind-merge` and `clsx`
 are most. See [briefs/done/12-the-web-app-to-tailwind.md](briefs/done/12-the-web-app-to-tailwind.md).
 
+
+## [2026-11-13] approved | Brief 14: the redesign direction "Live beside the log"
+
+The owner approved the redesign direction "Live beside the log" on the estate redesign board, with every question on the board standing as proposed: the queue page becomes two columns at 1280 (Now serving and Running merged into one card beside the log), and the accent moves from blue to plum. The build follows, tokens first, then one screen per commit.
