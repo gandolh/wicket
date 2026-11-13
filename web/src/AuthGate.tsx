@@ -33,7 +33,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return (
         <main className={GATE}>
           <div className={GATE_CARD}>
-            <h1 className="mr-2 text-title font-title">Wicket</h1>
+            <h1 className="text-title tracking-tight">Wicket</h1>
             <p role="alert">Wicket can't be reached. Check your connection and try again.</p>
             <button type="button" className={buttonClass()} onClick={() => void session.refresh()}>
               Try again

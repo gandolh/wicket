@@ -5,7 +5,8 @@ import { buttonClass } from "./components/ui/buttonClass";
 import { GATE, GATE_CARD } from "./gate";
 import { loginMessage, sessionReasonMessage, wardSignInMessage } from "./messages";
 
-const INPUT = "rounded-control border border-line bg-surface px-2.5 py-2 text-ink aria-invalid:border-danger";
+const INPUT =
+  "min-h-11 rounded-control border border-line-control bg-surface px-3 text-body font-normal text-ink aria-invalid:border-danger max-[560px]:text-heading";
 
 /**
  * The login page: username, password and "Sign in", and "Sign in with Ward"
@@ -56,7 +57,7 @@ export function LoginPage() {
   return (
     <main className={GATE} aria-busy={pending || ward.pending || undefined}>
       <div className={GATE_CARD}>
-        <h1 className="mr-2 text-title font-title">Wicket</h1>
+        <h1 className="text-title tracking-tight">Wicket</h1>
         <p className="text-ink-muted">Sign in to see the queue.</p>
         {notice !== null && (
           <p className="rounded-control bg-banner-bg px-3 py-2 text-banner-text" role="status">
@@ -65,7 +66,7 @@ export function LoginPage() {
         )}
 
         <form className="flex flex-col gap-3" onSubmit={submit} noValidate aria-label="Sign in">
-          <label className="flex flex-col gap-1 text-ink-muted">
+          <label className="flex flex-col gap-1 font-medium text-ink-muted">
             <span>Username</span>
             <input
               ref={usernameRef}
@@ -83,9 +84,9 @@ export function LoginPage() {
                 if (missing === "username") setMissing(null);
               }}
             />
-            {missing === "username" && <span className="text-danger">Enter your username.</span>}
+            {missing === "username" && <span className="font-normal text-danger">Enter your username.</span>}
           </label>
-          <label className="flex flex-col gap-1 text-ink-muted">
+          <label className="flex flex-col gap-1 font-medium text-ink-muted">
             <span>Password</span>
             <input
               ref={passwordRef}
@@ -100,7 +101,7 @@ export function LoginPage() {
                 if (missing === "password") setMissing(null);
               }}
             />
-            {missing === "password" && <span className="text-danger">Enter your password.</span>}
+            {missing === "password" && <span className="font-normal text-danger">Enter your password.</span>}
           </label>
           {error !== null && (
             <p className="text-danger" role="alert">
