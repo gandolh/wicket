@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const LIGHT_PAGE = "rgb(244, 245, 247)";
-const DARK_PAGE = "rgb(29, 33, 37)";
+const LIGHT_PAGE = "rgb(238, 236, 240)";
+const DARK_PAGE = "rgb(18, 16, 20)";
 
 /** The account page, signed in, with the API mocked. */
 async function openAccount(page: Page) {

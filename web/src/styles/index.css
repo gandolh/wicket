@@ -4,6 +4,13 @@
 
 @import "tailwindcss";
 
+/* The page's faces, self-hosted. The vendor layer sits after base, so the base rules win over a package's CSS. */
+@import "@fontsource/reddit-sans/400.css" layer(vendor);
+@import "@fontsource/reddit-sans/500.css" layer(vendor);
+@import "@fontsource/reddit-sans/700.css" layer(vendor);
+@import "@fontsource/reddit-mono/500.css" layer(vendor);
+@import "@fontsource/reddit-mono/700.css" layer(vendor);
+
 /* The vendored copies (Ward's hooks) are not the page's, so Tailwind doesn't scan them. */
 @source not "../../vendor";
 
@@ -35,57 +42,74 @@
   --container-*: initial;
   --font-*: initial;
 
-  /* light-dark() holds both themes, and color-scheme on <html> picks one, so no component needs dark:. */
-  --color-page: light-dark(#f4f5f7, #1d2125);
-  --color-surface: light-dark(#ffffff, #22272b);
-  --color-surface-sunk: light-dark(#ebecf0, #161a1d);
-  --color-ink: light-dark(#172b4d, #dee4ea);
-  --color-ink-muted: light-dark(#5e6c84, #9fadbc);
-  --color-line: light-dark(#dfe1e6, #38414a);
-  --color-accent: light-dark(#0c66e4, #579dff);
-  --color-danger: light-dark(#c9372c, #f87168);
-  --color-ok: light-dark(#1f845a, #4bce97);
-  --color-banner-bg: light-dark(#fff7d6, #332e1b);
-  --color-banner-text: light-dark(#533f04, #f5cd47);
-  /* Mixes of the above, named once: a success notice, an error notice and a danger button's border. */
+  /* light-dark() holds both themes, and color-scheme on <html> picks one, so no component needs dark:. A plum-tinted
+     grey ladder with a plum accent. */
+  --color-page: light-dark(#eeecf0, #121014);
+  --color-surface: light-dark(#fdfbfd, #241f27);
+  --color-surface-sunk: light-dark(#f4f2f5, #18151a);
+  --color-ink: light-dark(#1d1920, #ece7ef);
+  --color-ink-muted: light-dark(#5a5460, #a9a2b0);
+  --color-line: light-dark(#dbd6de, #38323d);
+  --color-line-strong: light-dark(#c4bdc8, #4d4652);
+  --color-line-control: light-dark(#8a8290, #7a7280);
+  --color-accent: light-dark(#7d2668, #e7a6d6);
+  --color-accent-soft: light-dark(#f6e6f0, #3e2536);
+  --color-danger: light-dark(#ad2e27, #f2877d);
+  --color-danger-line: light-dark(#c55a53, #b8605a);
+  --color-ok: light-dark(#1b7444, #62c996);
+  --color-banner-bg: light-dark(#fbf0c8, #352d16);
+  --color-banner-text: light-dark(#574100, #f0d27c);
+  /* Mixes of the above, named once: a success notice, an error notice and Force close's fill. */
   --color-ok-wash: color-mix(in srgb, var(--color-ok) 12%, var(--color-surface));
   --color-danger-wash: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
-  --color-danger-line: color-mix(in srgb, var(--color-danger) 45%, var(--color-line));
-  --color-scrim: rgb(9 30 66 / 0.45);
+  --color-scrim: light-dark(rgb(29 25 32 / 0.5), rgb(0 0 0 / 0.62));
 
+  /* Elevation: 1 raised (card, header), 2 overlay (the dialog). Dark has no card shadow: a lighter surface and the
+     line-strong edge carry it. */
   --shadow-card:
-    0 1px 1px light-dark(rgb(9 30 66 / 0.25), rgb(0 0 0 / 0.5)),
-    0 0 1px light-dark(rgb(9 30 66 / 0.31), rgb(0 0 0 / 0.5));
-  --shadow-dialog: 0 8px 32px rgb(9 30 66 / 0.3);
+    0 1px 2px light-dark(rgb(29 25 32 / 0.12), transparent), 0 2px 8px light-dark(rgb(29 25 32 / 0.06), transparent);
+  --shadow-dialog: 0 6px 16px light-dark(rgb(29 25 32 / 0.28), rgb(0 0 0 / 0.6));
 
   --height-top: 56px;
 
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Reddit Sans (400, 500, 700) for every label and title; Reddit Mono for figures only. */
+  --font-sans: "Reddit Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Reddit Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --default-mono-font-family: var(--font-mono);
 
-  /* The named type scale, in the pixels the page has always used. */
+  /* The named type scale, each with its line height and weight. */
   --text-small: 12px;
+  --text-small--line-height: 16px;
   --text-body: 14px;
+  --text-body--line-height: 20px;
   --text-heading: 16px;
-  --text-title: 18px;
+  --text-heading--line-height: 24px;
+  --text-heading--font-weight: 700;
+  --text-title: 20px;
+  --text-title--line-height: 28px;
+  --text-title--font-weight: 700;
   --text-page-title: 21px;
-  --text-ticket-phone: 44px;
-  --text-ticket: 56px;
-  --leading-ticket: 1.1;
+  --text-ticket-phone: 64px;
+  --leading-ticket-phone: 0.875;
+  --text-ticket: 96px;
+  --leading-ticket: 1;
   --tracking-label: 0.02em;
 
-  --radius-control: 4px;
-  --radius-group: 6px;
-  --radius-card: 8px;
+  --radius-control: 8px;
+  --radius-group: 8px;
+  --radius-segment: 6px;
+  --radius-card: 10px;
   --radius-pill: 10px;
 
-  --font-weight-title: 650;
+  --font-weight-title: 700;
 
   /* The layers: the sticky header, then a dialog's backdrop, then the dialog. */
   --z-index-bar: 3;
   --z-index-backdrop: 20;
   --z-index-dialog: 21;
 
-  --container-page: 1100px;
+  --container-page: 1200px;
+  --container-live: 400px;
   --container-account: 560px;
   --container-dialog: 440px;
   --container-gate: 360px;
