@@ -5,7 +5,10 @@ import { defineConfig } from "@playwright/test";
 // Playwright's own browser isn't downloaded.
 export default defineConfig({
   testDir: "e2e",
+  workers: 1,
   use: {
+    locale: "en-US",
+    timezoneId: "UTC",
     baseURL: "http://127.0.0.1:5189",
     launchOptions: { executablePath: process.env["CHROME"] },
   },
