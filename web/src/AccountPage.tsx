@@ -32,7 +32,7 @@ export function AccountPage() {
     <main className="mx-auto max-w-account p-6">
       <p className="my-3.5">
         <a
-          className="text-accent underline"
+          className="font-bold text-accent underline"
           href="."
           onClick={(event) => {
             event.preventDefault();
@@ -42,7 +42,7 @@ export function AccountPage() {
           ← Back to the queue
         </a>
       </p>
-      <h2 className="my-4.5 text-page-title font-bold">Account</h2>
+      <h2 className="my-4.5 text-title">Account</h2>
       <Facts>
         <Fact term="Signed in as">{user.username}</Fact>
         <Fact term="Signed in with">{viaWard ? "Ward" : "your Wicket password"}</Fact>
@@ -56,7 +56,7 @@ export function AccountPage() {
       </div>
 
       {result.result === "linked" && (
-        <p className="my-3.5 rounded-control bg-banner-bg px-3 py-2 text-banner-text" role="status">
+        <p className="my-3.5 rounded-control bg-banner-bg px-3 py-2 font-medium text-banner-text" role="status">
           Ward is linked. You can sign in with it from now on.
         </p>
       )}
