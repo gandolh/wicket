@@ -1,6 +1,6 @@
 import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { useRef, useState, type ReactNode } from "react";
-import { buttonClass } from "./buttonClass";
+import { buttonClass, type ButtonVariant } from "./buttonClass";
 
 /**
  * A button that asks first: a Base UI `AlertDialog` saying what happens to
@@ -15,6 +15,8 @@ export function ConfirmDialog({
   description,
   confirmLabel,
   danger = false,
+  triggerVariant,
+  triggerClassName,
   run,
 }: {
   label: string;
@@ -22,6 +24,9 @@ export function ConfirmDialog({
   description: ReactNode;
   confirmLabel: string;
   danger?: boolean;
+  /** The trigger's look, where it differs from the dialog's (a tinted Force close). */
+  triggerVariant?: ButtonVariant;
+  triggerClassName?: string;
   run: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -39,7 +44,9 @@ export function ConfirmDialog({
 
   return (
     <AlertDialog.Root open={open} onOpenChange={(next) => !pending && setOpen(next)}>
-      <AlertDialog.Trigger className={buttonClass(danger ? "danger" : "default")}>{label}</AlertDialog.Trigger>
+      <AlertDialog.Trigger className={buttonClass(triggerVariant ?? (danger ? "danger" : "default"), triggerClassName)}>
+        {label}
+      </AlertDialog.Trigger>
       <AlertDialog.Portal>
         <AlertDialog.Backdrop className="fixed inset-0 z-backdrop bg-scrim" />
         <AlertDialog.Popup

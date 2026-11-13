@@ -115,6 +115,15 @@
   --container-gate: 360px;
 }
 
+/* A scroll box that shows a soft shadow at its foot while there is more below: the shadow is fixed to the box, and a
+   surface-coloured fade scrolls with the content to hide it at the end. */
+@utility scroll-edge {
+  background:
+    linear-gradient(transparent, var(--color-surface) 70%) 0 100% / 100% 28px no-repeat local,
+    radial-gradient(farthest-side at 50% 100%, color-mix(in srgb, var(--color-ink) 22%, transparent), transparent) 0
+      100% / 100% 10px no-repeat scroll;
+}
+
 @layer base {
   /* Light on a first visit; the theme switch sets data-theme on <html> (base-ui rule 14), and System lets the
      operating system pick, live. The tokens are light-dark() pairs, so this is the only place the theme is read. */
@@ -134,7 +143,16 @@
     background-color: var(--color-page);
     color: var(--color-ink);
     font-size: var(--text-body);
-    line-height: 1.45;
+    line-height: var(--text-body--line-height);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /* The phone reads at 16 px. */
+  @media (max-width: 560px) {
+    body {
+      font-size: var(--text-heading);
+      line-height: var(--text-heading--line-height);
+    }
   }
 
   :focus-visible {

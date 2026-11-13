@@ -15,3 +15,18 @@ export function Fact({ term, children, numeric = false }: { term: string; childr
     </>
   );
 }
+
+/** Facts in a two-column grid, each a small label over a bold value: the running call's four. */
+export function FactGrid({ children }: { children: ReactNode }) {
+  return <dl className="m-0 mt-3 grid grid-cols-2 gap-x-4 gap-y-3 max-[560px]:mt-1 max-[560px]:gap-y-2">{children}</dl>;
+}
+
+/** One label over its value. `mono` sets the value in the figures face. */
+export function FactTile({ term, children, mono = false }: { term: string; children: ReactNode; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-small text-ink-muted">{term}</dt>
+      <dd className={cn("m-0 text-heading wrap-anywhere", mono && "font-mono")}>{children}</dd>
+    </div>
+  );
+}

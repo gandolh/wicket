@@ -40,7 +40,11 @@ export function RadioGroup<Value extends string>({
         aria-labelledby={labelId}
         value={value}
         onValueChange={onValueChange}
-        className={segmented ? "inline-flex rounded-group border border-line bg-surface p-0.5" : "flex flex-col gap-2"}
+        className={
+          segmented
+            ? "inline-flex rounded-group border border-line-control bg-surface p-0.5 max-[560px]:p-0"
+            : "flex flex-col gap-2"
+        }
       >
         {options.map((option) =>
           segmented ? (
@@ -48,8 +52,8 @@ export function RadioGroup<Value extends string>({
               key={option.value}
               value={option.value}
               className={cn(
-                "cursor-pointer rounded-control px-3 py-1 text-ink-muted select-none focus-visible:outline-offset-1",
-                "hover:not-data-checked:text-ink data-checked:bg-accent data-checked:text-surface",
+                "inline-flex min-h-8 cursor-pointer items-center justify-center rounded-segment px-3 font-medium whitespace-nowrap text-ink-muted select-none max-[560px]:min-h-11 max-[560px]:px-2.25",
+                "hover:not-data-checked:text-ink data-checked:bg-accent-soft data-checked:font-bold data-checked:text-ink data-checked:shadow-[inset_0_0_0_1.5px_var(--color-accent)]",
               )}
             >
               {option.label}
@@ -58,9 +62,9 @@ export function RadioGroup<Value extends string>({
             <label key={option.value} className="flex items-center gap-2">
               <Radio.Root
                 value={option.value}
-                className="flex size-4 flex-none items-center justify-center rounded-full border border-line bg-surface data-checked:border-accent data-checked:bg-accent"
+                className="flex size-4 flex-none items-center justify-center rounded-full border border-line-control bg-surface data-checked:border-accent data-checked:bg-accent-soft"
               >
-                <Radio.Indicator className="size-1.5 rounded-full bg-surface" />
+                <Radio.Indicator className="size-1.5 rounded-full bg-accent" />
               </Radio.Root>
               {option.label}
             </label>

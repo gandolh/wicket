@@ -67,6 +67,6 @@ describe("the queue page", () => {
       runMs: null,
     };
     const records = text(renderToStaticMarkup(<RecordsTable records={[record]} now={now} />));
-    expect(records).toContain("just-a-bot 40 None 4 s None Cancelled");
+    expect(records).toContain("just-a-bot 40 not started 4 s not started Cancelled");
   });
 });
