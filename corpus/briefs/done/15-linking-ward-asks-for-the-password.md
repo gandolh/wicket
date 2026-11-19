@@ -46,3 +46,28 @@ What the update changes here:
 - [ ] Both vendored copies at the new version; the tests above pass; `npm run check` exit 0; `bash corpus/lint.sh` OK.
 - [ ] The outcome note lists each CHANGELOG entry this app crossed and what it needed.
 - [ ] End move `ready_for_deploy` with the app's deploy step (server and web both change).
+
+## Outcome (2026-11-19)
+
+Both vendored copies are ward-auth 1.1.0 (checked against the build's SHA256SUMS), in one commit with the call-site
+change. What people notice: the account page's Link Ward has a "Current password" field beside it; a wrong password
+reads "Wrong password. Type your Wicket password to link Ward.", too many tries says how long to wait, and the field
+keeps focus. A first Ward sign-in whose name looks like a local user's gets `-2`. Rename stays off
+(`allowRename: false`).
+
+CHANGELOG entries crossed (0.7.0 to 1.1.0):
+
+- 0.7.1, 0.7.2: nothing to change.
+- 1.0.0: link takes the password (done: `LinkWard.tsx`, `useWardLink().link(currentPassword)`); both copies together;
+  a link waiting for Ward at a restart lands as `invalid_callback` (words already exist); cookie and budget changes
+  need nothing. No unlink in this app.
+- 1.1.0: migration 5 runs by itself, nothing by hand. The first boot of a scratch seeded database filled
+  `auth_users.username_skeleton` and logged no shared-key line (the app logs nothing for the migration itself). The
+  owner's real database gets it at the first boot after deploy; no step back without a backup.
+
+Tests: `server/src/plugins/auth/ward-link.test.ts` (Ward on with a fake discovery: 400 without the password, 401
+wrong, 429 after five, 200 with the right one, 401 signed out) and `web/src/LinkWard.test.tsx` (the call carries the
+password, empty is caught, a wrong one shows beside the field with focus kept, the wait is named). `npm run check`
+exit 0. Shots at 1280 light and 390 dark, with the error showing, read: no clipping. Not done: the look-alike
+`/register` test (the app has no register or rename route; both answer 404), a "linked user signs in with Ward" test
+(needs a signed ID token; the library's own tests cover it), a live link (no Ward locally).

@@ -259,3 +259,10 @@ minimums 5.27:1 (text) and 3.05:1 (parts); Playwright checks focus rings, reduce
 screens. At 1280 the build differs from its comps by 0.2% of pixels or less. Not pushed or deployed; `docs/images/` not
 retaken. See [briefs/done/14-a-redesign-with-hallmark-on-the-estate-board.md](briefs/done/14-a-redesign-with-hallmark-on-the-estate-board.md)
 and [docs/design.md](../docs/design.md).
+
+## [2026-11-19] done | Brief 15: Linking Ward asks for the password
+
+ward-auth 0.7.0 became 1.1.0 in `server/vendor/ward` and `web/vendor/ward`. Link Ward on the account page asks for the
+current password beside the button and shows a refusal beside the field. Look-alike usernames are taken by the library
+(migration 5 runs at the next boot); Wicket has no register or rename route, so nothing to test there. Not pushed or
+deployed. See [briefs/done/15-linking-ward-asks-for-the-password.md](briefs/done/15-linking-ward-asks-for-the-password.md).

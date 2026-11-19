@@ -1,5 +1,5 @@
 ---
-summary: Who gets into which route, as built 2026-11-04. The vendored ward-auth 0.7.0 as the session guard (cookie wicket_session on /wicket-api, rename off, no sign-up); the two families of routes (app tokens for /v1/jobs, sessions for /v1/queue and /v1/records) and why neither opens the other; why sessions may write here unlike brief-board, and the Origin check on the two admin writes; the 401 rewritten into the API's error shape; /metrics refused through a proxy; accounts and the seed; the settings.
+summary: Who gets into which route, as built 2026-11-04. The vendored ward-auth 1.1.0 as the session guard (cookie wicket_session on /wicket-api, rename off, no sign-up); the two families of routes (app tokens for /v1/jobs, sessions for /v1/queue and /v1/records) and why neither opens the other; why sessions may write here unlike brief-board, and the Origin check on the two admin writes; the 401 rewritten into the API's error shape; /metrics refused through a proxy; accounts and the seed; the settings.
 updated: 2026-11-11
 ---
 
@@ -14,8 +14,8 @@ for callers"). The code wins where this page and it disagree:
 ## The two guards
 
 - **The session guard** is the vendored `wardAuth` plugin
-  (`server/vendor/ward/`, ward-auth 0.7.0, vendored 2026-11-04 with the Ward
-  repo's `npm run vendor`; the same build brief-board carries), registered
+  (`server/vendor/ward/`, ward-auth 1.1.0, vendored 2026-11-19 with the Ward
+  repo's `npm run vendor`; first vendored as 0.7.0 on 2026-11-04), registered
   before any route. Cookie `wicket_session`, path `/wicket-api` (the
   browser-visible prefix, `WICKET_API_PREFIX`), `SameSite=Lax`, auth routes
   under `/auth`. `allowRename: false` turns off the library's
@@ -76,6 +76,12 @@ without echo, and leaves an existing one alone.
 "Sign in with Ward" turns on when `WARD_OIDC_ISSUER` and the other four
 `WARD_OIDC_*` values are set; a first Ward sign-in makes a user. Without them
 only local accounts work and the login page has no Ward button.
+
+Linking Ward (account page, 2026-11-19) asks for the local password again, in
+a field beside the button; the server refuses a link without it (400), with a
+wrong one (401) or after five wrong ones (429, with the wait). A username that
+reads like another user's (`AIice` against `alice`) is taken: a first Ward
+sign-in gets `-2`. Wicket has no register or rename route.
 
 ## Settings
 
