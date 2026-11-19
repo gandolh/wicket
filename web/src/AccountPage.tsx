@@ -3,12 +3,14 @@ import { useLogout, useSession, useWardLink, useWardResult, useWardSignOut } fro
 import { Fact, Facts } from "./components/Facts";
 import { ThemeSwitch } from "./components/ThemeSwitch";
 import { buttonClass } from "./components/ui/buttonClass";
+import { LinkWard } from "./LinkWard";
 import { accountMessage } from "./messages";
 import { navigate } from "./route";
 
 /**
- * The account page: who is signed in and how, "Link Ward" when the server
- * has Ward and this account has none, and sign-out. Nothing here changes the
+ * The account page: who is signed in and how, "Link Ward" (with the account's
+ * password, typed again) when the server has Ward and this account has none,
+ * and sign-out. Nothing here changes the
  * queue. A Ward link comes back here as `?ward=linked` or `?ward_error=…`,
  * which `useWardResult` reads.
  */
@@ -26,7 +28,7 @@ export function AccountPage() {
   if (session.status !== "signed_in") return null;
   const { user, ward } = session;
   const viaWard = session.session.origin === "ward";
-  const failure = link.error ?? result.error ?? logout.error ?? wardSignOut.error;
+  const failure = result.error ?? logout.error ?? wardSignOut.error;
 
   return (
     <main className="mx-auto max-w-account p-6">
@@ -66,12 +68,9 @@ export function AccountPage() {
         </p>
       )}
 
+      {ward.enabled && !ward.linked && !link.linked && <LinkWard link={link} />}
+
       <div className="mt-4 flex flex-wrap gap-2">
-        {ward.enabled && !ward.linked && !link.linked && (
-          <button type="button" className={buttonClass()} disabled={link.pending} onClick={() => void link.link()}>
-            {link.pending ? "Opening Ward…" : "Link Ward"}
-          </button>
-        )}
         <button type="button" className={buttonClass()} disabled={logout.pending} onClick={() => void logout.logout()}>
           Sign out
         </button>
