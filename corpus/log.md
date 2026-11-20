@@ -266,3 +266,7 @@ ward-auth 0.7.0 became 1.1.0 in `server/vendor/ward` and `web/vendor/ward`. Link
 current password beside the button and shows a refusal beside the field. Look-alike usernames are taken by the library
 (migration 5 runs at the next boot); Wicket has no register or rename route, so nothing to test there. Not pushed or
 deployed. See [briefs/done/15-linking-ward-asks-for-the-password.md](briefs/done/15-linking-ward-asks-for-the-password.md).
+
+## [2026-11-20] maintenance | The redesign's board page copied into the repo
+
+The estate redesign board is a private canvas, so `design/estate-redesign/` now holds a copy of this app's page on it and the build behind it: the directions, the judges' and the controller's rulings, the critique, the token hand-off, the board's notes, the owner's decisions, the proposed screens (as HTML with renders, or as the board's own artboard sources), and today's shots from before the redesign. It is the design record of brief 14, which built it; its README says what each file is. Prettier and the Docker build skip the folder.

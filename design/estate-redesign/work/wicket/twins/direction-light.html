@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wicket direction (twin)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reddit+Sans:wght@400;500;700&amp;family=Reddit+Mono:wght@500;700&amp;display=swap">
+<style>
+/* Hallmark · waive 72 · the sheet is a fixed 1440 artboard, never shown on a phone */
+/* Hallmark · shape: app screen · genre: operations console · theme: custom · redesign: reshape
+ * paper: #eeecf0 plum-tinted grey · accent: #7d2668 plum · display: Reddit Mono for figures · body: Reddit Sans
+ * nav: kept (a 56 px header with the account link; no rail, Wicket has one place) · footer: none, a utility page · hero: none, the live card is the first thing
+ * signature: the live column, the number and the running call with its Force close beside the scrolling log · states: queue empty, loading, API down, action failed, call pending
+ * axes: plum-tinted neutrals/humanist sans plus mono figures/one plum accent · posture: restrained · modes: light+dark · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: V, the plum and the mono numeral carry the look, so the cards stay today's raised surfaces with head bands */
+/* Hallmark · answered F4 · one filled button per screen: the dialog's Force close; the page's Force close is a tint and Clear queue an outline */
+.theme-light{color-scheme:light;--color-page:#eeecf0;--color-surface:#fdfbfd;--color-surface-sunk:#f4f2f5;--color-ink:#1d1920;--color-ink-muted:#5a5460;--color-line:#dbd6de;--color-line-strong:#c4bdc8;--color-line-control:#8a8290;--color-accent:#7d2668;--color-accent-soft:#f6e6f0;--color-danger:#ad2e27;--color-danger-line:#c55a53;--color-ok:#1b7444;--color-banner-bg:#fbf0c8;--color-banner-text:#574100;--color-danger-wash:#f3e2e3;--color-ok-wash:#e2ebe7;--color-scrim:rgb(29 25 32 / 0.5);--shadow-card:0 1px 2px rgb(29 25 32 / .12), 0 2px 8px rgb(29 25 32 / .06);--shadow-dialog:0 6px 16px rgb(29 25 32 / .28)}
+.theme-dark{color-scheme:dark;--color-page:#121014;--color-surface:#241f27;--color-surface-sunk:#18151a;--color-ink:#ece7ef;--color-ink-muted:#a9a2b0;--color-line:#38323d;--color-line-strong:#4d4652;--color-line-control:#7a7280;--color-accent:#e7a6d6;--color-accent-soft:#3e2536;--color-danger:#f2877d;--color-danger-line:#b8605a;--color-ok:#62c996;--color-banner-bg:#352d16;--color-banner-text:#f0d27c;--color-danger-wash:#3d2b31;--color-ok-wash:#2b3334;--color-scrim:rgb(0 0 0 / 0.62);--shadow-card:0 0 0 0 transparent;--shadow-dialog:0 6px 16px rgb(0 0 0 / .6)}
+
+.wk{container:page/inline-size;font-family:var(--font-sans);--font-sans:"Reddit Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-mono:"Reddit Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;--gutter:24px;--bar:56px;background:var(--color-page);color:var(--color-ink);font-size:14px;line-height:20px;font-variant-numeric:tabular-nums lining-nums;overflow-x:clip;-webkit-text-size-adjust:100%}
+html,body{overflow-x:clip}
+.wk *,.wk *::before,.wk *::after{box-sizing:border-box}
+.wk :where(h1,h2,h3,p,ul,dl,dd,fieldset,legend){margin:0;padding:0}
+.wk :where(h1,h2,h3){text-wrap:balance}
+.wk{scrollbar-color:var(--color-line-strong) transparent;caret-color:var(--color-accent)}
+.wk ::selection{background:var(--color-accent-soft);color:var(--color-ink)}
+.wk :where(ul){list-style:none}
+.wk :where(fieldset){border:0;min-width:0}
+.wk a{color:var(--color-accent);text-decoration:none;font-weight:700}
+.wk a:hover{text-decoration:underline;text-underline-offset:3px}
+.wk button{font:inherit;color:inherit;cursor:pointer}
+.wk :focus-visible,.wk .ring{outline:2px solid var(--color-accent);outline-offset:2px}
+.wk .mono{font-family:var(--font-mono);font-weight:500}
+.wk .ic{flex:none;display:block}
+.wk .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.wk .bar{position:sticky;top:0;z-index:5;background:var(--color-surface);border-bottom:1px solid var(--color-line);box-shadow:var(--shadow-card)}
+.wk .wrap{max-width:1200px;margin:0 auto;padding:0 var(--gutter)}
+.wk .bar .wrap{height:var(--bar);display:flex;align-items:center;justify-content:space-between;gap:16px}
+.wk .mark{font-size:20px;line-height:28px;font-weight:700;letter-spacing:-.01em}
+.wk .bar-r{display:flex;align-items:center;gap:20px;color:var(--color-ink-muted);white-space:nowrap}
+.wk .bar-r a{display:inline-flex;align-items:center;min-height:44px}
+.wk main.wrap{padding-top:24px;padding-bottom:48px;display:grid;grid-template-columns:400px minmax(0,1fr);gap:24px;align-items:start}
+.wk .live{position:sticky;top:calc(var(--bar) + 24px);display:flex;flex-direction:column;gap:16px;max-height:calc(100dvh - var(--bar) - 48px)}
+.wk .live>.a:nth-child(2){flex:1 1 auto;min-height:0;display:flex}
+.wk .live>.a:nth-child(2)>.card{flex:1;display:flex;flex-direction:column}
+.wk .live>.a:nth-child(2) .wbody{flex:1 1 auto;min-height:153px}
+@media (max-height:640px){.wk .live{position:static;max-height:none}}
+.wk .log{display:grid;gap:24px;min-width:0}
+.wk .a{position:relative;min-width:0}
+.wk .card{color:var(--color-ink);background:var(--color-surface);border:1px solid var(--color-line-strong);border-radius:10px;box-shadow:var(--shadow-card);overflow:hidden;min-width:0}
+.wk .band{color:var(--color-ink);display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:8px 16px;background:var(--color-surface-sunk);border-bottom:1px solid var(--color-line)}
+.wk .band h2{font-size:16px;line-height:24px;font-weight:700;display:flex;align-items:center;gap:8px}
+.wk .band .note{font-size:12px;line-height:16px;color:var(--color-ink-muted);text-align:right}
+.wk .pill{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:20px;padding:0 7px;border-radius:10px;background:var(--color-accent-soft);color:var(--color-ink);font-size:12px;line-height:16px;font-weight:700}
+.wk .serve{padding:16px 20px 20px}
+.wk .lab{font-size:14px;line-height:20px;font-weight:500;color:var(--color-ink-muted)}
+.wk .num{display:flex;align-items:baseline;gap:14px;margin-top:0}
+.wk .num b{font-family:var(--font-mono);font-weight:700;font-variant-numeric:tabular-nums lining-nums;font-size:96px;line-height:96px;letter-spacing:-.02em}
+.wk .num span{font-size:16px;line-height:24px;color:var(--color-ink-muted)}
+.wk .sub{border-top:1px solid var(--color-line);margin-top:8px;padding-top:16px}
+.wk .sub h3{font-size:16px;line-height:24px;font-weight:700}
+.wk .facts{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:12px;margin-top:12px}
+.wk .facts div{display:grid;gap:0;min-width:0}
+.wk .facts dt{font-size:12px;line-height:16px;color:var(--color-ink-muted)}
+.wk .facts dd{font-size:16px;line-height:24px;font-weight:700;overflow-wrap:anywhere}
+.wk .facts dd.mono{font-weight:700}
+.wk .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:8px;border:1px solid var(--color-danger-line);background:transparent;color:var(--color-danger);font-weight:700;font-size:14px;line-height:20px;white-space:nowrap}
+.wk .btn.quiet:hover{background:color-mix(in srgb,var(--color-danger) 8%,transparent)}
+.wk .btn.danger{background:var(--color-danger-wash);font-weight:700}
+.wk .btn.danger:hover{background:color-mix(in srgb,var(--color-danger) 20%,var(--color-surface))}
+.wk .btn.neutral{border-color:var(--color-line-control);background:var(--color-surface-sunk);color:var(--color-ink)}
+.wk .btn.solid{border-color:var(--color-danger);background:var(--color-danger);color:var(--color-surface);font-weight:700}
+.wk .btn:active{background:color-mix(in srgb,var(--color-danger) 26%,var(--color-surface))}
+.wk .btn.neutral:active{background:var(--color-line)}
+.wk .btn.solid:active{background:var(--color-danger);filter:brightness(.88)}
+.wk .btn:disabled,.wk .btn.off{background:var(--color-surface-sunk);border-color:var(--color-line);color:var(--color-ink-muted);cursor:not-allowed}
+.wk .stop{width:100%;margin-top:16px}
+.wk .clr{min-height:36px}
+.wk table{width:100%;border-collapse:collapse}
+.wk th{font-size:12px;line-height:16px;font-weight:500;color:var(--color-ink-muted);text-align:left;padding:8px 16px;border-bottom:1px solid var(--color-line);white-space:nowrap}
+.wk td{padding:0 16px;height:40px;border-bottom:1px solid var(--color-line);white-space:nowrap}
+.wk tbody tr:last-child td{border-bottom:0}
+.wk .r{text-align:right}
+.wk .chip{display:inline-block;margin-left:8px;padding:0 8px;border-radius:10px;background:var(--color-accent-soft);color:var(--color-accent);font-size:12px;line-height:20px;font-weight:700;font-family:var(--font-sans)}
+.wk .wbody{max-height:calc(33px + 8*40px);overflow:auto}
+.wk .wbody.sc th{background:var(--color-surface)}
+.wk .wbody.sc{background:linear-gradient(transparent,var(--color-surface) 70%) 0 100%,radial-gradient(farthest-side at 50% 100%,color-mix(in srgb,var(--color-ink) 22%,transparent),transparent) 0 100%;background-repeat:no-repeat;background-size:100% 28px,100% 10px;background-attachment:local,scroll}
+.wk .fail{color:var(--color-danger);font-weight:700}
+.wk .oc{font-weight:700}.wk .oc.ok{color:var(--color-ok);font-weight:400}.wk .oc.failed{color:var(--color-danger);font-weight:700}.wk .oc.cancelled{color:var(--color-ink-muted);font-weight:400}
+.wk .nb{white-space:nowrap}
+.wk .u{font-family:var(--font-sans);font-weight:400;color:var(--color-ink-muted)}
+.wk .facts dd .mono{font-weight:700}
+.wk .ns{color:var(--color-ink-muted)}
+.wk .seg{display:inline-flex;padding:2px;border:1px solid var(--color-line-control);border-radius:8px;background:var(--color-surface);position:relative}
+.wk .seg label{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:0 12px;border-radius:6px;font-weight:500;color:var(--color-ink-muted);cursor:pointer;white-space:nowrap}
+.wk .seg input{position:absolute;opacity:0;width:1px;height:1px}
+.wk .seg label:has(input:checked){background:var(--color-accent-soft);color:var(--color-ink);font-weight:700;box-shadow:inset 0 0 0 1.5px var(--color-accent)}
+.wk .seg label:has(input:focus-visible){outline:2px solid var(--color-accent);outline-offset:2px}
+.wk .rc{container:rc/inline-size}
+.wk .tbl-calls{display:none}.wk .list{display:block}
+.wk .list li{padding:12px 16px;border-bottom:1px solid var(--color-line);display:grid;gap:2px}
+.wk .list li:last-child{border-bottom:0}
+.wk .l1{display:flex;justify-content:space-between;gap:12px;font-size:16px;line-height:24px;font-weight:500}
+.wk .l2{display:flex;flex-wrap:wrap;gap:0 16px;font-size:14px;line-height:20px;color:var(--color-ink-muted)}
+.wk .l3{display:flex;flex-wrap:wrap;gap:0 16px;font-size:14px;line-height:20px;color:var(--color-ink-muted)}
+.wk .l3 i{font-style:normal;font-family:var(--font-mono);font-weight:500;color:var(--color-ink)}
+.wk .banner{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:var(--color-banner-bg);color:var(--color-banner-text);font-weight:500}
+.wk .banner .ic{margin-top:2px}
+.wk .mk{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--color-ink);color:var(--color-surface);font-size:12px;line-height:22px;font-weight:700;text-align:center;font-family:var(--font-sans)}
+.wk .mk.l{left:-36px}.wk .mk.r{left:calc(100% + 14px)}
+.wk .mk.t1{top:18px}.wk .mk.b1{bottom:18px}.wk .mk.t2{top:15px}.wk .mk.t3{top:15px}.wk .mk.t4{top:214px}
+.wk .frame{position:relative;height:800px;overflow:hidden;background:var(--color-page)}
+.wk .behind{position:absolute;inset:0;overflow:hidden}
+.wk .behind .live{position:static}
+.wk .scrim{position:absolute;z-index:10;inset:0;background:var(--color-scrim)}
+.wk .dlg{z-index:11;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100% - 32px));background:var(--color-surface);color:var(--color-ink);border:1px solid var(--color-line-strong);border-radius:10px;box-shadow:var(--shadow-dialog);padding:20px 24px 24px}
+.wk .dlg h2{font-size:20px;line-height:28px;font-weight:700;margin-bottom:8px}
+.wk .dlg p{font-size:14px;line-height:20px;color:var(--color-ink)}
+.wk .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.wk .acts .btn{min-height:44px;padding:0 20px}
+@container page (max-width:1279px){.wk .mk{display:none}}
+@container page (max-width:1199px){.wk main.wrap{grid-template-columns:360px minmax(0,1fr)}}
+@container rc (min-width:480px){.wk .list li{display:flex;flex-wrap:wrap;column-gap:24px}.wk .list li .l1{flex:0 0 100%}}
+@container rc (min-width:620px){.wk .tbl-calls{display:table}.wk .list{display:none}}
+@container rc (min-width:620px) and (max-width:675px){.wk .tbl-calls th,.wk .tbl-calls td{padding-left:12px;padding-right:12px}}
+@container page (min-width:561px){.wk .band h2{font-size:20px;line-height:28px}}
+@container page (max-width:839px){
+ .wk main.wrap{grid-template-columns:minmax(0,1fr);gap:8px;padding-top:8px}
+ .wk .live{position:static;display:contents}
+ .wk .live>.a:nth-child(1),.wk .live>.banner{order:0}
+ .wk .live>.a:nth-child(2){order:1}
+ .wk .log{display:contents}
+ .wk .log>.a{order:2}
+}
+@container page (max-width:560px){
+ .wk{--gutter:16px;--bar:52px;font-size:16px;line-height:24px}
+ .wk .serve{padding:12px 16px 16px}
+ .wk .num b{font-size:64px;line-height:56px}
+ .wk .num{gap:12px}
+ .wk .sub{padding-top:10px}
+ .wk .facts{row-gap:8px;margin-top:4px}
+ .wk .btn,.wk .clr{min-height:44px}
+ .wk .btn:active{background:color-mix(in srgb,var(--color-danger) 26%,var(--color-surface))}
+.wk .btn.neutral:active{background:var(--color-line)}
+.wk .btn.solid:active{background:var(--color-danger);filter:brightness(.88)}
+.wk .btn:disabled,.wk .btn.off{background:var(--color-surface-sunk);border-color:var(--color-line);color:var(--color-ink-muted);cursor:not-allowed}
+.wk .stop{min-height:48px;font-size:16px;margin-top:12px}
+ .wk .band{min-height:48px;padding:6px 12px;flex-wrap:wrap}
+ .wk .bar-r a{min-width:44px;justify-content:flex-end}
+ .wk .band .note{text-align:left;flex-basis:100%}
+ .wk .band:has(.note){flex-direction:column;align-items:flex-start;gap:0;padding:8px 12px}
+ .wk .seg{padding:0}
+ .wk .seg label{min-height:44px;padding:0 9px;font-size:14px}
+ .wk .band:has(.seg){padding-block:4px}
+ .wk td{height:40px;padding:0 12px;font-size:16px}.wk th{padding:6px 12px}
+ .wk .bar-r{gap:12px;font-size:13px;line-height:18px}
+ .wk .banner{font-size:16px;line-height:24px}
+ .wk .dlg{padding:20px 20px 20px}
+ .wk .dlg p{font-size:16px;line-height:24px}
+ .wk .acts .btn{flex:1;min-height:48px;font-size:16px}
+ .wk .frame{height:844px}
+}
+@container page (max-width:379px){
+ .wk .seg label{padding:0 6px}
+ .wk td,.wk th{padding-left:8px;padding-right:8px}
+ .wk td:first-child,.wk th:first-child{padding-left:12px}
+ .wk td:last-child,.wk th:last-child{padding-right:12px}
+}
+
+.dr{box-sizing:border-box;width:1440px;padding:56px 64px 72px;display:grid;gap:56px}
+.dr h2.dh{font-size:20px;line-height:28px;font-weight:700;margin-bottom:4px}
+.dr .sec>p.cap{font-size:14px;line-height:20px;color:var(--color-ink-muted);margin-bottom:20px}
+.dr .hero{display:grid;gap:12px}
+.dr .hero .kick{font-size:14px;line-height:20px;font-weight:500;color:var(--color-ink-muted)}
+.dr .hero h1{font-size:56px;line-height:60px;font-weight:700;letter-spacing:-.02em}
+.dr .hero p{font-size:20px;line-height:28px;max-width:760px}
+.dr .two{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.dr .pal{padding:20px;border-radius:12px;border:1px solid var(--color-line-strong);background:var(--color-page);color:var(--color-ink)}
+.dr .pal h3{font-size:16px;line-height:24px;font-weight:700;margin-bottom:12px}
+.dr .sw-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.dr .sw{min-width:0}
+.dr .sw i{display:block;height:48px;border-radius:8px;border:1px solid var(--color-line-strong)}
+.dr .sw b{display:block;font-size:13px;line-height:18px;font-weight:700;margin-top:6px}
+.dr .sw code,.dr .tk{display:block;font-family:var(--font-mono);font-weight:500;font-size:11px;line-height:16px;color:var(--color-ink-muted)}
+.dr .types{display:grid;grid-template-columns:1.1fr 1fr;gap:24px}
+.dr .tcard{padding:24px;border-radius:12px;border:1px solid var(--color-line-strong);background:var(--color-surface);box-shadow:var(--shadow-card)}
+.dr .spec{display:grid;grid-template-columns:120px 1fr;gap:4px 16px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--color-line)}
+.dr .spec:last-child{border-bottom:0}
+.dr .spec small{font-size:12px;line-height:16px;color:var(--color-ink-muted)}
+.dr .scale{width:100%;border-collapse:collapse;font-size:13px;line-height:18px}
+.dr .scale th{font-size:12px;padding:6px 8px 6px 0;border-bottom:1px solid var(--color-line);text-align:left;color:var(--color-ink-muted);font-weight:700}
+.dr .scale td{height:auto;padding:7px 8px 7px 0;border-bottom:1px solid var(--color-line);white-space:normal;vertical-align:top}
+.dr .scale tr:last-child td{border-bottom:0}
+.dr .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.dr .tile{padding:20px;border-radius:12px;border:1px solid var(--color-line-strong);background:var(--color-surface);box-shadow:var(--shadow-card)}
+.dr .tile h3{font-size:16px;line-height:24px;font-weight:700;margin-bottom:12px}
+.dr .space{display:flex;align-items:flex-end;gap:14px}
+.dr .space div{display:grid;gap:6px;justify-items:start;font-size:12px;line-height:16px;color:var(--color-ink-muted)}
+.dr .space i{display:block;background:var(--color-accent);border-radius:2px;width:24px}
+.dr .rad{display:flex;gap:16px;flex-wrap:wrap}
+.dr .rad div{display:grid;gap:6px;justify-items:start;font-size:12px;line-height:16px;color:var(--color-ink-muted)}
+.dr .rad i{display:block;width:56px;height:56px;border:1.5px solid var(--color-ink-muted);background:var(--color-accent-soft)}
+.dr .elev{display:flex;gap:16px;flex-wrap:wrap}
+.dr .elev div{width:96px;height:72px;border-radius:10px;background:var(--color-surface);border:1px solid var(--color-line-strong);display:flex;align-items:flex-end;padding:8px;font-size:12px;line-height:16px;color:var(--color-ink-muted)}
+.dr .cmp{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.dr .pnl{padding:20px;border-radius:12px;border:1px solid var(--color-line-strong);display:grid;gap:20px;align-content:start;font-size:14px;line-height:20px}
+.dr .pnl h3{font-size:12px;line-height:16px;font-weight:700;color:var(--color-ink-muted)}
+.dr .pnl .grp{display:grid;gap:8px}
+.dr .brow{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.dr .btn.hov.danger{background:color-mix(in srgb,var(--color-danger) 20%,var(--color-surface))}
+.dr .notice{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;font-size:14px;line-height:20px}
+.dr .notice.ok{background:var(--color-ok-wash)}
+.dr .notice.err{background:var(--color-danger-wash);color:var(--color-danger)}
+.dr .notice button.lk{border:0;background:transparent;padding:0;text-decoration:underline;color:var(--color-accent);font-weight:400;min-height:24px}
+.dr .notice.err button.lk{color:var(--color-danger)}
+.dr .fld{display:grid;gap:4px;color:var(--color-ink-muted)}
+.dr .fld .in{height:40px;border:1px solid var(--color-line-control);border-radius:8px;background:var(--color-surface);color:var(--color-ink);padding:0 12px;display:flex;align-items:center}
+.dr .fld .in.bad{border-color:var(--color-danger);border-width:2px}
+.dr .fld .er{color:var(--color-danger)}
+.dr .miniwrap{width:360px;border-radius:10px;overflow:hidden}
+.dr .states{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:start}
+.dr .states>div{display:grid;gap:12px;align-content:start}
+.dr .states h3{font-size:16px;line-height:24px;font-weight:700}
+.dr .st{display:grid;gap:6px}
+.dr .st>small{font-size:12px;line-height:16px;font-weight:700;color:var(--color-ink-muted)}
+.dr .emp{display:grid;justify-items:center;gap:8px;padding:28px 16px;color:var(--color-ink-muted);text-align:center}
+.dr .emp .ic{color:var(--color-ink-muted)}
+.dr .emp strong{color:var(--color-ink);font-size:16px;line-height:24px}
+.dr .ctab{width:100%;border-collapse:collapse;font-size:13px;line-height:18px}
+.dr .ctab th{font-size:12px;line-height:16px;padding:6px 8px;border-bottom:1px solid var(--color-line-strong)}
+.dr .ctab td{height:auto;padding:5px 8px;border-bottom:1px solid var(--color-line);white-space:normal}
+.dr .ctab .r{text-align:right;font-family:var(--font-mono);font-weight:500}
+.dr .pf{font-weight:700;color:var(--color-ok)}
+body{margin:0}
+</style>
+</head><body><div class="theme-light wk dr">
+
+<section class="hero"><p class="kick">Wicket · direction</p><h1>Live beside the log</h1><p>Everything happening now sits in one column that stays put, and the record of what already happened scrolls beside it.</p></section>
+<section class="sec"><h2 class="dh">Palette by role</h2><p class="cap">Light and dark side by side, in the app's own token names. Plum (hue about 315) is the accent: the chosen period, the next chip, the account link and the focus ring. Never the numeral, never a danger action.</p>
+<div class="two"><div class="pal theme-light wk"><h3>Light</h3><div class="sw-grid"><div class="sw"><i style="background:var(--color-page)"></i><b>page</b><code>--color-page</code><code>#eeecf0</code><span class="tk">ground</span></div><div class="sw"><i style="background:var(--color-surface)"></i><b>surface</b><code>--color-surface</code><code>#fdfbfd</code><span class="tk">cards, header</span></div><div class="sw"><i style="background:var(--color-surface-sunk)"></i><b>surface-sunk</b><code>--color-surface-sunk</code><code>#f4f2f5</code><span class="tk">head bands, Cancel</span></div><div class="sw"><i style="background:var(--color-ink)"></i><b>ink</b><code>--color-ink</code><code>#1d1920</code><span class="tk">text</span></div><div class="sw"><i style="background:var(--color-ink-muted)"></i><b>ink-muted</b><code>--color-ink-muted</code><code>#5a5460</code><span class="tk">labels, units</span></div><div class="sw"><i style="background:var(--color-line)"></i><b>line</b><code>--color-line</code><code>#dbd6de</code><span class="tk">row rules</span></div><div class="sw"><i style="background:var(--color-line-strong)"></i><b>line-strong</b><code>--color-line-strong</code><code>#c4bdc8</code><span class="tk">card edge (new)</span></div><div class="sw"><i style="background:var(--color-line-control)"></i><b>line-control</b><code>--color-line-control</code><code>#8a8290</code><span class="tk">control edge (new)</span></div><div class="sw"><i style="background:var(--color-accent)"></i><b>accent</b><code>--color-accent</code><code>#7d2668</code><span class="tk">links, ring, outline</span></div><div class="sw"><i style="background:var(--color-accent-soft)"></i><b>accent-soft</b><code>--color-accent-soft</code><code>#f6e6f0</code><span class="tk">pill, chosen (new)</span></div><div class="sw"><i style="background:var(--color-danger)"></i><b>danger</b><code>--color-danger</code><code>#ad2e27</code><span class="tk">Failed, Force close</span></div><div class="sw"><i style="background:var(--color-danger-line)"></i><b>danger-line</b><code>--color-danger-line</code><code>#c55a53</code><span class="tk">button edge</span></div><div class="sw"><i style="background:var(--color-danger-wash)"></i><b>danger-wash</b><code>--color-danger-wash</code><code>#f3e2e3</code><span class="tk">Force close fill</span></div><div class="sw"><i style="background:var(--color-ok)"></i><b>ok</b><code>--color-ok</code><code>#1b7444</code><span class="tk">OK outcome</span></div><div class="sw"><i style="background:var(--color-ok-wash)"></i><b>ok-wash</b><code>--color-ok-wash</code><code>#e2ebe7</code><span class="tk">done notice</span></div><div class="sw"><i style="background:var(--color-banner-bg)"></i><b>banner-bg</b><code>--color-banner-bg</code><code>#fbf0c8</code><span class="tk">API-down banner</span></div><div class="sw"><i style="background:var(--color-banner-text)"></i><b>banner-text</b><code>--color-banner-text</code><code>#574100</code><span class="tk">banner text</span></div></div></div><div class="pal theme-dark wk"><h3>Dark</h3><div class="sw-grid"><div class="sw"><i style="background:var(--color-page)"></i><b>page</b><code>--color-page</code><code>#121014</code><span class="tk">ground</span></div><div class="sw"><i style="background:var(--color-surface)"></i><b>surface</b><code>--color-surface</code><code>#241f27</code><span class="tk">cards, header</span></div><div class="sw"><i style="background:var(--color-surface-sunk)"></i><b>surface-sunk</b><code>--color-surface-sunk</code><code>#18151a</code><span class="tk">head bands, Cancel</span></div><div class="sw"><i style="background:var(--color-ink)"></i><b>ink</b><code>--color-ink</code><code>#ece7ef</code><span class="tk">text</span></div><div class="sw"><i style="background:var(--color-ink-muted)"></i><b>ink-muted</b><code>--color-ink-muted</code><code>#a9a2b0</code><span class="tk">labels, units</span></div><div class="sw"><i style="background:var(--color-line)"></i><b>line</b><code>--color-line</code><code>#38323d</code><span class="tk">row rules</span></div><div class="sw"><i style="background:var(--color-line-strong)"></i><b>line-strong</b><code>--color-line-strong</code><code>#4d4652</code><span class="tk">card edge (new)</span></div><div class="sw"><i style="background:var(--color-line-control)"></i><b>line-control</b><code>--color-line-control</code><code>#7a7280</code><span class="tk">control edge (new)</span></div><div class="sw"><i style="background:var(--color-accent)"></i><b>accent</b><code>--color-accent</code><code>#e7a6d6</code><span class="tk">links, ring, outline</span></div><div class="sw"><i style="background:var(--color-accent-soft)"></i><b>accent-soft</b><code>--color-accent-soft</code><code>#3e2536</code><span class="tk">pill, chosen (new)</span></div><div class="sw"><i style="background:var(--color-danger)"></i><b>danger</b><code>--color-danger</code><code>#f2877d</code><span class="tk">Failed, Force close</span></div><div class="sw"><i style="background:var(--color-danger-line)"></i><b>danger-line</b><code>--color-danger-line</code><code>#b8605a</code><span class="tk">button edge</span></div><div class="sw"><i style="background:var(--color-danger-wash)"></i><b>danger-wash</b><code>--color-danger-wash</code><code>#3d2b31</code><span class="tk">Force close fill</span></div><div class="sw"><i style="background:var(--color-ok)"></i><b>ok</b><code>--color-ok</code><code>#62c996</code><span class="tk">OK outcome</span></div><div class="sw"><i style="background:var(--color-ok-wash)"></i><b>ok-wash</b><code>--color-ok-wash</code><code>#2b3334</code><span class="tk">done notice</span></div><div class="sw"><i style="background:var(--color-banner-bg)"></i><b>banner-bg</b><code>--color-banner-bg</code><code>#352d16</code><span class="tk">API-down banner</span></div><div class="sw"><i style="background:var(--color-banner-text)"></i><b>banner-text</b><code>--color-banner-text</code><code>#f0d27c</code><span class="tk">banner text</span></div></div></div></div></section>
+<section class="sec"><h2 class="dh">Type</h2><p class="cap">Reddit Sans for every label and title. Reddit Mono only for figures and identifiers: the numeral, tickets, elapsed times, model ids, counts.</p>
+<div class="types"><div class="tcard">
+<div class="spec"><small>Mono 700, 96/96 (64/64 phone)</small><span class="mono" style="font-weight:700;font-size:96px;line-height:96px;letter-spacing:-.02em">1043</span></div>
+<div class="spec"><small>Sans 700, 20/28</small><span style="font-size:20px;line-height:28px;font-weight:700">Wicket, Force close ticket 1043?</span></div>
+<div class="spec"><small>Sans 700, 16/24</small><span style="font-size:16px;line-height:24px;font-weight:700">Calls per app · shelfmark</span></div>
+<div class="spec"><small>Sans 400 and Mono 500, 14/20</small><span style="font-size:14px;line-height:20px">just-a-bot · <span class="mono">gpt-oss:120b</span> · <span class="mono">11</span><span class="u"> s</span></span></div>
+<div class="spec"><small>Sans 500, 12/16</small><span style="font-size:12px;line-height:16px;font-weight:700;color:var(--color-ink-muted)">Counts and timings only. Wicket keeps no prompt or answer.</span></div></div>
+<div class="tcard"><table class="scale"><thead><tr><th>Size / line</th><th>Face, weight</th><th>Used for</th></tr></thead><tbody>
+<tr><td class="mono">96 / 96, 64 / 64</td><td>Mono 700</td><td>The ticket numeral, desktop and phone</td></tr>
+<tr><td class="mono">20 / 28</td><td>Sans 700</td><td>Wordmark, dialog title</td></tr>
+<tr><td class="mono">16 / 24</td><td>Sans 700 / 500</td><td>Card titles, running facts, phone rows and tables</td></tr>
+<tr><td class="mono">14 / 20</td><td>Sans 400-700, Mono 500</td><td>Desktop tables, buttons, body</td></tr>
+<tr><td class="mono">12 / 16</td><td>Sans 500, 700</td><td>Column heads, pills, fact labels, the privacy line</td></tr></tbody></table>
+<p style="font-size:12px;line-height:16px;color:var(--color-ink-muted);margin-top:12px">Five sizes (six counting the phone numeral). Tabular lining figures everywhere; no tracked capitals.</p></div></div></section>
+<section class="sec"><h2 class="dh">Spacing, radii, elevation</h2><p class="cap">A 4 px scale. Three radii plus full. Cards carry a visible edge in both themes, so a card still reads in dark, where it also rises by lightness.</p>
+<div class="row3">
+<div class="tile"><h3>Spacing</h3><div class="space"><div><i style="height:8px"></i>4</div><div><i style="height:16px"></i>8</div><div><i style="height:24px"></i>12</div><div><i style="height:32px"></i>16</div><div><i style="height:40px"></i>20</div><div><i style="height:48px"></i>24</div></div></div>
+<div class="tile"><h3>Radii</h3><div class="rad"><div><i style="border-radius:6px"></i>6 segment</div><div><i style="border-radius:8px"></i>8 control</div><div><i style="border-radius:10px"></i>10 card, dialog, pill</div></div></div>
+<div class="tile"><h3>Elevation</h3><div class="elev"><div style="border-color:var(--color-line);background:var(--color-page)">0 flat</div><div>1 card</div><div style="box-shadow:var(--shadow-dialog)">2 dialog</div></div></div></div></section>
+<section class="sec"><h2 class="dh">Components, both themes</h2><p class="cap">Wicket has no menu and no toast; its notices are inline, and the sign-in form is the only place with a field.</p>
+<div class="cmp"><div class="pnl theme-light wk"><h3>Light</h3><div class="grp"><h3>Buttons: Force close rests tinted, Clear queue stays outlined</h3>
+<div class="brow"><button class="btn danger" type="button">Force close</button><button class="btn danger hov" type="button">Force close, hover</button><button class="btn danger ring" type="button">Force close, focus</button><button class="btn danger off" type="button" disabled>Working…</button></div>
+<div class="brow"><button class="btn quiet" type="button">Clear queue</button><button class="btn neutral" type="button">Cancel</button><button class="btn solid" type="button">Force close</button><button class="btn solid off" type="button" disabled>Working…</button></div></div><div class="grp"><h3>Period, a radio group: chosen is a tint with a plum outline</h3><div class="brow">
+<fieldset class="seg"><legend class="vh">Period</legend><label><input type="radio" name="pr628" checked>Last 24 hours</label><label><input type="radio" name="q9vjm">Last 7 days</label></fieldset>
+<fieldset class="seg"><legend class="vh">Period, focused</legend><label class="ring" style="outline-offset:0"><input type="radio" name="r96oh">Last 24 hours</label><label style="box-shadow:inset 0 0 0 1.5px var(--color-accent);background:var(--color-accent-soft);color:var(--color-ink);font-weight:700"><input type="radio" name="srgaq" checked>Last 7 days</label></fieldset></div></div><div class="grp"><h3>Rows: a table row and a phone list row</h3>
+<div class="card"><table><thead><tr><th>Ticket</th><th>App</th><th class="r">Waited</th></tr></thead><tbody><tr><td class="mono">1044<span class="chip">next</span></td><td>just-a-bot</td><td class="r"><span class="mono">11</span><span class="u"> s</span></td></tr><tr><td class="mono">1045</td><td>almanac</td><td class="r"><span class="mono">6</span><span class="u"> s</span></td></tr></tbody></table></div>
+<div class="card"><table><thead><tr><th>App</th><th class="r">Calls</th><th class="r">OK</th><th class="r">Failed</th><th class="r">Cancelled</th></tr></thead><tbody><tr><td>shelfmark</td><td class="r mono">31</td><td class="r mono">28</td><td class="r mono fail">2</td><td class="r mono">1</td></tr></tbody></table></div>
+<div class="card"><ul class="list" style="display:block"><li><div class="l1"><span>postern</span><span class="oc failed">Failed</span></div><div class="l2"><span class="mono">1039</span><span class="ns">not started</span></div><div class="l3"><span>Finished <i>10:07 AM</i></span><span>Waited <i>2</i><span class="u"> s</span></span><span>Ran <span class="ns">not started</span></span></div></li></ul></div></div><div class="grp"><h3>Notices and the banner (the page's own words)</h3>
+<p class="notice ok" role="status"><span>Force closed ticket 1043.</span><button class="lk" type="button">Dismiss</button></p>
+<p class="notice err" role="alert"><span>That didn’t work. Wicket may be down; try again.</span><button class="lk" type="button">Dismiss</button></p>
+<section class="card banner" role="status"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5M12 16v.5"></path></svg><p>Wicket’s API isn’t answering. Showing what it said at 10:30 AM. Trying again every few seconds.</p></section></div><div class="grp"><h3>Field with a label and an error (the sign-in form)</h3>
+<label class="fld"><span>Username</span><span class="in bad">&nbsp;</span><span class="er">Enter your username.</span></label>
+<label class="fld"><span>Password</span><span class="in">••••••••</span></label>
+<p style="color:var(--color-danger)" role="alert">Wrong username or password.</p></div></div><div class="pnl theme-dark wk"><h3>Dark</h3><div class="grp"><h3>Buttons: Force close rests tinted, Clear queue stays outlined</h3>
+<div class="brow"><button class="btn danger" type="button">Force close</button><button class="btn danger hov" type="button">Force close, hover</button><button class="btn danger ring" type="button">Force close, focus</button><button class="btn danger off" type="button" disabled>Working…</button></div>
+<div class="brow"><button class="btn quiet" type="button">Clear queue</button><button class="btn neutral" type="button">Cancel</button><button class="btn solid" type="button">Force close</button><button class="btn solid off" type="button" disabled>Working…</button></div></div><div class="grp"><h3>Period, a radio group: chosen is a tint with a plum outline</h3><div class="brow">
+<fieldset class="seg"><legend class="vh">Period</legend><label><input type="radio" name="pa4k1" checked>Last 24 hours</label><label><input type="radio" name="q4767">Last 7 days</label></fieldset>
+<fieldset class="seg"><legend class="vh">Period, focused</legend><label class="ring" style="outline-offset:0"><input type="radio" name="rzxi1">Last 24 hours</label><label style="box-shadow:inset 0 0 0 1.5px var(--color-accent);background:var(--color-accent-soft);color:var(--color-ink);font-weight:700"><input type="radio" name="sl4xa" checked>Last 7 days</label></fieldset></div></div><div class="grp"><h3>Rows: a table row and a phone list row</h3>
+<div class="card"><table><thead><tr><th>Ticket</th><th>App</th><th class="r">Waited</th></tr></thead><tbody><tr><td class="mono">1044<span class="chip">next</span></td><td>just-a-bot</td><td class="r"><span class="mono">11</span><span class="u"> s</span></td></tr><tr><td class="mono">1045</td><td>almanac</td><td class="r"><span class="mono">6</span><span class="u"> s</span></td></tr></tbody></table></div>
+<div class="card"><table><thead><tr><th>App</th><th class="r">Calls</th><th class="r">OK</th><th class="r">Failed</th><th class="r">Cancelled</th></tr></thead><tbody><tr><td>shelfmark</td><td class="r mono">31</td><td class="r mono">28</td><td class="r mono fail">2</td><td class="r mono">1</td></tr></tbody></table></div>
+<div class="card"><ul class="list" style="display:block"><li><div class="l1"><span>postern</span><span class="oc failed">Failed</span></div><div class="l2"><span class="mono">1039</span><span class="ns">not started</span></div><div class="l3"><span>Finished <i>10:07 AM</i></span><span>Waited <i>2</i><span class="u"> s</span></span><span>Ran <span class="ns">not started</span></span></div></li></ul></div></div><div class="grp"><h3>Notices and the banner (the page's own words)</h3>
+<p class="notice ok" role="status"><span>Force closed ticket 1043.</span><button class="lk" type="button">Dismiss</button></p>
+<p class="notice err" role="alert"><span>That didn’t work. Wicket may be down; try again.</span><button class="lk" type="button">Dismiss</button></p>
+<section class="card banner" role="status"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5M12 16v.5"></path></svg><p>Wicket’s API isn’t answering. Showing what it said at 10:30 AM. Trying again every few seconds.</p></section></div><div class="grp"><h3>Field with a label and an error (the sign-in form)</h3>
+<label class="fld"><span>Username</span><span class="in bad">&nbsp;</span><span class="er">Enter your username.</span></label>
+<label class="fld"><span>Password</span><span class="in">••••••••</span></label>
+<p style="color:var(--color-danger)" role="alert">Wrong username or password.</p></div></div></div></section>
+<section class="sec"><h2 class="dh">States</h2><p class="cap">Real strings from the app. Queue empty is the one new title; it sits above today's line, Nobody waiting.</p>
+<div class="pnl theme-light wk"><div class="states">
+<div><h3>Queue</h3>
+<div class="st"><small>Idle: nothing yet, nobody waiting, nothing running</small><div class="card serve"><p class="lab">Now serving</p><div class="num"><b style="font-family:var(--font-sans);font-size:64px;line-height:64px;letter-spacing:-.02em">None yet</b></div><p style="color:var(--color-ink-muted);margin-top:4px">Nobody waiting</p><div class="sub"><h3>Running</h3><p style="color:var(--color-ink-muted);margin-top:4px">Nothing running.</p></div></div></div>
+<div class="st"><small>Waiting, empty: a calm Queue empty, Clear queue stays</small><div class="card"><div class="band"><h2>Waiting</h2><button class="btn quiet clr" type="button">Clear queue</button></div><div class="emp"><svg class="ic " viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5.5 12.5 4.2 4.2 8.8-9"></path></svg><strong>Queue empty</strong><span>Nobody waiting.</span></div></div></div>
+<div class="st"><small>Calls per app, no calls in the period</small><div class="card"><div class="emp"><svg class="ic " viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"></path></svg><strong>No calls in this period.</strong></div></div></div>
+<div class="st"><small>Recent calls, first use</small><div class="card"><div class="emp"><svg class="ic " viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"></path></svg><strong>No calls yet.</strong></div></div></div>
+<div class="st"><small>Loading</small><div class="card"><div class="emp"><span>Loading the queue…</span></div></div></div>
+</div>
+<div><h3>Force close dialog</h3>
+<div class="st"><small>Pending: both buttons disabled, the label becomes Working…</small><div class="card" style="padding:20px 24px"><h2 style="font-size:20px;line-height:28px;font-weight:700;margin-bottom:8px">Force close ticket 1043?</h2><p>Wicket aborts shelfmark’s call to <span class="mono">gpt-oss:120b</span>. shelfmark sees the ticket as cancelled, and the next ticket starts.</p><div class="acts"><button class="btn neutral off" type="button" disabled>Cancel</button><button class="btn solid off" type="button" disabled>Working…</button></div></div></div>
+<div class="st"><small>The sibling dialog, Clear the queue?</small><div class="card" style="padding:20px 24px"><h2 style="font-size:20px;line-height:28px;font-weight:700;margin-bottom:8px">Clear the queue?</h2><p style="margin-bottom:8px">The 3 waiting tickets are dropped, and their apps see them as cancelled.</p><p>The running call goes on. Use Force close for that.</p><div class="acts"><button class="btn neutral" type="button">Cancel</button><button class="btn solid" type="button">Clear queue</button></div></div></div>
+<div class="st"><small>Nothing was running by the time of the click</small><p class="notice ok" role="status"><span>Nothing was running by then.</span><button class="lk" type="button">Dismiss</button></p></div>
+</div>
+<div><h3>Queue, API down</h3>
+<div class="st"><small>First load failed: header says Loading…, live cards never loaded</small><div class="card banner" role="status"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5M12 16v.5"></path></svg><p>Wicket’s API isn’t answering. Trying again every few seconds.</p></div></div>
+<div class="st"><small>It answered once: the live column keeps the banner, records stay</small><div class="card banner" role="status"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5M12 16v.5"></path></svg><p>Wicket’s API isn’t answering. Showing what it said at 10:30 AM. Trying again every few seconds.</p></div></div>
+<div class="st"><small>An action fails while the API is down</small><p class="notice err" role="alert"><span>That didn’t work. Wicket may be down; try again.</span><button class="lk" type="button">Dismiss</button></p></div>
+</div>
+</div></div></section>
+<section class="sec"><h2 class="dh">Contrast</h2><p class="cap">Every text and icon pair, both themes, scripted from the token values. Text 4.5, large text and UI parts 3, edges 1.3, a card against its page 1.09 (dark lifts 1.15).</p><div class="two"><div class="tcard"><table class="ctab"><thead><tr><th>Pair</th><th class="r">Light</th><th class="r">Dark</th><th class="r">Need</th></tr></thead><tbody><tr><td>ink on surface</td><td class="r">16.82</td><td class="r">13.26</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>ink on page</td><td class="r">14.76</td><td class="r">15.54</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>ink on surface-sunk (head band)</td><td class="r">15.56</td><td class="r">14.85</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>ink-muted on surface</td><td class="r">7.1</td><td class="r">6.52</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>ink-muted on surface-sunk (labels, privacy line)</td><td class="r">6.57</td><td class="r">7.31</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>ink-muted on page</td><td class="r">6.23</td><td class="r">7.64</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>accent on surface (account link)</td><td class="r">8.68</td><td class="r">8.32</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>accent on page</td><td class="r">7.62</td><td class="r">9.75</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>accent on accent-soft (next chip)</td><td class="r">7.45</td><td class="r">7.11</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>ink on accent-soft (count pill, chosen period)</td><td class="r">14.43</td><td class="r">11.32</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>danger on surface (Failed, Clear queue)</td><td class="r">6.38</td><td class="r">6.57</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>danger on surface-sunk</td><td class="r">5.9</td><td class="r">7.35</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>danger on danger-wash (Force close)</td><td class="r">5.25</td><td class="r">5.37</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>surface on danger (Force close confirm)</td><td class="r">6.38</td><td class="r">6.57</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>ink on danger-wash (notice)</td><td class="r">13.86</td><td class="r">10.86</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>danger on danger-wash (error notice)</td><td class="r">5.25</td><td class="r">5.37</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>ink on ok-wash (notice)</td><td class="r">14.25</td><td class="r">10.61</td><td class="r">4.5<span class="pf"> pass</span></td></tr></tbody></table></div><div class="tcard"><table class="ctab"><thead><tr><th>Pair</th><th class="r">Light</th><th class="r">Dark</th><th class="r">Need</th></tr></thead><tbody><tr><td>ok on surface (OK outcome)</td><td class="r">5.62</td><td class="r">7.93</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>banner-text on banner-bg</td><td class="r">8.51</td><td class="r">9.24</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>danger-line on surface (Clear queue edge)</td><td class="r">4.11</td><td class="r">3.74</td><td class="r">3<span class="pf"> pass</span></td></tr><tr><td>danger-line on danger-wash (Force close edge)</td><td class="r">3.39</td><td class="r">3.06</td><td class="r">3<span class="pf"> pass</span></td></tr><tr><td>line-control on surface (Period group edge)</td><td class="r">3.59</td><td class="r">3.5</td><td class="r">3<span class="pf"> pass</span></td></tr><tr><td>line-control on surface-sunk (Cancel edge)</td><td class="r">3.32</td><td class="r">3.92</td><td class="r">3<span class="pf"> pass</span></td></tr><tr><td>ink-muted on surface (unit s, not started)</td><td class="r">7.1</td><td class="r">6.52</td><td class="r">4.5<span class="pf"> pass</span></td></tr><tr><td>line-strong on surface (dialog edge)</td><td class="r">1.78</td><td class="r">1.78</td><td class="r">1.3<span class="pf"> pass</span></td></tr><tr><td>accent on accent-soft (chosen period outline)</td><td class="r">7.45</td><td class="r">7.11</td><td class="r">3<span class="pf"> pass</span></td></tr><tr><td>accent on surface (focus ring)</td><td class="r">8.68</td><td class="r">8.32</td><td class="r">3<span class="pf"> pass</span></td></tr><tr><td>accent on page (focus ring)</td><td class="r">7.62</td><td class="r">9.75</td><td class="r">3<span class="pf"> pass</span></td></tr><tr><td>accent on surface-sunk (focus ring)</td><td class="r">8.03</td><td class="r">9.32</td><td class="r">3<span class="pf"> pass</span></td></tr><tr><td>line-strong on page (card edge)</td><td class="r">1.56</td><td class="r">2.08</td><td class="r">1.3<span class="pf"> pass</span></td></tr><tr><td>line-strong on banner-bg (banner edge)</td><td class="r">1.61</td><td class="r">1.5</td><td class="r">1.3<span class="pf"> pass</span></td></tr><tr><td>surface on page (light: card also carries an edge)</td><td class="r">1.14</td><td class="r">1.17</td><td class="r">1.09<span class="pf"> pass</span></td></tr><tr><td>surface-sunk on surface (head band)</td><td class="r">1.08</td><td class="r">1.12</td><td class="r">1.03<span class="pf"> pass</span></td></tr><tr><td>surface on page (dark lifts by lightness, needs 1.15)</td><td class="r">1.14</td><td class="r">1.17</td><td class="r">1.15<span class="pf"> pass</span></td></tr></tbody></table></div></div></section>
+</div></body></html>

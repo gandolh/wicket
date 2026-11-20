@@ -17,6 +17,7 @@ data
 # Not part of the image
 .git
 corpus
+design
 docs
 docs-site
 web/src

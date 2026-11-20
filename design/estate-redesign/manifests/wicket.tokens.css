@@ -1,0 +1,65 @@
+/*
+ * Wicket, direction "Live beside the log": the token set in the app's own names. Drop-in for the colour,
+ * shadow, font, text, radius and container groups of the `@theme` block in web/src/styles/index.css; the
+ * `--*: initial` resets, `--height-top`, the z-index group, the `--container-account|dialog|gate` sizes, the
+ * `@layer base` block and the custom variant stay. The file's own mechanism is kept: each colour is
+ * light-dark(light, dark), picked by color-scheme on :root, so there is no [data-theme="dark"] block here.
+ * NEW marks a name the app does not have yet. The accent is plum now, not blue.
+ */
+@theme {
+  /* Neutrals: a plum-tinted grey ladder */
+  --color-page: light-dark(#eeecf0, #121014);
+  --color-surface: light-dark(#fdfbfd, #241f27); /* cards, header, dialog; lighter than the page in both themes */
+  --color-surface-sunk: light-dark(#f4f2f5, #18151a); /* a card's head band, Cancel */
+  --color-ink: light-dark(#1d1920, #ece7ef);
+  --color-ink-muted: light-dark(#5a5460, #a9a2b0);
+  --color-line: light-dark(#dbd6de, #38323d); /* row rules, a head band's foot */
+  --color-line-strong: light-dark(#c4bdc8, #4d4652); /* NEW: every card's 1 px edge and the dialog's */
+  --color-line-control: light-dark(#8a8290, #7a7280); /* NEW: the Period group's and Cancel's edge, about 3.3:1 on surface */
+  --color-accent: light-dark(#7d2668, #e7a6d6); /* was blue: links, the focus ring, the chosen period's outline */
+  --color-accent-soft: light-dark(#f6e6f0, #3e2536); /* NEW: the count pill, the next chip, the chosen period's fill */
+  --color-danger: light-dark(#ad2e27, #f2877d);
+  --color-danger-line: light-dark(#c55a53, #b8605a); /* was a mix of danger and line: a danger button's edge */
+  --color-ok: light-dark(#1b7444, #62c996);
+  --color-banner-bg: light-dark(#fbf0c8, #352d16);
+  --color-banner-text: light-dark(#574100, #f0d27c);
+  /* Mixes of the above, named once (unchanged): a success notice, an error notice, Force close's fill. */
+  --color-ok-wash: color-mix(in srgb, var(--color-ok) 12%, var(--color-surface));
+  --color-danger-wash: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
+  --color-scrim: light-dark(rgb(29 25 32 / 0.5), rgb(0 0 0 / 0.62)); /* was rgb(9 30 66 / 0.45) */
+
+  /* Elevation: 0 flat (a line), 1 raised (card, header), 2 overlay (the dialog). Dark: a lighter surface and a 1 px line-strong edge, no shadow */
+  --shadow-card: 0 1px 2px light-dark(rgb(29 25 32 / 0.12), transparent), 0 2px 8px light-dark(rgb(29 25 32 / 0.06), transparent);
+  --shadow-dialog: 0 6px 16px light-dark(rgb(29 25 32 / 0.28), rgb(0 0 0 / 0.6));
+
+  /* Type: Reddit Sans 400, 500, 700 for every label and title; Reddit Mono 500, 700 for figures only (the numeral,
+     tickets, elapsed, waited, ran, model ids, counts, times). Sizes: 12 14 16 20 96, and 64 on a phone. */
+  --font-sans: "Reddit Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Reddit Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; /* NEW */
+  --default-mono-font-family: var(--font-mono);
+  --text-small: 12px; /* 12/16, 500: column heads, fact labels, the privacy line; 700 in pills and chips */
+  --text-small--line-height: 16px;
+  --text-body: 14px; /* 14/20, 400: desktop tables, buttons, the dialog (16/24 on a phone) */
+  --text-body--line-height: 20px;
+  --text-heading: 16px; /* 16/24, 700: a card's title, a running fact's value, a phone list row's app name */
+  --text-heading--line-height: 24px;
+  --text-heading--font-weight: 700;
+  --text-title: 20px; /* 20/28, 700: the wordmark, the dialog's title (was 18) */
+  --text-title--line-height: 28px;
+  --text-title--font-weight: 700;
+  --text-ticket: 96px; /* 96/96, mono 700: the ticket numeral (was 56) */
+  --leading-ticket: 1;
+  --text-ticket-phone: 64px; /* 64/56, mono 700 (was 44) */
+  --leading-ticket-phone: 0.875; /* NEW */
+  --font-weight-title: 700; /* was 650 */
+
+  /* Radii: 6 segment, 8 control and group, 10 card and pill */
+  --radius-control: 8px; /* was 4: buttons, fields */
+  --radius-group: 8px; /* was 6: the Period group's outer edge */
+  --radius-segment: 6px; /* NEW: a Period segment inside the group */
+  --radius-card: 10px; /* was 8: cards, the dialog */
+  --radius-pill: 10px;
+
+  --container-page: 1200px; /* was 1100 */
+  --container-live: 400px; /* NEW: the live column at 1200 and up; 360 px from 840 to 1199, one column under 840 */
+}

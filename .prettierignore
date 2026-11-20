@@ -18,3 +18,6 @@ docs-site/
 # Playwright output.
 web/test-results/
 web/playwright-report/
+
+# The estate redesign board's copy, kept as exported.
+design/
