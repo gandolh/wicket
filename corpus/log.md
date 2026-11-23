@@ -280,3 +280,10 @@ makes gpt-oss's reasoning level a setting (unset sends today's body), and the to
 [name an answer that only thought](todos/name-an-answer-that-only-thought.md). Todos in ro-housing (fence the listing
 page as data) and my-personal-skills (lint pages older than their code) came from the same read. See
 [research-odysseus.md](wiki/research-odysseus.md).
+
+## [2026-11-23] todo | Check `format` against Ollama Cloud
+
+From the romania-law research (just-a-bot's corpus, `corpus/wiki/research-romania-law.md` there). Ollama's cloud
+page says cloud models don't support structured outputs, while Wicket passes `format` through and its tests used
+a stub only; ro-housing's fill sends a schema. One live job settles it, on the owner's word. See
+[the todo](todos/check-format-against-ollama-cloud.md).
