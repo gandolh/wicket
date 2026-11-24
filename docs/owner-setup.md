@@ -263,6 +263,23 @@ call at a time every waiting caller waits for that. Live calls are yours.
    [providers.md](../corpus/wiki/providers.md).
 4. Change `WICKET_CLOUD_MODEL` later and you recheck or unset the level.
 
+## 10. Wicket checks the answer's format
+
+Since 2026-11-24 Wicket checks a `"json"` or schema answer and asks the model once more when it is wrong
+([api.md](../corpus/wiki/api.md)). Ship it from the vps-deploy checkout:
+
+```
+node cli.ts wicket server
+```
+
+Then run one "Fill the gaps" in ro-housing. It should behave as before. On the queue page, a fill whose first
+answer was wrong runs about twice as long (two cloud calls in one slot); a fill that still fails shows "the model's
+answer ... after one retry" as its reason.
+
+This deploy moves the database to schema 3 (a `calls` column on the records). An older image refuses to start on
+it ("the database is at schema 3, newer than this server knows"), so going back means restoring the database from
+before the deploy as well as the image.
+
 ## Local development
 
 Running Wicket on your own machine, "Sign in with Ward" against a local Ward

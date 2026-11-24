@@ -14,9 +14,16 @@ when there were two providers, a cloud and a backup; the backup was dropped on
 ## One call
 
 The runner sends Ollama's `POST /api/chat` with `model`, `messages`,
-`stream: false`, the caller's `format` when given, and
-`Authorization: Bearer <OLLAMA_API_KEY>`. The answer is `message.content`,
-trimmed, and the job's result is `{ text, model }`.
+`stream: false`, the caller's `format` when it is `"json"` or a schema (never
+`"plain"`), and `Authorization: Bearer <OLLAMA_API_KEY>`. The answer is
+`message.content`, trimmed, and the job's result is `{ text, model }`.
+
+Since 2026-11-24 a `"json"` or schema job goes through
+[`format.ts`](../../server/src/features/queue/format.ts): a system message
+asking for JSON only, the check (ajv 8 for a schema), and at most one more
+call with the answer and what was wrong; [api.md](api.md) has what callers
+see. Both calls share the job's one time limit, and each is reported through
+`attempt`, so the record's `calls` is 2 after a retry.
 
 ## Settings
 
@@ -85,7 +92,9 @@ connection close.
 - The log gets one line per failure, with a status code or a kind and never
   Ollama's text, which could in principle quote the prompt. The kinds the
   runner names: `timeout`, `unreachable`, `bad-body`, `error-body`, `empty`,
-  `thinking-only`.
+  `thinking-only` (as "the cloud failed (<kind>)"), and `format_mismatch`
+  and `bad-schema` (as "a job failed (<kind>)": the cloud answered, the
+  format failed).
 
 ## How it was tested (2026-11-04)
 

@@ -1,6 +1,6 @@
 ---
-summary: Why Wicket's server is laid out as it is since 2026-11-11 (brief 13). The skills library's code structure (server.ts listens, app.ts builds, config.ts the one reader of the environment, fastify-plugin plugins, features used through their index, zod route schemas with a response schema per status), and what it rejected (autoload, TypeBox, decorators as dependencies or test seams, an ApiError class); the long-poll rule for connectionTimeout (35 s over a 25 s wait) and the other timeouts; the token guard kept a root hook, and no route declaring a 401. Read before moving a route, adding a feature or changing a timeout.
-updated: 2026-11-11
+summary: Why Wicket's server is laid out as it is since 2026-11-11 (brief 13). The skills library's code structure (server.ts listens, app.ts builds, config.ts the one reader of the environment, fastify-plugin plugins, features used through their index, zod route schemas with a response schema per status), and what it rejected (autoload, TypeBox, decorators as dependencies or test seams, an ApiError class); the long-poll rule for connectionTimeout (35 s over a 25 s wait) and the other timeouts; the token guard kept a root hook, and no route declaring a 401. Read before moving a route, adding a feature or changing a timeout. Also: Wicket enforces the answer's format (plain, json or a JSON schema; one retry inside the job, then format_mismatch), built 2026-11-24.
+updated: 2026-11-24
 ---
 
 # Decisions: the server's layout
@@ -77,3 +77,7 @@ answer: for JSON it instructs the model, checks the answer, retries once inside 
 answer in the owner's grill that night), because every caller would repeat the same parse and retry and drift apart.
 The cost is a second cloud call when the first answer is wrong. Ollama Cloud documents no structured outputs, so the
 check can't rely on `format` reaching the model ([brief 21](../briefs/todo/21-wicket-enforces-the-answers-format.md)).
+Built 2026-11-24 as decided, with three calls the brief left open: a schema ajv can't compile fails the job at once
+(`bad-schema`), before any cloud call, rather than a 400 at submit, which would put ajv in the request path; the
+record counts the job's cloud calls (a `calls` column, the third migration), so a retry shows in the records; and a
+schema error's path shows a key the schema doesn't name as `*`, because that key is the model's text.

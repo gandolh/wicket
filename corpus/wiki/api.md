@@ -1,20 +1,22 @@
 ---
-summary: The API contract callers build against (just-a-bot and ro-housing quote it), settled 2026-11-04. WICKET_URL and WICKET_TOKEN; POST /v1/jobs, GET /v1/jobs/:id with ?wait long-polling, DELETE /v1/jobs/:id; the admin routes for the page (GET /v1/queue, force close, clear queue); what ticket, nowServing and position mean; the statuses; result { text, model } (backup dropped 2026-11-04, cloud only); a cloud failure fails the job; errors (400, 401, 404, 503 queue_full); how long an answer is kept; health and metrics. Read before writing a caller or changing a route.
-updated: 2026-11-04
+summary: The API contract callers build against (just-a-bot and ro-housing quote it), settled 2026-11-04. WICKET_URL and WICKET_TOKEN; POST /v1/jobs, GET /v1/jobs/:id with ?wait long-polling, DELETE /v1/jobs/:id; the admin routes for the page (GET /v1/queue, force close, clear queue); what ticket, nowServing and position mean; the statuses; format plain, json or a JSON schema, which Wicket checks, asking once more, since 2026-11-24 (format_mismatch); result { text, model } (backup dropped 2026-11-04, cloud only); a cloud failure fails the job; errors (400, 401, 404, 503 queue_full); how long an answer is kept; health and metrics. Read before writing a caller or changing a route.
+updated: 2026-11-24
 ---
 
 # API
 
 The contract below, down to "401 for a missing or unknown token", is the text
 other repos' briefs quote. Keep it word for word. Anything after it adds detail
-a caller can rely on without changing the contract.
+a caller can rely on without changing the contract. Its one change since
+2026-11-04: `format` took `"plain"` on 2026-11-24, and Wicket checks a JSON
+answer since then.
 
 ## The contract
 
 Callers set `WICKET_URL` (the API base) and `WICKET_TOKEN` (a per-app bearer
 token that names the app).
 
-- `POST {WICKET_URL}/v1/jobs` with `{ messages: [{role, content}], format?: "json" | <JSON schema> }` → `202 { id, ticket, nowServing, position, status }`.
+- `POST {WICKET_URL}/v1/jobs` with `{ messages: [{role, content}], format?: "plain" | "json" | <JSON schema> }` → `202 { id, ticket, nowServing, position, status }`.
 - `GET {WICKET_URL}/v1/jobs/:id` (optional `?wait=25` long-polls up to 25 s for a change) → `{ id, ticket, nowServing, position, status: "queued"|"running"|"done"|"failed"|"cancelled", result?: { text, model }, error? }`.
 - `DELETE {WICKET_URL}/v1/jobs/:id` cancels the caller's own job.
 - Admin, UI session only: `GET /v1/queue`, `POST /v1/queue/running/cancel` (force close), `POST /v1/queue/clear`.
@@ -31,8 +33,23 @@ token that names the app).
 - **`messages`**: Ollama's chat messages. `role` is `system`, `user` or
   `assistant`; `content` is a string. At least one message. The body is at
   most 1 MB.
-- **`format`**: passed to Ollama as it is: `"json"` for any JSON, or a JSON
-  schema for structured output. Left out, the answer is free text.
+- **`format`**: the shape of the answer, which Wicket guarantees (2026-11-24).
+  - `"plain"`, or left out: free text, the answer as the model wrote it.
+    Nothing is added or checked, and no `format` goes to Ollama.
+  - `"json"`: a JSON object or array.
+  - A JSON schema (an object): JSON that matches it. It is read as ajv 8
+    reads it by default (draft-07, unknown keywords ignored). A schema ajv
+    can't compile fails the job at once, before any call.
+
+  For `"json"` and a schema, Wicket adds one system message at the end of the
+  conversation asking for JSON only (with the schema, when there is one), and
+  still passes `format` to Ollama as it is. It reads the answer with one
+  surrounding Markdown code fence dropped. When the answer isn't the asked
+  shape, Wicket asks once more in the same job: the conversation, the model's
+  answer, and a short message saying what was wrong (not JSON, or the first
+  three schema errors). That second call takes the same queue slot and the
+  same time limit as the first. Still wrong, the job ends `failed`. Any other
+  string is a 400.
 - **`id`**: an opaque string, unique, unguessable. Use it in the URLs.
 - **`ticket`**: the call's number in the queue, counting up. Never reused,
   even across restarts.
@@ -42,13 +59,24 @@ token that names the app).
   0 once it runs or has finished.
 - **`status`**: `queued` (waiting), `running`, then one of `done`, `failed`
   or `cancelled`.
-- **`result`**: on `done` only. `text` is the answer (for `format`, the JSON
-  as a string), `model` is the Ollama Cloud model that answered. (Until
-  2026-11-04 it also had `backup`; Wicket asks the cloud only since then.)
+- **`result`**: on `done` only. `text` is the answer, `model` is the Ollama
+  Cloud model that answered. For `"json"` or a schema, `text` is the checked
+  JSON re-serialised (`JSON.stringify` of the parsed answer), so
+  `JSON.parse(text)` always works; the model's own spacing is gone. (Until
+  2026-11-04 `result` also had `backup`; Wicket asks the cloud only since
+  then.)
 - **`error`**: on `failed` only, a short message that never repeats the
-  prompt, such as "the cloud model answered 429: you have reached your usage
-  limit" or "the cloud model took longer than 120 s". On `cancelled`, a short reason: cancelled by the caller, force
-  closed, cleared, or the server restarted.
+  prompt or the answer, such as "the cloud model answered 429: you have
+  reached your usage limit", "the cloud model took longer than 120 s" or "the
+  cloud model answered with reasoning and no answer". A format still wrong
+  after the retry (`format_mismatch` in Wicket's log) reads "the model's
+  answer was not valid JSON after one retry", "the model's answer was not a
+  JSON object or array after one retry", or "the model's answer did not match
+  the schema after one retry: /rooms (type)", the first schema error's path
+  and keyword (a key the schema doesn't name shows as `*`); a schema that
+  can't be compiled, "the format is not a JSON schema Wicket can check". On
+  `cancelled`, a short reason: cancelled by the caller, force closed,
+  cleared, or the server restarted.
 
 ## Behaviour a caller can rely on
 
@@ -64,6 +92,10 @@ token that names the app).
   refuses (a spent quota is a 429), the job ends `failed` with the reason and
   the next ticket runs. There is no second model. Retry later, or tell your
   user.
+- **A wrong format fails the job, after one retry.** A `"json"` or schema job
+  whose answer is still the wrong shape after Wicket asked once more ends
+  `failed` (`format_mismatch`). The retry costs a second cloud call; Wicket
+  never asks a third time. A caller may keep its own checks on top.
 - **Answers are kept in memory for 10 minutes** after a job finishes, then the
   job is forgotten and `GET` answers 404. Nothing about the answer is
   written to disk.
