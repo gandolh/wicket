@@ -333,3 +333,12 @@ never the answer. `result.text` is the JSON re-serialised. The records count eac
 api.md's contract line changed (`"plain"`). ro-housing needs no change. Ready for deploy: `node cli.ts wicket server`,
 then one Fill the gaps. See
 [briefs/done/21-wicket-enforces-the-answers-format.md](briefs/done/21-wicket-enforces-the-answers-format.md).
+
+## [2026-11-24] brief | 20 One live check of `format` against Ollama Cloud
+
+Built. `server/src/live-format.ts` (`server/dist/live-format.js` in the image) sends one request that asks for prose
+with a JSON schema in `format`, and prints whether Ollama Cloud honoured, ignored or refused it, with the evidence.
+Opt-in by `WICKET_LIVE_FORMAT=1`; without it, nothing is sent. Tested against the stub only. Ready for test: the owner
+runs it once after `node cli.ts wicket server` and pastes the output; the result then goes into
+[providers.md](wiki/providers.md). See
+[briefs/done/20-check-format-against-ollama-cloud.md](briefs/done/20-check-format-against-ollama-cloud.md).

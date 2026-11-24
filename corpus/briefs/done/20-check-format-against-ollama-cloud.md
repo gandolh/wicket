@@ -77,5 +77,22 @@ fails today.
 
 - Settled 2026-11-25 (owner, grill): find out with this check and one live call by the owner.
 - Settled 2026-11-25 (owner, grill, then revisited the same night): Wicket enforces the answer's format, for
-  consistency among its callers ([brief 21](../done/21-wicket-enforces-the-answers-format.md)); callers may keep their own checks.
+  consistency among its callers ([brief 21](21-wicket-enforces-the-answers-format.md)); callers may keep their own checks.
 - Mine (technical): a prompt that asks for prose while the schema asks for JSON, so "honoured" and "ignored" differ.
+
+## Outcome
+
+Built 2026-11-24 (74187af code, cd3c24a docs). `server/src/live-format.ts` sends one `POST /api/chat`, built the way
+the runner sends a job (the model, `stream: false`, `think` when set, the key as a bearer token), with the prose prompt
+above and the two-field schema in `format`, and prints the verdict (honoured, ignored, refused), the model, the HTTP
+status, any error text, the answer's first 300 characters, and whether it parses as JSON and matches the schema
+(ajv). It leaves out brief 21's JSON instruction, so the verdict is about the cloud and not Wicket's check; a fenced
+JSON answer counts as ignored. An error body in a 200 counts as refused too, whether or not it names `format`; the
+printed error says which. The guard reads `WICKET_LIVE_FORMAT` through `liveFormatWanted()` in `config.ts` (the one
+reader of the environment), before any `.env` is loaded; only `1` runs it. The test runs the same function against
+the stub server (moved to `server/src/testing/ollama-stub.ts` by brief 21): each verdict, the guard, no key, and an
+unreachable cloud. `node server/dist/live-format.js` and `npm run live:format -w @wicket/server` were run with the
+variable unset only: one line, exit 0, no request. The owner's steps are in `docs/owner-setup.md` section 11.
+
+Ready for test: the owner runs it once after `node cli.ts wicket server` and pastes the output (question 1 on the
+ticket); the controller then records the verdict in `providers.md`.

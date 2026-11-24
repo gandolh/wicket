@@ -11,7 +11,7 @@
 The owner, 2026-11-25: "we can enforce the format on wicket tho. For consistency amongst them. Something like plain
 or json as options when doing requests." Today `format` (`"json"` or a JSON schema, [api.md](../../wiki/api.md)) is
 passed to Ollama Cloud as it is and the answer comes back unchecked; Ollama's cloud page says cloud models don't
-support structured outputs ([brief 20](../todo/20-check-format-against-ollama-cloud.md) checks what really happens). So each
+support structured outputs ([brief 20](20-check-format-against-ollama-cloud.md) checks what really happens). So each
 caller has to check the answer itself, as ro-housing's Fill the gaps does. Wicket should guarantee the shape instead,
 the same way for every caller.
 

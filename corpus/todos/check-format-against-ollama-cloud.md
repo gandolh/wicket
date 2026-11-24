@@ -1,13 +1,13 @@
 ---
 title: Check format against Ollama Cloud
 created: 2026-11-23
-status: promoted
+status: promoted (brief 20, [20-check-format-against-ollama-cloud](../briefs/done/20-check-format-against-ollama-cloud.md))
 tags: [server, contract]
 ---
 
 # Check `format` against Ollama Cloud
 
-Promoted 2026-11-25 to [brief 20](../briefs/todo/20-check-format-against-ollama-cloud.md).
+Promoted 2026-11-25 to [brief 20](../briefs/done/20-check-format-against-ollama-cloud.md).
 
 Found during the romania-law research of 2026-11-23, while checking what Wicket could do for a law chatbot.
 
