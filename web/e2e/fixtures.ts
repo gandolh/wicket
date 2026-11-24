@@ -7,7 +7,7 @@ import type { Page } from "@playwright/test";
  */
 
 /** The server's clock, and the browser's, for every screen: 10:30:02. */
-export const NOW = Date.UTC(2026, 10, 13, 10, 30, 2);
+const NOW = Date.UTC(2026, 10, 13, 10, 30, 2);
 
 export type QueueState = "busy" | "idle" | "twelve" | "down";
 export type SessionState = "signed-in" | "signed-out" | "ended" | "unreachable";

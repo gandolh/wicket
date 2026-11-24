@@ -3,7 +3,7 @@ import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 import { useId, type ReactNode } from "react";
 import { cn } from "../../lib/cn";
 
-export interface RadioOption<Value extends string> {
+interface RadioOption<Value extends string> {
   value: Value;
   label: ReactNode;
 }

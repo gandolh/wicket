@@ -16,12 +16,12 @@ import { API_BASE } from "./base";
  */
 
 /** The auth plugin's routes as the browser sees them. */
-export const AUTH_BASE_PATH = `${API_BASE}/auth`;
+const AUTH_BASE_PATH = `${API_BASE}/auth`;
 
 configureAuth({ basePath: AUTH_BASE_PATH });
 
 /** The client the hooks share. Import it from here, so it is set up before anything asks for it. */
-export function authClient(): AuthClient {
+function authClient(): AuthClient {
   return getAuthClient();
 }
 

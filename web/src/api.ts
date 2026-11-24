@@ -22,7 +22,7 @@ import { API_BASE } from "./base";
  */
 
 /** The request was refused for want of a session. */
-export class Unauthorized extends Error {
+class Unauthorized extends Error {
   override readonly name = "Unauthorized";
 }
 

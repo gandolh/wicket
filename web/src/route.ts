@@ -21,7 +21,7 @@ function subscribe(listener: () => void): () => void {
 }
 
 /** The page a path names; anything else under the base is the queue. */
-export function pageOf(pathname: string, base: string = appBase()): Page {
+function pageOf(pathname: string, base: string = appBase()): Page {
   const rest = pathname.startsWith(base) ? pathname.slice(base.length) : "";
   const name = rest.replace(/\/+$/, "");
   return name === "login" ? "login" : name === "account" ? "account" : "queue";
