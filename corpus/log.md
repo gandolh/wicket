@@ -302,3 +302,9 @@ Built. `WICKET_CLOUD_THINK` (`low`, `medium`, `high`, or unset) puts Ollama's `t
 ## [2026-11-24] brief | 17 Make `npm run check` green again
 
 Built. `design/**` joins knip's `ignore`; six exports that nothing outside their file imported lost the `export` keyword. No behaviour change, nothing to deploy. `npm run check` exits 0. From [the todo](todos/check-conventions-is-red.md).
+
+## [2026-11-24] todo | Brief 18 from the infra review of 2026-11-24
+
+Filed from the estate's infra review. The image's `deps` stage installs only the server's closure instead of
+every workspace (about 66 MB less build cache per cold build on the box), and every base is pinned to
+`node:24.22.1-alpine`. The image that runs doesn't change. Ships with `node cli.ts wicket server`.
