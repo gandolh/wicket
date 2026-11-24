@@ -71,7 +71,7 @@ declared 401 would refuse the guard's body and turn the reply into a 500
 
 ## Wicket enforces the answer's format
 
-**2026-11-25.** A request's `format` is `"plain"` (the default), `"json"`, or a JSON schema, and Wicket guarantees the
+**2026-11-24.** A request's `format` is `"plain"` (the default), `"json"`, or a JSON schema, and Wicket guarantees the
 answer: for JSON it instructs the model, checks the answer, retries once inside the job, and fails the job as
 `format_mismatch` if it is still wrong. Rejected: leaving each caller to check (the state until then, and the first
 answer in the owner's grill that night), because every caller would repeat the same parse and retry and drift apart.

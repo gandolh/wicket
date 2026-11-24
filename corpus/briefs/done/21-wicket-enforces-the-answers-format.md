@@ -8,7 +8,7 @@
 
 ## Context
 
-The owner, 2026-11-25: "we can enforce the format on wicket tho. For consistency amongst them. Something like plain
+The owner, 2026-11-24: "we can enforce the format on wicket tho. For consistency amongst them. Something like plain
 or json as options when doing requests." Today `format` (`"json"` or a JSON schema, [api.md](../../wiki/api.md)) is
 passed to Ollama Cloud as it is and the answer comes back unchecked; Ollama's cloud page says cloud models don't
 support structured outputs ([brief 20](20-check-format-against-ollama-cloud.md) checks what really happens). So each
@@ -22,7 +22,7 @@ the same way for every caller.
   the parse, the check), their tests against the stub
 - `server/package.json` (one validator dependency, pinned exactly)
 - `corpus/wiki/api.md` (`format`, `result`, `error`), `corpus/wiki/providers.md` (one line), `corpus/wiki/decisions-server.md`
-  (its entry of 2026-11-25 is already there; update it if the build differs), `corpus/wiki/status.md`, `corpus/log.md`, `docs/` pages that quote `format`
+  (its entry of 2026-11-24 is already there; update it if the build differs), `corpus/wiki/status.md`, `corpus/log.md`, `docs/` pages that quote `format`
 
 ## Files you must NOT touch
 
@@ -66,7 +66,7 @@ the same way for every caller.
 
 ## Owner decisions
 
-- Settled 2026-11-25 (owner): Wicket enforces the format, with plain and JSON as the options, for consistency among
+- Settled 2026-11-24 (owner): Wicket enforces the format, with plain and JSON as the options, for consistency among
   callers.
 - Mine (technical): a JSON schema stays accepted (ro-housing sends one; a schema is JSON plus a shape); one retry, not
   more (a second cloud call doubles the cost); ajv 8 (the standard JSON-schema validator); the answer re-serialised so

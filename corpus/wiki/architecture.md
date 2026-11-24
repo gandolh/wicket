@@ -36,7 +36,7 @@ Like brief-board, without its CLI:
   rest is utilities. [cn.ts](../../web/src/lib/cn.ts) merges classes,
   [theme.ts](../../web/src/lib/theme.ts) holds the Light / Dark / System
   choice, and [components/](../../web/src/components/) has the shared pieces
-  (`Facts`, `Table`, `ThemeSwitch`) and the Base UI wrappers with `buttonClass`. `web/e2e/` is the Playwright theme spec.
+  (`Card`, `Facts`, `Table`, `ThemeSwitch`) and the Base UI wrappers with `buttonClass`. `web/e2e/` is the Playwright theme spec.
 
 Beside them, `docs-site/` is the Docusaurus docs site: its own npm package
 with its own lockfile, not a workspace, so the API image's `npm ci` never
@@ -110,7 +110,7 @@ signal fired.
 
 Read from the environment and the repo's `.env`; `.env.example` lists each.
 The cloud: `OLLAMA_API_KEY` (secret; unset, every job fails saying so),
-`WICKET_CLOUD_URL`, `WICKET_CLOUD_MODEL`, a timeout. The apps: `WICKET_APP_TOKENS` (secret). Sign-in: `PUBLIC_ORIGIN`,
+`WICKET_CLOUD_URL`, `WICKET_CLOUD_MODEL`, `WICKET_CLOUD_THINK` (the reasoning level; unset sends no `think`), a timeout. The apps: `WICKET_APP_TOKENS` (secret). Sign-in: `PUBLIC_ORIGIN`,
 the five `WARD_OIDC_*`, `AUTH_TRUSTED_PROXIES`, `SEED_USERNAME`,
 `SEED_PASSWORD`.
 

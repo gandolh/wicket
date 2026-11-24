@@ -7,7 +7,7 @@ tags: [server]
 
 # Name an answer that only thought
 
-Promoted 2026-11-25 to [brief 19](../briefs/done/19-name-an-answer-that-only-thought.md), built 2026-11-24.
+Promoted 2026-11-24 to [brief 19](../briefs/done/19-name-an-answer-that-only-thought.md), built 2026-11-24.
 
 From the odysseus research of 2026-11-23 ([research-odysseus.md](../wiki/research-odysseus.md)). Odysseus is
 AGPL-3.0: the idea only, nothing copied.

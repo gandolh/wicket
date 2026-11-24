@@ -19,7 +19,7 @@ answer"). That stays right: reasoning never stands in for the answer. But a mode
 reasoning and wrote no answer (a long `format` job could) reads the same as a blank reply, so neither the caller
 nor the owner can tell the two apart.
 
-Nobody has seen the failure yet. The owner asked on 2026-11-25 to promote it anyway, and the change is small
+Nobody has seen the failure yet. The owner asked on 2026-11-24 to promote it anyway, and the change is small
 and sits in the function brief 16 already touched.
 
 ## Decisions
@@ -75,7 +75,7 @@ None beyond the deploy. No live call is needed: the stub proves it.
 
 ## Owner decisions
 
-- Settled 2026-11-25 (owner): promote it.
+- Settled 2026-11-24 (owner): promote it.
 - Mine (technical): the kind name `thinking-only`, the fixed message, no fallback, and no change to the API
   contract unless the check in the last decision finds an enum.
 
