@@ -49,7 +49,8 @@ token that names the app).
   answer, and a short message saying what was wrong (not JSON, or the first
   three schema errors). That second call takes the same queue slot and the
   same time limit as the first. Still wrong, the job ends `failed`. Any other
-  string is a 400.
+  string is a 400. Whether Ollama Cloud honours `format` on its own is
+  unchecked until the owner's live check ([providers.md](providers.md)).
 - **`id`**: an opaque string, unique, unguessable. Use it in the URLs.
 - **`ticket`**: the call's number in the queue, counting up. Never reused,
   even across restarts.

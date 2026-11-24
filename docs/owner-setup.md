@@ -282,6 +282,27 @@ This deploy moves the database to schema 3 (a `calls` column on the records). An
 it ("the database is at schema 3, newer than this server knows"), so going back means restoring the database from
 before the deploy as well as the image.
 
+## 11. One live check of `format`
+
+Does Ollama Cloud honour a JSON schema in `format`, ignore it, or refuse the request? One live call settles it.
+It is opt-in: without `WICKET_LIVE_FORMAT=1` the script prints one line and sends nothing. After
+`node cli.ts wicket server` has shipped it, on the box, as the services account in the API's server folder:
+
+```
+export DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock
+docker compose -f infrastructure/docker-compose.yml exec -e WICKET_LIVE_FORMAT=1 wicket-api node server/dist/live-format.js
+```
+
+Or locally, with `OLLAMA_API_KEY` in your shell:
+
+```
+WICKET_LIVE_FORMAT=1 npm run live:format -w @wicket/server
+```
+
+It prints a verdict (`honoured`, `ignored` or `refused`), the HTTP status, the answer's first 300 characters, and
+whether the answer parses as JSON and matches the schema. It never prints the key. Paste the output on the board
+ticket; the result goes into [providers.md](../corpus/wiki/providers.md).
+
 ## Local development
 
 Running Wicket on your own machine, "Sign in with Ward" against a local Ward

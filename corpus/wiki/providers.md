@@ -1,5 +1,5 @@
 ---
-summary: How a job reaches the model, as built 2026-11-04 and made cloud only the same day (brief 08). Ollama Cloud only, no model on the box; the settings and their defaults (gpt-oss:120b, 120 s); what counts as a failure (no key, unreachable, a timeout, anything but 2xx, a bad body, reasoning and no answer) and that it fails the job with the reason; how a cancel is told from a timeout; what the caller's error and the log say (never the prompt); running with no key; how it was tested (stub servers).
+summary: How a job reaches the model, as built 2026-11-04 and made cloud only the same day (brief 08). Ollama Cloud only, no model on the box; the settings and their defaults (gpt-oss:120b, 120 s); what counts as a failure (no key, unreachable, a timeout, anything but 2xx, a bad body, reasoning and no answer) and that it fails the job with the reason; how a cancel is told from a timeout; what the caller's error and the log say (never the prompt); running with no key; how it was tested (stub servers); the format check and its retry (2026-11-24); the opt-in live check of format against the cloud, result pending.
 updated: 2026-11-24
 ---
 
@@ -24,6 +24,15 @@ asking for JSON only, the check (ajv 8 for a schema), and at most one more
 call with the answer and what was wrong; [api.md](api.md) has what callers
 see. Both calls share the job's one time limit, and each is reported through
 `attempt`, so the record's `calls` is 2 after a retry.
+
+Whether Ollama Cloud itself honours `format` is unchecked: its cloud page says
+cloud models don't support structured outputs. Since 2026-11-24
+[`live-format.ts`](../../server/src/live-format.ts) checks it with one live
+call, opt-in by `WICKET_LIVE_FORMAT=1`, run by the owner where the key is
+(`docs/owner-setup.md` section 11): it asks for prose with a schema in
+`format` and prints honoured, ignored or refused. Result: pending the owner's
+run. Wicket's own check holds the format whatever the cloud does; this only
+says whether passing `format` on helps.
 
 ## Settings
 
