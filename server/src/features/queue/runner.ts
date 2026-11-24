@@ -17,9 +17,11 @@ import type { Runner } from "./queue.js";
  * force close, a clear, shutdown) and the abort is rethrown for the queue;
  * when only the timeout fired, the job failed.
  *
- * `think` (`WICKET_CLOUD_THINK`) goes in the body only when set. The reasoning
- * Ollama returns in `message.thinking` is never read: the answer is
- * `message.content` alone.
+ * `think` (`WICKET_CLOUD_THINK`) goes in the body only when set. The answer is
+ * `message.content` alone. The reasoning Ollama returns in `message.thinking`
+ * is only checked for being blank, to tell a reply that only reasoned
+ * (`thinking-only`) from a blank one (`empty`); its text is never kept,
+ * logged or returned, and never stands in for the answer.
  *
  * Text stays out of the logs: a failure is logged with the cloud's status or
  * the kind of failure, never a message or Ollama's error text.
@@ -119,8 +121,15 @@ async function chat(
   }
   if (parsed === undefined) throw new ProviderFailure("bad-body", "sent a body that is not JSON");
   if (errorText) throw new ProviderFailure("error-body", `sent an error: ${cut(errorText, DETAIL_LENGTH)}`);
-  const content = (parsed as { message?: { content?: unknown } }).message?.content;
-  if (typeof content !== "string" || content.trim() === "") throw new ProviderFailure("empty", "sent an empty answer");
+  const message = (parsed as { message?: { content?: unknown; thinking?: unknown } }).message;
+  const content = message?.content;
+  if (typeof content !== "string" || content.trim() === "") {
+    const thinking = message?.thinking;
+    if (typeof thinking === "string" && thinking.trim() !== "") {
+      throw new ProviderFailure("thinking-only", "answered with reasoning and no answer");
+    }
+    throw new ProviderFailure("empty", "sent an empty answer");
+  }
   return content.trim();
 }
 

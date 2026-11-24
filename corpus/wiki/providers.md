@@ -1,5 +1,5 @@
 ---
-summary: How a job reaches the model, as built 2026-11-04 and made cloud only the same day (brief 08). Ollama Cloud only, no model on the box; the settings and their defaults (gpt-oss:120b, 120 s); what counts as a failure (no key, unreachable, a timeout, anything but 2xx, a bad body) and that it fails the job with the reason; how a cancel is told from a timeout; what the caller's error and the log say (never the prompt); running with no key; how it was tested (stub servers).
+summary: How a job reaches the model, as built 2026-11-04 and made cloud only the same day (brief 08). Ollama Cloud only, no model on the box; the settings and their defaults (gpt-oss:120b, 120 s); what counts as a failure (no key, unreachable, a timeout, anything but 2xx, a bad body, reasoning and no answer) and that it fails the job with the reason; how a cancel is told from a timeout; what the caller's error and the log say (never the prompt); running with no key; how it was tested (stub servers).
 updated: 2026-11-24
 ---
 
@@ -40,8 +40,9 @@ start-up with a message naming the variable.
 
 Ollama's thinking docs (read 2026-11-23): gpt-oss takes `think` as `low`, `medium` or `high`, uses `medium` when
 the field is left out, and can't turn reasoning off; a model that can't take levels takes `false` as its lowest.
-The reasoning comes back in `message.thinking` and the answer in `message.content`. The runner reads only the
-content: the thinking text never reaches the result, the log or a caller's error, and a test keeps it so.
+The reasoning comes back in `message.thinking` and the answer in `message.content`. The answer is the content
+alone: the thinking text never reaches the result, the log or a caller's error, and a test keeps it so. The runner
+only checks whether `thinking` is blank, to tell a reply that only reasoned from a blank one (2026-11-24, below).
 
 Wicket doesn't ask the model what it takes. A model that refuses the field fails each job with Ollama's own
 reason, shown on the queue page. Unset or recheck the level whenever `WICKET_CLOUD_MODEL` changes.
@@ -53,9 +54,15 @@ Whether Ollama Cloud takes the field for gpt-oss is unchecked live; the owner's 
 
 No key is set; the cloud can't be reached; it takes longer than its timeout;
 it answers anything but 2xx (a bad key is a 401, a spent quota a 429); it
-sends a body that isn't JSON, `error` in a 200, or an empty answer. Each ends
-the job `failed` with the reason, and the queue starts the next ticket. There
-is no second model to ask.
+sends a body that isn't JSON, `error` in a 200, an empty answer, or reasoning
+and no answer. Each ends the job `failed` with the reason, and the queue starts
+the next ticket. There is no second model to ask.
+
+A blank `content` with a non-blank `thinking` is its own failure (2026-11-24):
+the model spent its turn reasoning and wrote no answer. The caller's error is
+the fixed "the cloud model answered with reasoning and no answer"; a blank
+`content` with no reasoning stays "sent an empty answer". The reasoning never
+stands in for the answer.
 
 ## A cancel is not a failure
 
@@ -75,9 +82,10 @@ connection close.
   took longer than 120 s", or "the cloud model can't be asked:
   OLLAMA_API_KEY is not set". Ollama's own error text is cut to 120
   characters.
-- The log gets one line per failure, with a status code or a kind
-  (`timeout`, `unreachable`, `bad-body`, `error-body`, `empty`) and never
-  Ollama's text, which could in principle quote the prompt.
+- The log gets one line per failure, with a status code or a kind and never
+  Ollama's text, which could in principle quote the prompt. The kinds the
+  runner names: `timeout`, `unreachable`, `bad-body`, `error-body`, `empty`,
+  `thinking-only`.
 
 ## How it was tested (2026-11-04)
 

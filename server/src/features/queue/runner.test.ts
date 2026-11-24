@@ -152,17 +152,42 @@ describe("the cloud", () => {
     });
     const result = await run(ask, context());
     expect(result).toEqual({ text: "the answer", model: "gpt-oss:120b" });
-
-    cloud.handle((_req, res) => {
-      res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ message: { role: "assistant", thinking: THOUGHT, content: "  " }, done: true }));
-    });
-    const error = await run(ask, context()).catch((e: unknown) => e as Error);
-    expect((error as Error).message).toBe("the cloud model sent an empty answer");
     expect(JSON.stringify(result)).not.toContain(THOUGHT);
-    expect(logged.join("\n")).not.toContain(THOUGHT);
-    expect((error as Error).message).not.toContain(THOUGHT);
+    expect(logged).toEqual([]);
   });
+
+  /** A stub that answers with `message` as Ollama's reply message. */
+  function reply(message: Record<string, unknown>): Handler {
+    return (_req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ model: "x", message: { role: "assistant", ...message }, done: true }));
+    };
+  }
+
+  it("fails a reply that only reasoned as thinking-only, with the fixed message", async () => {
+    const cloud = await stub();
+    cloud.handle(reply({ thinking: "the reasoning", content: "  " }));
+    const logged: string[] = [];
+    const run = createRunner({ cloud: cloudAt(cloud.url), log: { error: (m) => logged.push(m) } });
+    await expect(run(ask, context())).rejects.toThrow(/^the cloud model answered with reasoning and no answer$/);
+    expect(logged).toEqual(["the cloud failed (thinking-only)"]);
+  });
+
+  const blanks: [string, Record<string, unknown>][] = [
+    ["both blank", { thinking: "   ", content: "" }],
+    ["no thinking at all", { content: " " }],
+    ["thinking that is not a string", { thinking: 42, content: "" }],
+  ];
+  for (const [name, message] of blanks) {
+    it(`fails a blank reply with ${name} as empty`, async () => {
+      const cloud = await stub();
+      cloud.handle(reply(message));
+      const logged: string[] = [];
+      const run = createRunner({ cloud: cloudAt(cloud.url), log: { error: (m) => logged.push(m) } });
+      await expect(run(ask, context())).rejects.toThrow(/^the cloud model sent an empty answer$/);
+      expect(logged).toEqual(["the cloud failed (empty)"]);
+    });
+  }
 
   it("passes a JSON schema format as it is", async () => {
     const cloud = await stub();
@@ -249,9 +274,10 @@ describe("failing", () => {
 });
 
 describe("in the queue", () => {
-  function queueWith(cloud: CloudSettings | undefined) {
+  function queueWith(cloud: CloudSettings | undefined, logged: string[] = []) {
     const records: JobRecord[] = [];
-    const queue = new Queue({ run: createRunner({ cloud }), record: (r) => records.push(r) });
+    const run = createRunner({ cloud, log: { error: (m) => logged.push(m) } });
+    const queue = new Queue({ run, record: (r) => records.push(r) });
     return { queue, records };
   }
 
@@ -281,6 +307,25 @@ describe("in the queue", () => {
       error: "the cloud model answered 429: you have reached your usage limit",
     });
     expect(records.map((r) => r.outcome)).toEqual(["failed", "ok"]);
+  });
+
+  it("a reply that only reasoned ends the job failed, its reasoning in no log line, error or record", async () => {
+    const THOUGHT = "THOUGHT-only-reasoning-no-answer-2b7e";
+    const cloud = await stub();
+    cloud.handle((_req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ message: { role: "assistant", thinking: THOUGHT, content: "" }, done: true }));
+    });
+    const logged: string[] = [];
+    const { queue, records } = queueWith(cloudAt(cloud.url), logged);
+    const job = queue.submit("app", ask);
+    const view = await finished(queue, job.id);
+    expect(view).toMatchObject({ status: "failed", error: "the cloud model answered with reasoning and no answer" });
+    expect(logged).toEqual(["the cloud failed (thinking-only)"]);
+    expect(records.map((r) => r.outcome)).toEqual(["failed"]);
+    expect(JSON.stringify(view)).not.toContain(THOUGHT);
+    expect(JSON.stringify(records)).not.toContain(THOUGHT);
+    expect(logged.join("\n")).not.toContain(THOUGHT);
   });
 
   it("with no key, a job ends failed with the reason", async () => {
