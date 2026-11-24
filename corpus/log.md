@@ -298,3 +298,7 @@ owner compares run times live and picks the level ([providers.md](wiki/providers
 ## [2026-11-24] brief | 16 The cloud model's reasoning level as a setting
 
 Built. `WICKET_CLOUD_THINK` (`low`, `medium`, `high`, or unset) puts Ollama's `think` field in the request body; unset sends exactly the old body, and a bad value stops start-up naming the variable. `message.thinking` is never read; tests prove it stays out of the result, the log and errors. The API contract is unchanged. Ready for deploy; the owner compares run times live and picks the level ([providers.md](wiki/providers.md)).
+
+## [2026-11-24] brief | 17 Make `npm run check` green again
+
+Built. `design/**` joins knip's `ignore`; six exports that nothing outside their file imported lost the `export` keyword. No behaviour change, nothing to deploy. `npm run check` exits 0. From [the todo](todos/check-conventions-is-red.md).

@@ -28,3 +28,7 @@ not cause it; the failure shows with its changes stashed.
 
 - `npm run check` exits 0.
 - `bash corpus/lint.sh` exits 0.
+
+## Outcome
+
+Built 2026-11-24. `design/**` is in knip's `ignore` in `knip.config.js`. All six names are used inside their own files and `git log -S` shows only the commit that introduced each, so none ever had an outside importer: the `export` keyword is gone from `NOW`, `Unauthorized`, `AUTH_BASE_PATH`, `authClient`, `pageOf` and `RadioOption`. `Unauthorized` is matched by its name string in `QueuePage.tsx` and `usePolling.ts`, which is unaffected. No behaviour change; `npm run check` exits 0.
