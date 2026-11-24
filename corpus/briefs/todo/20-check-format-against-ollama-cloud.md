@@ -77,5 +77,5 @@ fails today.
 
 - Settled 2026-11-25 (owner, grill): find out with this check and one live call by the owner.
 - Settled 2026-11-25 (owner, grill, then revisited the same night): Wicket enforces the answer's format, for
-  consistency among its callers ([brief 21](21-wicket-enforces-the-answers-format.md)); callers may keep their own checks.
+  consistency among its callers ([brief 21](../done/21-wicket-enforces-the-answers-format.md)); callers may keep their own checks.
 - Mine (technical): a prompt that asks for prose while the schema asks for JSON, so "honoured" and "ignored" differ.

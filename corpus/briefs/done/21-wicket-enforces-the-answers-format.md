@@ -11,7 +11,7 @@
 The owner, 2026-11-25: "we can enforce the format on wicket tho. For consistency amongst them. Something like plain
 or json as options when doing requests." Today `format` (`"json"` or a JSON schema, [api.md](../../wiki/api.md)) is
 passed to Ollama Cloud as it is and the answer comes back unchecked; Ollama's cloud page says cloud models don't
-support structured outputs ([brief 20](20-check-format-against-ollama-cloud.md) checks what really happens). So each
+support structured outputs ([brief 20](../todo/20-check-format-against-ollama-cloud.md) checks what really happens). So each
 caller has to check the answer itself, as ro-housing's Fill the gaps does. Wicket should guarantee the shape instead,
 the same way for every caller.
 
@@ -71,3 +71,30 @@ the same way for every caller.
 - Mine (technical): a JSON schema stays accepted (ro-housing sends one; a schema is JSON plus a shape); one retry, not
   more (a second cloud call doubles the cost); ajv 8 (the standard JSON-schema validator); the answer re-serialised so
   `JSON.parse` always works.
+
+## Outcome
+
+Built 2026-11-24 (32957d7 code, 89349e1 docs). `formatSchema` takes `"plain"`, `"json"` or a JSON schema; any other
+string is still a 400 (replies of `POST /v1/jobs` captured before and after: identical but for `"plain"`, now 202).
+A plain job, or one without `format`, sends the same body as before. A json or schema job goes through
+`server/src/features/queue/format.ts`: a system message at the end asks for JSON only (with the schema), `format` still
+goes to Ollama, the answer is trimmed and unfenced, parsed, and for a schema validated by ajv 8.20.0 (`strict: false`,
+`allErrors`, a fresh instance per job, compiled once). A wrong answer gets one retry in the same job with the answer and
+a message naming what was wrong (not JSON, not an object or array, or the first three schema errors); still wrong, the
+job fails with "the model's answer was not valid JSON after one retry" (or "... was not a JSON object or array ...",
+or "... did not match the schema after one retry: /rooms (type)"), logged as `format_mismatch`. On success
+`result.text` is `JSON.stringify` of the parsed answer. The job's time limit is one deadline for both calls.
+
+Three calls the brief left open: a schema ajv can't compile fails the job at once, before any call ("the format is not
+a JSON schema Wicket can check", kind `bad-schema`); the records count each job's calls through `attempt()`, in a new
+`calls` column (the third migration, backfilled 1 where a model was asked), which the page's records don't carry; and a
+path segment the schema doesn't name (a key the model chose) shows as `*` in the error. Files beyond the OWN list:
+`db/open.ts`, `records/store.ts`, `queue/queue.ts` (the call count), `testing/ollama-stub.ts` (the stub moved out of
+`runner.test.ts` for brief 20's test), `docs/owner-setup.md` section 10.
+
+ro-housing needs no change. Its fill schema (`required`, `additionalProperties: false`) passes the check; where its
+`mergeFill` used to drop one wrong field quietly, Wicket now asks again, and a fill can fail after two wrong answers.
+
+Ready for deploy: `node cli.ts wicket server`, check that `wicket-api` turns healthy, then one Fill the gaps. The
+database moves to schema 3; an older image refuses to start on it, so a rollback needs the pre-deploy database too.
+The image wasn't built locally.

@@ -272,9 +272,11 @@ Since 2026-11-24 Wicket checks a `"json"` or schema answer and asks the model on
 node cli.ts wicket server
 ```
 
-Then run one "Fill the gaps" in ro-housing. It should behave as before. On the queue page, a fill whose first
-answer was wrong runs about twice as long (two cloud calls in one slot); a fill that still fails shows "the model's
-answer ... after one retry" as its reason.
+Check that the `wicket-api` container turns healthy (the image now carries ajv; it wasn't built locally). Then run
+one "Fill the gaps" in ro-housing. It should fill as before. One difference: where ro-housing used to drop a
+wrong-typed field quietly, Wicket now asks the model again, so a fill whose first answer was wrong runs about twice
+as long (two cloud calls in one slot), and a fill wrong twice fails with "the model's answer ... after one retry" as
+its reason.
 
 This deploy moves the database to schema 3 (a `calls` column on the records). An older image refuses to start on
 it ("the database is at schema 3, newer than this server knows"), so going back means restoring the database from

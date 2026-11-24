@@ -323,3 +323,13 @@ answered with reasoning and no answer", and the log names the kind `thinking-onl
 stays `empty`. The reasoning is only checked for being blank, never kept, logged or returned. The API contract is
 unchanged. Ready for deploy: `node cli.ts wicket server`. See
 [briefs/done/19-name-an-answer-that-only-thought.md](briefs/done/19-name-an-answer-that-only-thought.md).
+
+## [2026-11-24] brief | 21 Wicket enforces the answer's format
+
+Built. `format` is `"plain"` (the default), `"json"` or a JSON schema, and Wicket checks a JSON answer: a system
+message asks for JSON only, the answer is unfenced, parsed and validated (ajv 8.20.0), and a wrong one is asked again
+once in the same job; still wrong, the job fails as `format_mismatch` with an error that names the path and keyword,
+never the answer. `result.text` is the JSON re-serialised. The records count each job's calls (database schema 3).
+api.md's contract line changed (`"plain"`). ro-housing needs no change. Ready for deploy: `node cli.ts wicket server`,
+then one Fill the gaps. See
+[briefs/done/21-wicket-enforces-the-answers-format.md](briefs/done/21-wicket-enforces-the-answers-format.md).
