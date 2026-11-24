@@ -17,8 +17,13 @@ export const messageSchema = z
   .strict();
 export type Message = z.infer<typeof messageSchema>;
 
-/** `"json"` for any JSON, or a JSON schema for structured output. Passed to Ollama as it is. */
-export const formatSchema = z.union([z.literal("json"), z.record(z.string(), z.unknown())]);
+/**
+ * The shape the answer must have. `"plain"` (what a missing `format` means) is
+ * free text; `"json"` is a JSON object or array; an object is a JSON schema the
+ * answer must match. Wicket checks a JSON answer and asks once more when it is
+ * wrong; the job fails if the second answer is wrong too.
+ */
+export const formatSchema = z.union([z.literal("plain"), z.literal("json"), z.record(z.string(), z.unknown())]);
 export type Format = z.infer<typeof formatSchema>;
 
 /**
@@ -40,7 +45,10 @@ export type JobStatus = z.infer<typeof jobStatusSchema>;
 
 export const FINAL_STATUSES: ReadonlySet<JobStatus> = new Set(["done", "failed", "cancelled"]);
 
-/** The answer, on a `done` job only: its text and the cloud model that wrote it. */
+/**
+ * The answer, on a `done` job only: its text and the cloud model that wrote it.
+ * For a JSON `format`, `text` is the checked JSON, re-serialised.
+ */
 export const resultSchema = z.object({
   text: z.string(),
   model: z.string(),

@@ -1,5 +1,6 @@
-import type { JobRequest, JobResult } from "@wicket/shared";
+import type { JobResult, Message } from "@wicket/shared";
 import type { CloudSettings } from "../../config.js";
+import { answerInFormat, FormatFailure, isChecked, type CheckedFormat } from "./format.js";
 import type { Runner } from "./queue.js";
 
 /**
@@ -15,7 +16,13 @@ import type { Runner } from "./queue.js";
  * A cancel is not a failure. The job's signal and the timeout are separate:
  * when the job's signal fired, the call was cancelled (the caller's DELETE, a
  * force close, a clear, shutdown) and the abort is rethrown for the queue;
- * when only the timeout fired, the job failed.
+ * when only the timeout fired, the job failed. The timeout is the job's, not
+ * the call's: a format retry shares it with the first call.
+ *
+ * A `"plain"` job (or one with no `format`) is one call, with no `format` in
+ * the body. A `"json"` or schema job goes through `format.ts`: an instruction,
+ * the check, and at most one more call; `format` is passed on to the cloud
+ * as it is. Each call is reported through `attempt`, so the record counts it.
  *
  * `think` (`WICKET_CLOUD_THINK`) goes in the body only when set. The answer is
  * `message.content` alone. The reasoning Ollama returns in `message.thinking`
@@ -61,21 +68,23 @@ function cut(text: string, length: number): string {
 
 /**
  * One chat call. Resolves with the answer's text, throws `ProviderFailure`,
- * or rethrows the abort when `signal` (the job's) fired.
+ * or rethrows the abort when `signal` (the job's) fired. `deadline` is the
+ * job's timeout, shared by every call the job makes.
  */
 async function chat(
   endpoint: CloudSettings,
-  request: JobRequest,
+  messages: Message[],
+  format: CheckedFormat | undefined,
   signal: AbortSignal,
+  deadline: AbortSignal,
   doFetch: typeof fetch,
 ): Promise<string> {
-  const timeout = AbortSignal.timeout(endpoint.timeoutMs);
-  const combined = AbortSignal.any([signal, timeout]);
+  const combined = AbortSignal.any([signal, deadline]);
   const body = {
     model: endpoint.model,
-    messages: request.messages,
+    messages,
     stream: false,
-    ...(request.format !== undefined ? { format: request.format } : {}),
+    ...(format !== undefined ? { format } : {}),
     ...(endpoint.think !== undefined ? { think: endpoint.think } : {}),
   };
   const headers: Record<string, string> = {
@@ -97,7 +106,7 @@ async function chat(
     raw = await res.text();
   } catch (error) {
     if (signal.aborted) throw error;
-    if (timeout.aborted) {
+    if (deadline.aborted) {
       throw new ProviderFailure("timeout", `took longer than ${Math.round(endpoint.timeoutMs / 1000)} s`);
     }
     throw new ProviderFailure("unreachable", "could not be reached");
@@ -141,7 +150,11 @@ function reasonOf(error: unknown): { kind: string; message: string } {
 /** What a job without a key fails with. */
 export const NO_KEY_ERROR = "the cloud model can't be asked: OLLAMA_API_KEY is not set";
 
-/** The queue's runner: one call to the cloud, and the job fails if that does. */
+/**
+ * The queue's runner: one call to the cloud (two when a JSON answer was wrong
+ * the first time), and the job fails if the cloud does or the answer's format
+ * is still wrong.
+ */
 export function createRunner(options: ProviderOptions): Runner {
   const doFetch = options.fetch ?? fetch;
   const log = options.log ?? { error: () => undefined };
@@ -152,12 +165,23 @@ export function createRunner(options: ProviderOptions): Runner {
       log.error("a job failed: no OLLAMA_API_KEY");
       throw new Error(NO_KEY_ERROR);
     }
-    attempt(cloud.model);
+    const deadline = AbortSignal.timeout(cloud.timeoutMs);
+    const ask = (messages: Message[], format: CheckedFormat | undefined): Promise<string> => {
+      attempt(cloud.model);
+      return chat(cloud, messages, format, signal, deadline, doFetch);
+    };
     try {
-      const text = await chat(cloud, request, signal, doFetch);
+      const { format } = request;
+      const text = isChecked(format)
+        ? await answerInFormat(format, request.messages, ask)
+        : await ask(request.messages, undefined);
       return { text, model: cloud.model };
     } catch (error) {
       if (signal.aborted) throw error;
+      if (error instanceof FormatFailure) {
+        log.error(`a job failed (${error.kind})`);
+        throw new Error(error.message, { cause: error });
+      }
       const reason = reasonOf(error);
       log.error(`the cloud failed (${reason.kind})`);
       throw new Error(`the cloud model ${reason.message}`, { cause: error });

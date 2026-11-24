@@ -13,6 +13,7 @@ const row: StoredRecord = {
   app: "just-a-bot",
   ticket: 7,
   model: "gpt-oss:120b",
+  calls: 1,
   outcome: "ok",
   queuedAt: NOW - 3_000,
   startedAt: NOW - 2_000,
@@ -53,7 +54,10 @@ describe("GET /v1/records", () => {
     const res = await app.inject({ url: "/v1/records" });
     expect(res.statusCode).toBe(200);
     expect(res.body).not.toContain("PROMPT-");
-    expect(res.json()).toEqual({ records: [row], counts: { day: [counts], week: [counts] } });
+    // The call count stays on the server too: the page's record has no such field.
+    const sent = { ...row, calls: undefined };
+    expect(res.json()).toEqual({ records: [sent], counts: { day: [counts], week: [counts] } });
+    expect(res.json<{ records: object[] }>().records[0]).not.toHaveProperty("calls");
     expect(limits).toEqual([50]);
   });
 

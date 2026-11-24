@@ -22,7 +22,10 @@ import type { JobRecord, Outcome } from "../records/index.js";
 export interface RunContext {
   /** Aborted when the job is cancelled. A runner must stop on it. */
   signal: AbortSignal;
-  /** The runner is now asking `model`; the page shows it and the record keeps it. */
+  /**
+   * The runner is now asking `model`, once per call it makes; the page shows
+   * the model and the record keeps it and the number of calls.
+   */
   attempt(model: string): void;
 }
 
@@ -106,6 +109,8 @@ interface Job {
   startedAt: number | null;
   finishedAt: number | null;
   model: string | null;
+  /** How many calls the runner has made to the model. */
+  calls: number;
   result: JobResult | undefined;
   error: string | undefined;
   controller: AbortController | undefined;
@@ -160,6 +165,7 @@ export class Queue {
       startedAt: null,
       finishedAt: null,
       model: null,
+      calls: 0,
       result: undefined,
       error: undefined,
       controller: undefined,
@@ -300,6 +306,7 @@ export class Queue {
         attempt: (model) => {
           if (job.status !== "running") return;
           job.model = model;
+          job.calls += 1;
           this.changed();
         },
       });
@@ -340,6 +347,7 @@ export class Queue {
         app: job.app,
         ticket: job.ticket,
         model: job.model,
+        calls: job.calls,
         outcome,
         queuedAt: job.queuedAt,
         startedAt: job.startedAt,

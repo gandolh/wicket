@@ -1,8 +1,7 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import type { AddressInfo } from "node:net";
-import { FINAL_STATUSES, type JobRequest, type JobResult, type JobView } from "@wicket/shared";
+import { FINAL_STATUSES, type JobRequest, type JobResult, type JobView, type Message } from "@wicket/shared";
 import { afterEach, describe, expect, it } from "vitest";
 import type { CloudSettings } from "../../config.js";
+import { answer, closeStubs, deadUrl, refuse, stub, type Handler } from "../../testing/ollama-stub.js";
 import type { JobRecord } from "../records/index.js";
 import { Queue, type RunContext } from "./queue.js";
 import { createRunner, NO_KEY_ERROR } from "./runner.js";
@@ -12,73 +11,7 @@ import { createRunner, NO_KEY_ERROR } from "./runner.js";
  * ever asked.
  */
 
-interface Seen {
-  headers: IncomingMessage["headers"];
-  body: Record<string, unknown>;
-}
-
-type Handler = (req: IncomingMessage, res: ServerResponse, body: Record<string, unknown>) => void;
-
-interface Stub {
-  url: string;
-  seen: Seen[];
-  /** Resolves when a request's connection closes before an answer was sent. */
-  hungUp: Promise<void>;
-  /** Resolves on the first request. */
-  reached: Promise<void>;
-  handle(handler: Handler): void;
-}
-
-const servers: Server[] = [];
-
-async function stub(): Promise<Stub> {
-  let handler: Handler = (_req, res) => answer(res, "stub answer");
-  const seen: Seen[] = [];
-  let hungUp!: () => void;
-  let reached!: () => void;
-  const hungUpPromise = new Promise<void>((resolve) => (hungUp = resolve));
-  const reachedPromise = new Promise<void>((resolve) => (reached = resolve));
-  const server = createServer((req, res) => {
-    let raw = "";
-    req.on("data", (chunk: Buffer) => (raw += chunk.toString()));
-    req.on("end", () => {
-      const body = JSON.parse(raw) as Record<string, unknown>;
-      seen.push({ headers: req.headers, body });
-      res.on("close", () => {
-        if (!res.writableEnded) hungUp();
-      });
-      reached();
-      handler(req, res, body);
-    });
-  });
-  servers.push(server);
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const { port } = server.address() as AddressInfo;
-  return {
-    url: `http://127.0.0.1:${port}`,
-    seen,
-    hungUp: hungUpPromise,
-    reached: reachedPromise,
-    handle: (h) => (handler = h),
-  };
-}
-
-function answer(res: ServerResponse, content: string, status = 200): void {
-  res.writeHead(status, { "content-type": "application/json" });
-  res.end(JSON.stringify({ model: "x", message: { role: "assistant", content }, done: true }));
-}
-
-function refuse(res: ServerResponse, status: number, error: string): void {
-  res.writeHead(status, { "content-type": "application/json" });
-  res.end(JSON.stringify({ error }));
-}
-
-afterEach(async () => {
-  for (const server of servers.splice(0)) {
-    server.closeAllConnections();
-    await new Promise((resolve) => server.close(resolve));
-  }
-});
+afterEach(closeStubs);
 
 const PROMPT = "PROMPT-a-flat-near-the-park-5e1b";
 const ask: JobRequest = { messages: [{ role: "user", content: PROMPT }] };
@@ -94,33 +27,16 @@ function context(signal = new AbortController().signal): RunContext & { attempts
   return { signal, attempts, attempt: (model) => void attempts.push(model) };
 }
 
-/** A port nothing listens on: a server that was opened and closed. */
-async function deadUrl(): Promise<string> {
-  const server = createServer();
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const { port } = server.address() as AddressInfo;
-  await new Promise((resolve) => server.close(resolve));
-  return `http://127.0.0.1:${port}`;
-}
-
 describe("the cloud", () => {
   it("answers with the text and the model", async () => {
     const cloud = await stub();
     cloud.handle((_req, res) => answer(res, "  from the cloud  "));
     const run = createRunner({ cloud: cloudAt(cloud.url) });
     const ctx = context();
-    await expect(run({ ...ask, format: "json" }, ctx)).resolves.toEqual({
-      text: "from the cloud",
-      model: "gpt-oss:120b",
-    });
+    await expect(run(ask, ctx)).resolves.toEqual({ text: "from the cloud", model: "gpt-oss:120b" });
     expect(ctx.attempts).toEqual(["gpt-oss:120b"]);
     expect(cloud.seen[0]!.headers.authorization).toBe(`Bearer ${KEY}`);
-    expect(cloud.seen[0]!.body).toMatchObject({
-      model: "gpt-oss:120b",
-      stream: false,
-      format: "json",
-      messages: ask.messages,
-    });
+    expect(cloud.seen[0]!.body).toEqual({ model: "gpt-oss:120b", stream: false, messages: ask.messages });
     expect(cloud.seen[0]!.body).not.toHaveProperty("keep_alive");
   });
 
@@ -188,13 +104,158 @@ describe("the cloud", () => {
       expect(logged).toEqual(["the cloud failed (empty)"]);
     });
   }
+});
 
-  it("passes a JSON schema format as it is", async () => {
+describe("the answer's format", () => {
+  const SCHEMA = { type: "object", properties: { rooms: { type: "integer" } }, required: ["rooms"] };
+
+  /** A stub that answers from `answers` in turn. */
+  function answering(...answers: string[]): Handler {
+    return (_req, res) => answer(res, answers.shift() ?? "no more answers");
+  }
+
+  /** The body of the `n`th request the stub saw. */
+  function bodyOf(cloud: { seen: { body: Record<string, unknown> }[] }, n: number): Record<string, unknown> {
+    const seen = cloud.seen[n];
+    if (!seen) throw new Error(`the stub saw no request ${n}`);
+    return seen.body;
+  }
+
+  function sentMessages(cloud: { seen: { body: Record<string, unknown> }[] }, n: number): Message[] {
+    return bodyOf(cloud, n).messages as Message[];
+  }
+
+  it("leaves a plain job as it was: no format sent, no instruction, the answer as written", async () => {
     const cloud = await stub();
-    const schema = { type: "object", properties: { rooms: { type: "integer" } }, required: ["rooms"] };
+    cloud.handle(answering("  Two rooms, I think.  "));
     const run = createRunner({ cloud: cloudAt(cloud.url) });
-    await run({ ...ask, format: schema }, context());
-    expect(cloud.seen[0]!.body.format).toEqual(schema);
+    const ctx = context();
+    await expect(run({ ...ask, format: "plain" }, ctx)).resolves.toEqual({
+      text: "Two rooms, I think.",
+      model: "gpt-oss:120b",
+    });
+    expect(cloud.seen).toHaveLength(1);
+    expect(Object.keys(bodyOf(cloud, 0)).sort()).toEqual(["messages", "model", "stream"]);
+    expect(sentMessages(cloud, 0)).toEqual(ask.messages);
+    expect(ctx.attempts).toHaveLength(1);
+  });
+
+  it("a request with no format sends the same body as before and takes prose", async () => {
+    const cloud = await stub();
+    cloud.handle(answering("not JSON at all"));
+    const run = createRunner({ cloud: cloudAt(cloud.url) });
+    await expect(run(ask, context())).resolves.toMatchObject({ text: "not JSON at all" });
+    expect(cloud.seen).toHaveLength(1);
+    expect(bodyOf(cloud, 0)).toEqual({ model: "gpt-oss:120b", stream: false, messages: ask.messages });
+  });
+
+  it("json: passes format on, adds the instruction, and takes a fenced answer re-serialised", async () => {
+    const cloud = await stub();
+    cloud.handle(answering('```json\n{ "rooms": 2 }\n```'));
+    const run = createRunner({ cloud: cloudAt(cloud.url) });
+    const ctx = context();
+    await expect(run({ ...ask, format: "json" }, ctx)).resolves.toEqual({ text: '{"rooms":2}', model: "gpt-oss:120b" });
+    expect(cloud.seen).toHaveLength(1);
+    expect(bodyOf(cloud, 0).format).toBe("json");
+    const sent = sentMessages(cloud, 0);
+    expect(sent.slice(0, -1)).toEqual(ask.messages);
+    expect(sent.at(-1)).toMatchObject({ role: "system", content: expect.stringMatching(/JSON only/) });
+    expect(ctx.attempts).toHaveLength(1);
+  });
+
+  it("json: a prose answer is asked again once, in the same job, then accepted", async () => {
+    const cloud = await stub();
+    cloud.handle(answering("Sure! The flat has two rooms.", '{"rooms": 2}'));
+    const run = createRunner({ cloud: cloudAt(cloud.url) });
+    const ctx = context();
+    await expect(run({ ...ask, format: "json" }, ctx)).resolves.toEqual({ text: '{"rooms":2}', model: "gpt-oss:120b" });
+    expect(cloud.seen).toHaveLength(2);
+    expect(ctx.attempts).toEqual(["gpt-oss:120b", "gpt-oss:120b"]);
+    const first = sentMessages(cloud, 0);
+    const second = sentMessages(cloud, 1);
+    expect(second.slice(0, first.length)).toEqual(first);
+    expect(second.slice(first.length)).toEqual([
+      { role: "assistant", content: "Sure! The flat has two rooms." },
+      { role: "user", content: expect.stringMatching(/not valid JSON/) },
+    ]);
+    expect(bodyOf(cloud, 1).format).toBe("json");
+  });
+
+  it("json: wrong twice ends the job failed as format_mismatch, the answer in no error or log line", async () => {
+    const MARKER = "ANSWER-prose-from-the-model-31f0";
+    const cloud = await stub();
+    cloud.handle(answering(`${MARKER} one`, `${MARKER} two`));
+    const logged: string[] = [];
+    const run = createRunner({ cloud: cloudAt(cloud.url), log: { error: (m) => logged.push(m) } });
+    const error = await run({ ...ask, format: "json" }, context()).catch((e: unknown) => e as Error);
+    expect((error as Error).message).toBe("the model's answer was not valid JSON after one retry");
+    expect(logged).toEqual(["a job failed (format_mismatch)"]);
+    expect(cloud.seen).toHaveLength(2);
+    expect((error as Error).message).not.toContain(MARKER);
+    expect((error as Error).message).not.toContain(PROMPT);
+    expect(logged.join("\n")).not.toContain(MARKER);
+  });
+
+  it("a schema: passed on as it is, and a mismatch is asked again with the validation error", async () => {
+    const cloud = await stub();
+    cloud.handle(answering('{"rooms": "two"}', '{"rooms": 2}'));
+    const run = createRunner({ cloud: cloudAt(cloud.url) });
+    await expect(run({ ...ask, format: SCHEMA }, context())).resolves.toMatchObject({ text: '{"rooms":2}' });
+    expect(cloud.seen.map((s) => s.body.format)).toEqual([SCHEMA, SCHEMA]);
+    expect(sentMessages(cloud, 0).at(-1)?.content).toContain(JSON.stringify(SCHEMA));
+    expect(sentMessages(cloud, 1).at(-1)).toEqual({
+      role: "user",
+      content: expect.stringContaining("/rooms must be integer"),
+    });
+  });
+
+  it("a schema wrong twice fails with the first error's path and keyword", async () => {
+    const MARKER = "ANSWER-rooms-as-words-0b6c";
+    const cloud = await stub();
+    cloud.handle(answering(JSON.stringify({ rooms: MARKER }), JSON.stringify({ rooms: MARKER })));
+    const logged: string[] = [];
+    const run = createRunner({ cloud: cloudAt(cloud.url), log: { error: (m) => logged.push(m) } });
+    await expect(run({ ...ask, format: SCHEMA }, context())).rejects.toThrow(
+      /^the model's answer did not match the schema after one retry: \/rooms \(type\)$/,
+    );
+    expect(logged).toEqual(["a job failed (format_mismatch)"]);
+  });
+
+  it("a schema that can't be compiled fails at once, asking nothing", async () => {
+    const cloud = await stub();
+    const logged: string[] = [];
+    const run = createRunner({ cloud: cloudAt(cloud.url), log: { error: (m) => logged.push(m) } });
+    const ctx = context();
+    await expect(run({ ...ask, format: { type: "no-such-type" } }, ctx)).rejects.toThrow(
+      /^the format is not a JSON schema Wicket can check$/,
+    );
+    expect(cloud.seen).toHaveLength(0);
+    expect(ctx.attempts).toEqual([]);
+    expect(logged).toEqual(["a job failed (bad-schema)"]);
+  });
+
+  it("a cloud failure on the retry fails the job with the cloud's reason", async () => {
+    const cloud = await stub();
+    let calls = 0;
+    cloud.handle((_req, res) => (calls++ === 0 ? answer(res, "prose") : refuse(res, 429, "usage limit")));
+    const run = createRunner({ cloud: cloudAt(cloud.url) });
+    await expect(run({ ...ask, format: "json" }, context())).rejects.toThrow(
+      /^the cloud model answered 429: usage limit$/,
+    );
+  });
+
+  it("the time limit covers both calls", async () => {
+    // Each answer alone is inside the limit; the two together are not.
+    const cloud = await stub();
+    let calls = 0;
+    cloud.handle((_req, res) => {
+      const content = calls++ === 0 ? "prose" : '{"rooms": 2}';
+      setTimeout(() => answer(res, content), 300);
+    });
+    const run = createRunner({ cloud: cloudAt(cloud.url, 450) });
+    await expect(run({ ...ask, format: "json" }, context())).rejects.toThrow(/^the cloud model took longer than 0 s$/);
+    expect(cloud.seen).toHaveLength(2);
+    await cloud.hungUp;
   });
 });
 
@@ -328,11 +389,43 @@ describe("in the queue", () => {
     expect(logged.join("\n")).not.toContain(THOUGHT);
   });
 
+  it("a job's record counts its calls: one, or two when the format asked again", async () => {
+    const cloud = await stub();
+    const answers = ["plain words", "prose first", '{"rooms": 2}'];
+    cloud.handle((_req, res) => answer(res, answers.shift() ?? ""));
+    const { queue, records } = queueWith(cloudAt(cloud.url));
+    const plain = queue.submit("app", ask);
+    const json = queue.submit("app", { ...ask, format: "json" });
+    await finished(queue, plain.id);
+    await expect(finished(queue, json.id)).resolves.toMatchObject({ status: "done", result: { text: '{"rooms":2}' } });
+    expect(records.map((r) => [r.outcome, r.calls])).toEqual([
+      ["ok", 1],
+      ["ok", 2],
+    ]);
+  });
+
+  it("a format wrong twice ends the job failed as format_mismatch, with two calls and no answer text", async () => {
+    const MARKER = "ANSWER-kept-nowhere-e5d2";
+    const cloud = await stub();
+    cloud.handle((_req, res) => answer(res, `${MARKER} prose`));
+    const logged: string[] = [];
+    const { queue, records } = queueWith(cloudAt(cloud.url), logged);
+    const job = queue.submit("app", { ...ask, format: "json" });
+    const view = await finished(queue, job.id);
+    expect(view).toMatchObject({ status: "failed", error: "the model's answer was not valid JSON after one retry" });
+    expect(records).toEqual([expect.objectContaining({ outcome: "failed", calls: 2 })]);
+    expect(logged).toEqual(["a job failed (format_mismatch)"]);
+    for (const kept of [JSON.stringify(view), JSON.stringify(records), logged.join("\n")]) {
+      expect(kept).not.toContain(MARKER);
+      expect(kept).not.toContain(PROMPT);
+    }
+  });
+
   it("with no key, a job ends failed with the reason", async () => {
     const { queue, records } = queueWith(undefined);
     const job = queue.submit("app", ask);
     await expect(finished(queue, job.id)).resolves.toMatchObject({ status: "failed", error: NO_KEY_ERROR });
-    expect(records[0]).toMatchObject({ outcome: "failed", model: null });
+    expect(records[0]).toMatchObject({ outcome: "failed", model: null, calls: 0 });
   });
 
   it("force close aborts the cloud's request and ends the job cancelled", async () => {

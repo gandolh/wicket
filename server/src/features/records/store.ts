@@ -12,6 +12,8 @@ export interface JobRecord {
   ticket: number;
   /** The model asked; null if the job never ran. */
   model: string | null;
+  /** How many calls the job made to the model: 0 if it never reached one, 2 when a format retry asked again. */
+  calls: number;
   outcome: Outcome;
   queuedAt: number;
   startedAt: number | null;
@@ -30,6 +32,7 @@ interface Row {
   app: string;
   ticket: number;
   model: string | null;
+  calls: number;
   outcome: Outcome;
   queued_at: number;
   started_at: number | null;
@@ -44,6 +47,7 @@ function fromRow(row: Row): StoredRecord {
     app: row.app,
     ticket: row.ticket,
     model: row.model,
+    calls: row.calls,
     outcome: row.outcome,
     queuedAt: row.queued_at,
     startedAt: row.started_at,
@@ -62,8 +66,8 @@ export class Records {
 
   constructor(db: Db) {
     this.insert = db.prepare(
-      `INSERT INTO records (app, ticket, model, outcome, queued_at, started_at, finished_at, wait_ms, run_ms)
-       VALUES (@app, @ticket, @model, @outcome, @queuedAt, @startedAt, @finishedAt, @waitMs, @runMs)`,
+      `INSERT INTO records (app, ticket, model, calls, outcome, queued_at, started_at, finished_at, wait_ms, run_ms)
+       VALUES (@app, @ticket, @model, @calls, @outcome, @queuedAt, @startedAt, @finishedAt, @waitMs, @runMs)`,
     );
     this.maxTicketStmt = db.prepare("SELECT COALESCE(MAX(ticket), 0) AS max FROM records");
     this.recentStmt = db.prepare("SELECT * FROM records ORDER BY finished_at DESC, id DESC LIMIT ?");

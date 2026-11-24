@@ -36,6 +36,12 @@ export const MIGRATIONS: string[] = [
   `
   ALTER TABLE records DROP COLUMN provider;
   `,
+  // How many calls a job made to the model: a JSON answer that was wrong the first time is asked again. Every job
+  // recorded before made one call if it reached the model, which is when its model is set.
+  `
+  ALTER TABLE records ADD COLUMN calls INTEGER NOT NULL DEFAULT 0;
+  UPDATE records SET calls = 1 WHERE model IS NOT NULL;
+  `,
 ];
 
 function migrate(db: Db): void {

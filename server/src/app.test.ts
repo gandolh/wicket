@@ -144,8 +144,8 @@ describe("jobs", () => {
     }
   });
 
-  it("takes json or a schema as the format", async () => {
-    for (const format of ["json", { type: "object", properties: { rooms: { type: "integer" } } }]) {
+  it("takes plain, json or a schema as the format", async () => {
+    for (const format of ["json", { type: "object", properties: { rooms: { type: "integer" } } }, "plain"]) {
       const res = await call({
         method: "POST",
         url: "/v1/jobs",
@@ -155,6 +155,20 @@ describe("jobs", () => {
       expect(res.statusCode).toBe(202);
     }
     expect(calls[0]!.request.format).toBe("json");
+  });
+
+  it("refuses a format that is none of plain, json or a schema", async () => {
+    for (const format of ["yaml", "JSON", "", 42, null, true, ["json"]]) {
+      const res = await call({
+        method: "POST",
+        url: "/v1/jobs",
+        headers: BOT,
+        payload: { messages: [{ role: "user", content: "hi" }], format },
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.json<ErrorBody>()).toEqual({ code: "invalid_request", message: "format: Invalid input" });
+    }
+    expect(calls).toHaveLength(0);
   });
 
   it("answers a body that isn't JSON without quoting it", async () => {
