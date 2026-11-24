@@ -1,7 +1,7 @@
 ---
 title: npm run check is red on check:conventions
 created: 2026-11-24
-status: open
+status: promoted (brief 17, [17-check-conventions-green](../briefs/todo/17-check-conventions-green.md))
 tags: [harness]
 ---
 
