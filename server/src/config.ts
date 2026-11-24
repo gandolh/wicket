@@ -266,6 +266,16 @@ export function resolveDbPath(value: string | undefined): string {
   return path === ":memory:" ? path : resolve(path);
 }
 
+/**
+ * Whether the live check of `format` may send its one request to Ollama
+ * Cloud: only when `WICKET_LIVE_FORMAT` is exactly `1`. Read from the
+ * environment the check starts in, before any `.env` is loaded, so a line in
+ * `.env` never turns it on.
+ */
+export function liveFormatWanted(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.WICKET_LIVE_FORMAT === "1";
+}
+
 /** The seed's settings. A missing name or password is asked for on a terminal. */
 export interface SeedConfig {
   /** `SEED_USERNAME`, trimmed, or undefined. */
