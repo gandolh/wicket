@@ -1,6 +1,6 @@
 ---
 summary: How a job reaches the model, as built 2026-11-04 and made cloud only the same day (brief 08). Ollama Cloud only, no model on the box; the settings and their defaults (gpt-oss:120b, 120 s); what counts as a failure (no key, unreachable, a timeout, anything but 2xx, a bad body) and that it fails the job with the reason; how a cancel is told from a timeout; what the caller's error and the log say (never the prompt); running with no key; how it was tested (stub servers).
-updated: 2026-11-04
+updated: 2026-11-24
 ---
 
 # Providers
@@ -26,10 +26,28 @@ trimmed, and the job's result is `{ text, model }`.
 | `WICKET_CLOUD_URL` | `https://ollama.com` | |
 | `WICKET_CLOUD_MODEL` | `gpt-oss:120b` | just-a-bot's default. |
 | `WICKET_CLOUD_TIMEOUT_SECONDS` | 120 | |
+| `WICKET_CLOUD_THINK` | unset | `low`, `medium` or `high`. Unset sends no `think` field. |
 
 [`config.ts`](../../server/src/config.ts) checks them at start and names any
 that is wrong, never repeating the key. Old `WICKET_BACKUP_*` lines in an
 `.env` are ignored.
+
+## The reasoning level
+
+`WICKET_CLOUD_THINK` sets Ollama's `think` field for every call; there is no level per app and no caller
+field. Unset, the request body is exactly the one above. Any other value than `low`, `medium` or `high` stops
+start-up with a message naming the variable.
+
+Ollama's thinking docs (read 2026-11-23): gpt-oss takes `think` as `low`, `medium` or `high`, uses `medium` when
+the field is left out, and can't turn reasoning off; a model that can't take levels takes `false` as its lowest.
+The reasoning comes back in `message.thinking` and the answer in `message.content`. The runner reads only the
+content: the thinking text never reaches the result, the log or a caller's error, and a test keeps it so.
+
+Wicket doesn't ask the model what it takes. A model that refuses the field fails each job with Ollama's own
+reason, shown on the queue page. Unset or recheck the level whenever `WICKET_CLOUD_MODEL` changes.
+
+Whether Ollama Cloud takes the field for gpt-oss is unchecked live; the owner's before-and-after comparison
+(brief 16's owner steps, in [owner-setup.md](../../docs/owner-setup.md)) settles it and picks the level.
 
 ## What counts as a failure
 

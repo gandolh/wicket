@@ -72,6 +72,23 @@ describe("cloud settings", () => {
   });
 });
 
+describe("the reasoning level", () => {
+  it("is not in the settings when unset or empty", () => {
+    expect(loadConfig({ OLLAMA_API_KEY: "a-key" }).cloud).not.toHaveProperty("think");
+    expect(loadConfig({ OLLAMA_API_KEY: "a-key", WICKET_CLOUD_THINK: "" }).cloud).not.toHaveProperty("think");
+  });
+
+  it.each(["low", "medium", "high"])("takes %s", (level) => {
+    expect(loadConfig({ OLLAMA_API_KEY: "a-key", WICKET_CLOUD_THINK: level }).cloud).toMatchObject({ think: level });
+  });
+
+  it.each(["off", "true", "max"])("stops start-up on %s, naming the variable", (level) => {
+    expect(() => loadConfig({ OLLAMA_API_KEY: "a-key", WICKET_CLOUD_THINK: level })).toThrow(
+      /WICKET_CLOUD_THINK must be one of low, medium, high/,
+    );
+  });
+});
+
 describe("sign-in settings", () => {
   it("defaults to the Vite dev server, the sub-paths and local accounts only", () => {
     const config = loadConfig({});

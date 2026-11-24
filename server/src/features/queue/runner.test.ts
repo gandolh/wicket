@@ -124,6 +124,46 @@ describe("the cloud", () => {
     expect(cloud.seen[0]!.body).not.toHaveProperty("keep_alive");
   });
 
+  it("sends no think field when the level is unset", async () => {
+    const cloud = await stub();
+    const run = createRunner({ cloud: cloudAt(cloud.url) });
+    await run(ask, context());
+    expect(Object.keys(cloud.seen[0]!.body).sort()).toEqual(["messages", "model", "stream"]);
+  });
+
+  it("sends the level when it is set", async () => {
+    const cloud = await stub();
+    const run = createRunner({ cloud: { ...cloudAt(cloud.url), think: "low" } });
+    await run(ask, context());
+    expect(cloud.seen[0]!.body.think).toBe("low");
+  });
+
+  it("returns the content alone and keeps the thinking out of the log and the error", async () => {
+    const THOUGHT = "THOUGHT-weighing-the-flat-9c4d";
+    const cloud = await stub();
+    cloud.handle((_req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ message: { role: "assistant", thinking: THOUGHT, content: "the answer" }, done: true }));
+    });
+    const logged: string[] = [];
+    const run = createRunner({
+      cloud: { ...cloudAt(cloud.url), think: "high" },
+      log: { error: (m) => logged.push(m) },
+    });
+    const result = await run(ask, context());
+    expect(result).toEqual({ text: "the answer", model: "gpt-oss:120b" });
+
+    cloud.handle((_req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ message: { role: "assistant", thinking: THOUGHT, content: "  " }, done: true }));
+    });
+    const error = await run(ask, context()).catch((e: unknown) => e as Error);
+    expect((error as Error).message).toBe("the cloud model sent an empty answer");
+    expect(JSON.stringify(result)).not.toContain(THOUGHT);
+    expect(logged.join("\n")).not.toContain(THOUGHT);
+    expect((error as Error).message).not.toContain(THOUGHT);
+  });
+
   it("passes a JSON schema format as it is", async () => {
     const cloud = await stub();
     const schema = { type: "object", properties: { rooms: { type: "integer" } }, required: ["rooms"] };

@@ -17,6 +17,10 @@ import type { Runner } from "./queue.js";
  * force close, a clear, shutdown) and the abort is rethrown for the queue;
  * when only the timeout fired, the job failed.
  *
+ * `think` (`WICKET_CLOUD_THINK`) goes in the body only when set. The reasoning
+ * Ollama returns in `message.thinking` is never read: the answer is
+ * `message.content` alone.
+ *
  * Text stays out of the logs: a failure is logged with the cloud's status or
  * the kind of failure, never a message or Ollama's error text.
  */
@@ -70,6 +74,7 @@ async function chat(
     messages: request.messages,
     stream: false,
     ...(request.format !== undefined ? { format: request.format } : {}),
+    ...(endpoint.think !== undefined ? { think: endpoint.think } : {}),
   };
   const headers: Record<string, string> = {
     "content-type": "application/json",

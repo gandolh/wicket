@@ -77,7 +77,7 @@ With vps-deploy, these go in its secrets file for the stack
 | Secrets | `WARD_OIDC_CLIENT_KEY`, `OLLAMA_API_KEY`, `WICKET_APP_TOKENS` (step 2) |
 | Plain env | `PUBLIC_ORIGIN=<production origin>`; `WARD_OIDC_ISSUER` (Ward's origin), `WARD_OIDC_CLIENT_ID=wicket`, `WARD_OIDC_REDIRECT_URI=<production origin>/wicket-api/auth/ward/callback`, `WARD_OIDC_POST_LOGOUT_REDIRECT_URI=<production origin>/wicket/`; `AUTH_TRUSTED_PROXIES` = the range Caddy reaches containers from, as for the other apps |
 | Set by compose | `HOST`, `PORT`, `WICKET_DB` |
-| Optional env | `WICKET_CLOUD_MODEL` (default `gpt-oss:120b`), `WICKET_CLOUD_TIMEOUT_SECONDS` (120) |
+| Optional env | `WICKET_CLOUD_MODEL` (default `gpt-oss:120b`), `WICKET_CLOUD_TIMEOUT_SECONDS` (120), `WICKET_CLOUD_THINK` (`low`, `medium` or `high`; unset sends no level) |
 | Outbound | HTTPS to `ollama.com`, where every call goes |
 | Prometheus | a scrape job `wicket` on `127.0.0.1:8808`, path `/metrics` (Prometheus runs on host networking, bound to loopback) |
 | Ward client | slug `wicket`, like brief-board's |
@@ -246,6 +246,22 @@ Links from the wiki to source files render as plain text, since the repo
 doesn't write its own GitHub address down. Build with
 `DOCS_REPO_URL=https://github.com/<account>/wicket npm run docs` to make them
 links.
+
+## 9. Pick the reasoning level
+
+Optional, after the deploy. Without `WICKET_CLOUD_THINK`, gpt-oss reasons at its default (`medium`), and with one
+call at a time every waiting caller waits for that. Live calls are yours.
+
+1. With the setting unset, run about five "Fill the gaps" in ro-housing and five `/ask` in Discord. Note each
+   run time from the queue page's Recent calls, and the time you finished.
+2. In the stack's plain env, set `WICKET_CLOUD_THINK=low` beside `WICKET_CLOUD_MODEL`, then
+   `node cli.ts wicket server` from the vps-deploy checkout. Run similar fills and questions, and note their
+   times, starting after the restart.
+3. Keep `low` if the fills still find the same fields, the answers read as well and the run times dropped.
+   Otherwise try `medium`, or unset it and redeploy. If every job fails with an Ollama error about `think`,
+   Ollama Cloud doesn't take the field for this model: unset it and note that in
+   [providers.md](../corpus/wiki/providers.md).
+4. Change `WICKET_CLOUD_MODEL` later and you recheck or unset the level.
 
 ## Local development
 

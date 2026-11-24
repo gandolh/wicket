@@ -34,6 +34,7 @@ cp .env.example .env
 | `WICKET_APP_TOKENS` | Secret. `app=token` pairs, comma-separated, each token at least 32 characters | `my-app=` plus the output of `openssl rand -hex 32` |
 | `OLLAMA_API_KEY` | Secret. The Ollama Cloud key | yours, or empty: every call then fails saying so |
 | `WICKET_CLOUD_MODEL` | The cloud model | default `gpt-oss:120b` |
+| `WICKET_CLOUD_THINK` | The model's reasoning level: `low`, `medium` or `high` | unset: no level is sent |
 | `PUBLIC_ORIGIN` | The page's origin as the browser sees it | empty for `npm run dev`; `http://127.0.0.1:8808` for `npm start` |
 
 The cloud settings and their defaults are in

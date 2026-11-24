@@ -57,6 +57,10 @@ const WARD_CALLBACK_PATH = `${AUTH_ROUTE_PREFIX}/ward/callback`;
 /** The Vite dev server, where the page runs in development. */
 const DEV_ORIGIN = "http://localhost:5179";
 
+/** The reasoning levels Ollama's `think` field takes for gpt-oss. */
+const THINK_LEVELS = ["low", "medium", "high"] as const;
+type ThinkLevel = (typeof THINK_LEVELS)[number];
+
 /** Ollama Cloud, as the runner asks it. */
 export interface CloudSettings {
   /** `https://ollama.com` in production. */
@@ -65,6 +69,8 @@ export interface CloudSettings {
   /** `OLLAMA_API_KEY`. A secret: never log it. */
   apiKey: string;
   timeoutMs: number;
+  /** `WICKET_CLOUD_THINK`: the model's reasoning level. Undefined sends no `think` field. */
+  think?: ThinkLevel;
 }
 
 /** The server's settings, read once at startup from the environment (and the repo's `.env`). */
@@ -135,6 +141,9 @@ const envSchema = z.object({
   WICKET_CLOUD_MODEL: optional(z.string().trim()).transform((value) => value ?? DEFAULTS.cloudModel),
   WICKET_CLOUD_TIMEOUT_SECONDS: optional(seconds("WICKET_CLOUD_TIMEOUT_SECONDS")).transform(
     (value) => value ?? DEFAULTS.cloudTimeoutSeconds,
+  ),
+  WICKET_CLOUD_THINK: optional(
+    z.enum(THINK_LEVELS, { message: `WICKET_CLOUD_THINK must be one of ${THINK_LEVELS.join(", ")}, or unset.` }),
   ),
   PUBLIC_ORIGIN: optional(
     z.string().refine((value) => URL.canParse(value) && new URL(value).origin === value, {
@@ -223,6 +232,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
           model: values.WICKET_CLOUD_MODEL,
           apiKey: values.OLLAMA_API_KEY,
           timeoutMs: values.WICKET_CLOUD_TIMEOUT_SECONDS * 1000,
+          ...(values.WICKET_CLOUD_THINK !== undefined ? { think: values.WICKET_CLOUD_THINK } : {}),
         }
       : undefined,
     publicOrigin: values.PUBLIC_ORIGIN,
