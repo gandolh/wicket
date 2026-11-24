@@ -9,12 +9,12 @@
 ## Context
 
 From [the todo](../../todos/check-format-against-ollama-cloud.md) (2026-11-23). Wicket's contract offers `format`
-(`"json"` or a JSON schema) and the runner passes it to Ollama Cloud as it is ([providers.md](../wiki/providers.md),
-[api.md](../wiki/api.md)). Ollama's cloud page says cloud models don't support structured outputs, and every `format`
+(`"json"` or a JSON schema) and the runner passes it to Ollama Cloud as it is ([providers.md](../../wiki/providers.md),
+[api.md](../../wiki/api.md)). Ollama's cloud page says cloud models don't support structured outputs, and every `format`
 test so far ran against the stub. Nobody knows whether the cloud honours `format`, ignores it, or refuses the request.
 
-ro-housing, the one caller that sends a schema, already checks every answer itself (`mergeFill` in its
-`api/src/features/saved/details/fill.ts`: JSON, an object, only the asked fields, the right types, sane ranges), so
+ro-housing, the one caller that sends a schema, already checks every answer itself (`mergeFill`, in its
+saved feature: JSON, an object, only the asked fields, the right types, sane ranges), so
 nothing breaks today whatever the answer is.
 
 The repo's hard rule: no real model without the owner's word. The owner gave it on 2026-11-25 for **one** live call,
@@ -46,10 +46,9 @@ run by the owner (builders can't read the key).
    It never prints the key or any header.
 2. **The test** runs the same function against the stub (no network): one stub answer per verdict, and the
    `WICKET_LIVE_FORMAT` guard.
-3. **The wiki, ready for the result:** in providers.md, replace "Whether Ollama Cloud takes ..." for `format` with a
-   line saying the check exists, how the owner runs it, and "result: pending the owner's run". In api.md, under
-   `format`, add: callers check the answer themselves (the owner's call of 2026-11-25); Wicket passes `format` through
-   and does not validate the answer.
+3. **The wiki, ready for the result:** in providers.md, add a line for `format` saying the check exists, how the
+   owner runs it, and "result: pending the owner's run". Brief 21 makes Wicket enforce the answer's format whatever
+   the cloud does; this check only says whether passing `format` on to the cloud helps.
 
 ## Acceptance
 
@@ -71,11 +70,12 @@ docker compose -f infrastructure/docker-compose.yml exec -e WICKET_LIVE_FORMAT=1
 
 (or locally, with `OLLAMA_API_KEY` in your shell: `WICKET_LIVE_FORMAT=1 npm run live:format -w @wicket/server`).
 Paste the output. The controller then records the result: **honoured** → providers.md with the date; **ignored** →
-the api.md line stands (callers check), nothing else; **refused** → a fix brief, since ro-housing's Fill the gaps
+providers.md says so, and brief 21's own check is what holds the format; **refused** → a fix brief, since ro-housing's Fill the gaps
 fails today.
 
 ## Owner decisions
 
 - Settled 2026-11-25 (owner, grill): find out with this check and one live call by the owner.
-- Settled 2026-11-25 (owner, grill): callers check `format` answers themselves; Wicket stays a pass-through.
+- Settled 2026-11-25 (owner, grill, then revisited the same night): Wicket enforces the answer's format, for
+  consistency among its callers ([brief 21](21-wicket-enforces-the-answers-format.md)); callers may keep their own checks.
 - Mine (technical): a prompt that asks for prose while the schema asks for JSON, so "honoured" and "ignored" differ.

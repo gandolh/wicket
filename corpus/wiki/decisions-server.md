@@ -68,3 +68,12 @@ session guard answers `{ error: "unauthorized" }` from a hook, and the auth
 plugin rewrites it into `{ code, message }` after serialisation, so a
 declared 401 would refuse the guard's body and turn the reply into a 500
 (measured on 2026-11-10). A test calls every signed-out `/v1` route.
+
+## Wicket enforces the answer's format
+
+**2026-11-25.** A request's `format` is `"plain"` (the default), `"json"`, or a JSON schema, and Wicket guarantees the
+answer: for JSON it instructs the model, checks the answer, retries once inside the job, and fails the job as
+`format_mismatch` if it is still wrong. Rejected: leaving each caller to check (the state until then, and the first
+answer in the owner's grill that night), because every caller would repeat the same parse and retry and drift apart.
+The cost is a second cloud call when the first answer is wrong. Ollama Cloud documents no structured outputs, so the
+check can't rely on `format` reaching the model ([brief 21](../briefs/todo/21-wicket-enforces-the-answers-format.md)).
