@@ -92,3 +92,7 @@ Live calls are the owner's (the repo's `CLAUDE.md`: no live runs without the own
 
 - The level, after the comparison in the owner steps. The brief ships it unset. `low` is the likely pick for
   the fill; whether `/ask` answers stay good enough at `low` is the owner's taste.
+
+## Outcome
+
+Built 2026-11-24. `WICKET_CLOUD_THINK` is read in `config.ts` and sent by `runner.ts` only when set; stub-server tests cover unset, `low`, bad values and the thinking text. Shipped unset. The owner compares run times and picks the level (`docs/owner-setup.md`, section 9).

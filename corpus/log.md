@@ -275,7 +275,7 @@ The estate redesign board is a private canvas, so `design/estate-redesign/` now 
 
 The owner asked whether the estate can learn from odysseus (a self-hosted AI workspace, AGPL-3.0, read at `dev`
 `17ff9ea`; ideas only, nothing copied). Little fits: one model, one call at a time and no stored text rule out most
-of it. What carries over is its model-running knowledge: [brief 16](briefs/todo/16-the-reasoning-level-as-a-setting.md)
+of it. What carries over is its model-running knowledge: [brief 16](briefs/done/16-the-reasoning-level-as-a-setting.md)
 makes gpt-oss's reasoning level a setting (unset sends today's body), and the todo
 [name an answer that only thought](todos/name-an-answer-that-only-thought.md). Todos in ro-housing (fence the listing
 page as data) and my-personal-skills (lint pages older than their code) came from the same read. See
@@ -287,3 +287,14 @@ From the romania-law research (just-a-bot's corpus, `corpus/wiki/research-romani
 page says cloud models don't support structured outputs, while Wicket passes `format` through and its tests used
 a stub only; ro-housing's fill sends a schema. One live job settles it, on the owner's word. See
 [the todo](todos/check-format-against-ollama-cloud.md).
+
+## [2026-11-24] brief | 16 The cloud model's reasoning level as a setting
+
+Built. `WICKET_CLOUD_THINK` (`low`, `medium`, `high`, or unset) puts Ollama's `think` field in the request body;
+unset sends exactly the old body, a bad value stops start-up naming the variable. `message.thinking` is never read,
+and tests prove it stays out of the result, the log and errors. The API contract is unchanged. Ready for deploy; the
+owner compares run times live and picks the level ([providers.md](wiki/providers.md)).
+
+## [2026-11-24] brief | 16 The cloud model's reasoning level as a setting
+
+Built. `WICKET_CLOUD_THINK` (`low`, `medium`, `high`, or unset) puts Ollama's `think` field in the request body; unset sends exactly the old body, and a bad value stops start-up naming the variable. `message.thinking` is never read; tests prove it stays out of the result, the log and errors. The API contract is unchanged. Ready for deploy; the owner compares run times live and picks the level ([providers.md](wiki/providers.md)).
