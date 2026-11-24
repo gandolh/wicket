@@ -308,3 +308,10 @@ Built. `design/**` joins knip's `ignore`; six exports that nothing outside their
 Filed from the estate's infra review. The image's `deps` stage installs only the server's closure instead of
 every workspace (about 66 MB less build cache per cold build on the box), and every base is pinned to
 `node:24.22.1-alpine`. The image that runs doesn't change. Ships with `node cli.ts wicket server`.
+
+## [2026-11-24] brief | 18 The image's build stage installs only the server, on a pinned base
+
+Built. `deps` runs `npm ci -w @wicket/server --include-workspace-root` (352 → 288 MB of `node_modules`; the
+`deps` stage image 949 → 892 MB), and every stage is on `node:24.22.1-alpine`. The final image is 209 MB (208
+before) and turned healthy on scratch data. Ready for deploy: `node cli.ts wicket server`. See
+[briefs/done/18-the-images-build-stage-installs-only-the-server.md](briefs/done/18-the-images-build-stage-installs-only-the-server.md).

@@ -70,3 +70,19 @@ the controller.
 ## Owner steps
 
 - `node cli.ts wicket server` from vps-deploy. The deploy builds the image on the box.
+
+## Outcome
+
+Built 2026-11-24 by the controller (c6ced3b). Ready for deploy: `node cli.ts wicket server`.
+
+- **Step 1**, in a `git archive` export: the full `npm ci` leaves 352 MB of `node_modules`; `npm ci -w
+  @wicket/server --include-workspace-root` leaves 288 MB (64 MB less), and `npx tsc -b server` compiles both
+  `shared/dist` and `server/dist`. No extra workspace was needed: `shared` comes with the server.
+- **Step 2**: `deps` runs the scoped install with a comment saying why; the three `FROM` lines are
+  `node:24.22.1-alpine`.
+- **Step 3**, both built on the laptop the same hour: the `deps` stage image 949 MB before, 892 MB after; the
+  final image 208 MB before, 209 MB after. `docker history` differs only in three layer sizes by about 10 kB to
+  1 MB (the pinned Node patch). Both histories are in the controller's scratch folder, not the repo.
+- **Step 4**: the new image on a scratch data folder turned healthy; `/v1/health` answered `{"ok":true}`; Node
+  is v24.22.1. Test images and the container were removed.
+- `npm run check` exits 0; `bash corpus/lint.sh` passes.

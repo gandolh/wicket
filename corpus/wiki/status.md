@@ -111,6 +111,9 @@ In this order; the details are in `docs/owner-setup.md`.
    builds the image, whose `CMD` is now `node server/dist/server.js`; check
    that the `wicket-api` container turns healthy, and note the image size
    (about 210 MB before). The image wasn't built locally.
+10. For brief 18 (2026-11-24): `node cli.ts wicket server`. The image's build
+    stage installs only the server, on `node:24.22.1-alpine`; the image that
+    runs is the same within a megabyte.
 
 The six calls the first build made on its own were all kept by the owner on
 2026-11-04. One call waits in [open-questions.md](open-questions.md): the
