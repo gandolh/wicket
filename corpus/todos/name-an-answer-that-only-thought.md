@@ -1,13 +1,13 @@
 ---
 title: Name an answer that only thought
 created: 2026-11-23
-status: promoted
+status: promoted (brief 19, [19-name-an-answer-that-only-thought](../briefs/done/19-name-an-answer-that-only-thought.md))
 tags: [server]
 ---
 
 # Name an answer that only thought
 
-Promoted 2026-11-25 to [brief 19](../briefs/todo/19-name-an-answer-that-only-thought.md).
+Promoted 2026-11-25 to [brief 19](../briefs/done/19-name-an-answer-that-only-thought.md), built 2026-11-24.
 
 From the odysseus research of 2026-11-23 ([research-odysseus.md](../wiki/research-odysseus.md)). Odysseus is
 AGPL-3.0: the idea only, nothing copied.

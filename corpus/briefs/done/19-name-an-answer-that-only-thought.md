@@ -78,3 +78,7 @@ None beyond the deploy. No live call is needed: the stub proves it.
 - Settled 2026-11-25 (owner): promote it.
 - Mine (technical): the kind name `thinking-only`, the fixed message, no fallback, and no change to the API
   contract unless the check in the last decision finds an enum.
+
+## Outcome
+
+Built 2026-11-24 (c43094a). `chat()` in `runner.ts` throws `ProviderFailure("thinking-only", "answered with reasoning and no answer")` when `content` is blank and `message.thinking` is a non-blank string; a blank `content` with no, blank or non-string `thinking` stays `empty`. The caller's error reads "the cloud model answered with reasoning and no answer" and the log line "the cloud failed (thinking-only)". `shared/src/api.ts` lists no failure kinds (its `ERROR_CODES` are the HTTP error codes), so the API contract is unchanged. Tests against the stub: the kind and the fixed message; in the queue, the marker reasoning text in no log line, job error or record; the three blank cases still `empty`; content plus thinking still returns the content alone (brief 16's test, its old "blank content with thinking is empty" half now replaced by the new kind). `providers.md` lists the kinds the runner names. Ready for deploy: `node cli.ts wicket server`.

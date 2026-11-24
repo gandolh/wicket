@@ -315,3 +315,11 @@ Built. `deps` runs `npm ci -w @wicket/server --include-workspace-root` (352 → 
 `deps` stage image 949 → 892 MB), and every stage is on `node:24.22.1-alpine`. The final image is 209 MB (208
 before) and turned healthy on scratch data. Ready for deploy: `node cli.ts wicket server`. See
 [briefs/done/18-the-images-build-stage-installs-only-the-server.md](briefs/done/18-the-images-build-stage-installs-only-the-server.md).
+
+## [2026-11-24] brief | 19 Name an answer that only thought
+
+Built. A reply whose `content` is blank while `message.thinking` is not fails the job with the fixed "the cloud model
+answered with reasoning and no answer", and the log names the kind `thinking-only`; a blank reply with no reasoning
+stays `empty`. The reasoning is only checked for being blank, never kept, logged or returned. The API contract is
+unchanged. Ready for deploy: `node cli.ts wicket server`. See
+[briefs/done/19-name-an-answer-that-only-thought.md](briefs/done/19-name-an-answer-that-only-thought.md).
