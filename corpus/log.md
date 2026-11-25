@@ -342,3 +342,9 @@ Opt-in by `WICKET_LIVE_FORMAT=1`; without it, nothing is sent. Tested against th
 runs it once after `node cli.ts wicket server` and pastes the output; the result then goes into
 [providers.md](wiki/providers.md). See
 [briefs/done/20-check-format-against-ollama-cloud.md](briefs/done/20-check-format-against-ollama-cloud.md).
+
+## [2026-11-25] todo | Brief 22: the colour mode is kept under Wicket's own key
+
+Filed from the owner's report that the colour-mode picker acts across apps. Wicket and six other apps on the shared
+domain keep the choice under the bare `theme` key; it moves to `wicket.theme`, carrying the old value over once.
+Ships with `node cli.ts wicket all`.
