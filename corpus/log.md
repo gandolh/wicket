@@ -347,4 +347,4 @@ runs it once after `node cli.ts wicket server` and pastes the output; the result
 
 Filed from the owner's report that the colour-mode picker acts across apps. Wicket and six other apps on the shared
 domain keep the choice under the bare `theme` key; it moves to `wicket.theme`, carrying the old value over once.
-Ships with `node cli.ts wicket all`.
+Ships with `node cli.ts wicket deploy`.
