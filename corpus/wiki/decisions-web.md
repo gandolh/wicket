@@ -21,7 +21,7 @@ beside the Base UI wrappers; CSS modules; and `bg-bg` and `text-text` as names, 
 
 ## The theme is Light, Dark or System, light on a first visit
 _2026-11-10_, the owner. A first visit shows the light theme, even on a dark system; the choice is kept on the device in
-`localStorage` and set on `<html data-theme>` by a small script in `web/index.html` before the first paint, so Dark
+`localStorage` under `wicket.theme` (brief 22, 2026-11-26: the bare `theme` key was shared with every app on the domain; it is read once as `LEGACY_THEME_KEY` to carry an old choice over, and never written) and set on `<html data-theme>` by a small script in `web/index.html` before the first paint, so Dark
 never flashes light. The colour tokens are `light-dark()` pairs and `color-scheme` follows the attribute, so System
 tracks the operating system live and no component writes a `dark:` class. The switch is a `RadioGroup` on the account
 page ([ThemeSwitch.tsx](../../web/src/components/ThemeSwitch.tsx), store in

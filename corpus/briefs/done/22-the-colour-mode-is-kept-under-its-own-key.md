@@ -70,3 +70,13 @@ All settled. None of them is open.
 
 - Settled 2026-11-25 (owner): "color-mode picker should be per app, not per ward account." The key, the carry-over
   and the legacy name are the controller's calls, the same in all seven apps.
+
+## Outcome (2026-11-26)
+
+Built as specified. `wicket.theme` is the key in the boot script and the store, with the one-time carry-over from the bare
+`theme` in both (`LEGACY_THEME_KEY` in the store). `theme.test.tsx` covers own key wins, bare `dark` carried over and
+written to `wicket.theme`, the bare key never written, and unknown values reading as light. `theme.spec.ts` gained a
+carry-over spec (a bare `dark` carries over, a later bare `light` leaves the app dark, the switch writes only the new
+key); `shots.spec.ts` and `floor.spec.ts` seed `wicket.theme`. `decisions-web.md` names the key. Checked in Chromium:
+`theme.spec.ts` and `floor.spec.ts` pass (48). brief-board was not available in this session. Owner step: `node cli.ts
+wicket deploy`.

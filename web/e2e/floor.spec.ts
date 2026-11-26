@@ -7,7 +7,7 @@ import { SCREENS, type Screen } from "./screens";
  * 390 px phone never scrolls sideways.
  */
 async function open(page: import("@playwright/test").Page, screen: Screen, theme = "light") {
-  await page.addInitScript((value) => localStorage.setItem("theme", value), theme);
+  await page.addInitScript((value) => localStorage.setItem("wicket.theme", value), theme);
   await stubApi(page, screen.queue, screen.session);
   await page.goto(screen.path);
   await page.waitForTimeout(400);

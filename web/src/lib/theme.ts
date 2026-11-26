@@ -3,16 +3,28 @@ import { useSyncExternalStore } from "react";
 /** The theme the user picked. `system` follows the operating system, live. */
 export type Theme = "light" | "dark" | "system";
 
-const KEY = "theme";
+/** The app's own key: one localStorage serves every app on the domain, so the name carries the app's. */
+const KEY = "wicket.theme";
+/** The bare key older builds used, read once to carry the choice over and never written. */
+const LEGACY_THEME_KEY = "theme";
 
 function isTheme(value: unknown): value is Theme {
   return value === "light" || value === "dark" || value === "system";
 }
 
+function readLegacyTheme(): Theme | null {
+  const value = localStorage.getItem(LEGACY_THEME_KEY);
+  return isTheme(value) ? value : null;
+}
+
 function saved(): Theme {
   try {
     const value = localStorage.getItem(KEY);
-    return isTheme(value) ? value : "light";
+    if (isTheme(value)) return value;
+    const legacy = readLegacyTheme();
+    if (legacy === null) return "light";
+    localStorage.setItem(KEY, legacy);
+    return legacy;
   } catch {
     return "light";
   }
