@@ -45,6 +45,26 @@ test("Dark is set before the first paint, and survives a reload", async ({ page 
   expect(await page.evaluate(() => (window as unknown as { seen: string | undefined }).seen)).toBe("dark");
 });
 
+test("a bare theme carries over once, with no flash, and the bare key is never written", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("wicket.theme") && !sessionStorage.getItem("seeded")) {
+      localStorage.setItem("theme", "dark");
+      sessionStorage.setItem("seeded", "1");
+    }
+  });
+  await openAccount(page);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  expect(await page.evaluate(() => localStorage.getItem("wicket.theme"))).toBe("dark");
+
+  // Another app flips the bare key; Wicket keeps its own.
+  await page.evaluate(() => localStorage.setItem("theme", "light"));
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("radio", { name: "Light" }).click();
+  expect(await page.evaluate(() => localStorage.getItem("theme"))).toBe("light");
+  expect(await page.evaluate(() => localStorage.getItem("wicket.theme"))).toBe("light");
+});
+
 test("System follows the operating system, live", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await openAccount(page);

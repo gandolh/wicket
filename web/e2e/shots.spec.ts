@@ -21,7 +21,7 @@ for (const theme of ["light", "dark"] as const) {
     for (const screen of SCREENS) {
       test(`${screen.name} ${theme} ${size.name}`, async ({ page }) => {
         await page.setViewportSize({ width: size.width, height: size.height });
-        await page.addInitScript((value) => localStorage.setItem("theme", value), theme);
+        await page.addInitScript((value) => localStorage.setItem("wicket.theme", value), theme);
         await stubApi(page, screen.queue, screen.session);
         await page.goto(screen.path);
         await page.waitForTimeout(500);

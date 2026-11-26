@@ -348,3 +348,13 @@ runs it once after `node cli.ts wicket server` and pastes the output; the result
 Filed from the owner's report that the colour-mode picker acts across apps. Wicket and six other apps on the shared
 domain keep the choice under the bare `theme` key; it moves to `wicket.theme`, carrying the old value over once.
 Ships with `node cli.ts wicket deploy`.
+
+## [2026-11-26] brief | 22 The colour mode is kept under Wicket's own key
+
+Built. The Light / Dark / System choice moves from the bare `theme` localStorage key, shared with every app on the domain,
+to `wicket.theme`. When `wicket.theme` holds nothing valid, the boot script in `web/index.html` and the store in
+`web/src/lib/theme.ts` read the bare `theme` once (`LEGACY_THEME_KEY`), use it and write it to `wicket.theme`; the bare key
+is never written or deleted. Store tests and a Playwright carry-over spec cover it, and the specs that seed the mode write
+the new key. brief-board was not updated because brief-board was not available in this session. Ready for deploy:
+`node cli.ts wicket deploy` (web build only). See
+[briefs/done/22-the-colour-mode-is-kept-under-its-own-key.md](briefs/done/22-the-colour-mode-is-kept-under-its-own-key.md).
